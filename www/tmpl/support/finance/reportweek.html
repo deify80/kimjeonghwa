@@ -1,0 +1,219 @@
+<script>
+
+	$(document).ready(function() {
+		
+		show_calendar("<?=date('Y')?>", "<?=intval(date('m'))?>");
+		
+		$("#srch_year").val("<?=date('Y')?>");
+		$("#srch_month").val("<?=intval(date('m'))?>");
+		
+		set_select("<?=intval(date('d'))?>"); 
+
+		set_dates("<?=date('Y')?>", "<?=intval(date('m'))?>");
+
+		$("#srch-frm select").on("change", function() {
+//			show_calendar($('#srch_year').val(), $('#srch_month').val());
+			set_dates($('#srch_year').val(), $('#srch_month').val());
+		});
+
+
+//		var last_day = ( new Date( date, month, 0) ).getDate();
+//		set_dates_select();
+	});
+
+	
+	function getCurrentDatettt( date , month , last_day ){
+	  
+	    var date ;
+	    var month ;
+	    var last_day ;
+
+		var temp = date+"-"+month+"-"+last_day;
+
+		var week = new Array('7', '1', '2', '3', '4', '5', '6');
+		 
+		var today = new Date( temp ).getDay();
+	
+		var loadDt = new Date( temp ); //현재 날짜 및 시간   //현재시간 기준 계산
+
+		var temps = new Date(Date.parse(loadDt) + ( 7 - today ) * 1000 * 60 * 60 * 24); //일주일후
+
+		var tempsday = temps.getDate() ;
+
+//		var todayLabel = week[today];
+
+		return tempsday;
+  
+	}
+	
+	function show_calendar(y, m) {
+
+		var date = new Date();
+		var now_year = date.getFullYear();
+		var now_month = date.getMonth();
+		var now_day = date.getDate();
+
+		y = (y != undefined) ? y : now_year;
+		m = (m != undefined) ? m - 1 : now_month;
+
+		var the_date = new Date(y, m, 1);
+		var the_day = the_date.getDay();
+
+		var last = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+
+		if (y % 4 == 0 && y % 100 != 0 || y % 400 == 0)
+			last_date = last[1] = 29;
+
+		var last_date = last[m];
+		var row = Math.ceil((the_day + last_date) / 7);
+		var calendar = "<ul class=inline-calendar>";
+
+		var d_num = 1;
+		for (var i = 1; i <= row; i++) {
+			for (var k = 1; k <= 7; k++) {
+				if (i == 1 && k<=the_day || d_num>last_date) {
+				} else {
+					calendar += "<li onClick=set_select("+d_num+"); id='"+d_num+"'>" + d_num + "</li>";
+					d_num++;
+				}
+			}
+		}
+		calendar += "</ul>";
+		$("#calendar-area").html(calendar);
+	}
+	
+	function set_select(d_num) {
+
+		$(".inline-calendar li").removeClass("selected");
+		$("#"+d_num).addClass("selected");
+		$("#srch_day").val(d_num);
+		
+		//해당 내용 출력
+		//$( "#calendar-area" ).load( "/finance/report_result/<?=$type?>?"+$("#srch-frm").serialize());
+		
+		$.ajax({
+ 			type : "GET",
+ 			url : "/finance/report_result/<?=$type?>",
+ 			data : $("#srch-frm").serialize(),
+ 			success : function(result_data) {
+ 				$("#report-area").hide();
+ 				/*
+ 				$("#msg-area").html(result_data);
+ 				$("#msg-area").dialog("open");
+ 				*/
+ 				$("#report-area").html(result_data).fadeIn();
+ 			}
+ 		});
+
+	}	
+	
+	function set_dates ( y, m ) {
+
+		var between_weekTime ;
+
+		var sdate = '<?=date("Y")?>';
+		var smonth = '<?=date("m")?>';
+		var day = '<?=date("d")?>';
+
+		var date = (y != undefined) ? y : sdate;
+		var month = (m != undefined) ? m : smonth;
+
+		var last_day = ( new Date( date, month, 0) ).getDate();
+		var last_day_weekday = getCurrentDate( date , month , last_day ); 		
+		
+		if ( last_day == 31 && last_day_weekday < 2 ) { 
+			between_weekTime = 6 ; 
+		} else if (last_day == 30 && last_day_weekday < 1) { 
+			between_weekTime = 6 ; 
+		} else if (last_day == 28 && last_day_weekday == 6) { 
+			between_weekTime = 4 ; 
+		} else { 
+			between_weekTime = 5 ; 
+		} 
+
+		var weekNo = '<?=toWeekNum(time())?>' ;
+
+		var weekst = getCurrentDatettt( date , fillzero(month,2) , '01' ); 		
+
+		var calendar = "<ul class=inline-calendar>";
+		var iia ;
+
+		for (var ii = 1; ii <= between_weekTime ; ii++) {
+
+/*
+			iia = ii * 7 - 7 ;
+			if ( iia == 0 ) iia = 1 ;
+*/		
+			if ( ii == 1)
+			{
+				weekst = weekst - 1 ;
+			} else {
+				weekst = weekst + 7 ;
+			}
+
+//			if ( ii == 1 ) iia = weekst ;
+//			if ( ii == between_weekTime ) weekst = last_day - 2 ;				
+
+			if ( fillzero(smonth,2) == fillzero(m,2)  )
+			{
+				if ( weekNo == ii )
+				{
+					var temps = " class='selected' "  ;
+				} else {
+					var temps = " "  ;
+				}
+			}
+
+			calendar += "<li onClick=set_select("+weekst+"); id='"+weekst+"' "+temps+" >" +ii+ "주차 </li>";
+
+		}
+		calendar += "</ul>";
+
+		$("#calendar-area").html(calendar);
+	}
+
+	function fillzero(obj, len) {
+	  obj= '000000000000000'+obj;
+	  return obj.substring(obj.length-len);
+	} 
+
+	function getCurrentDate( date , month , last_day ){
+	  
+	    var date ;
+	    var month ;
+	    var last_day ;
+
+		var temp = date+"-"+month+"-"+last_day;
+
+		var week = new Array('7', '1', '2', '3', '4', '5', '6');
+		 
+		var today = new Date( temp ).getDay();
+		var todayLabel = week[today];
+		 
+		return todayLabel;
+  
+	}
+
+</script>
+
+<form id="srch-frm">
+<input type="hidden" name="srch_day" id="srch_day">
+<div style="clear: both;margin-top: 10px;margin-bottom: 10px;width:100%;height:40px;vertical-align: middle;" id="select-calendar">
+	<div style="float: left;margin-top: 5px;">
+		<select style="width:80px;" name="srch_year" id="srch_year">
+			<? for($i=2015; $i<=2020; $i++): ?>
+			<option value="<?=$i?>"><?=$i?>년</option>
+			<? endfor; ?>
+		</select> 
+		<select style="width:80px;" name="srch_month" id="srch_month">
+		<? for($i=1; $i<=12; $i++): ?>
+			<option value="<?=$i?>"><?=$i?>월</option>
+		<? endfor; ?>	
+		</select>
+	</div>
+	<div id="calendar-area" style="float: left; margin-left: 10px;"></div>
+</div>
+</form>
+<div id="report-area"></div>
+
+

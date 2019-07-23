@@ -1,0 +1,72 @@
+<style>
+ul.sortable > li {
+	border:solid 1px #E3E3E3;
+	margin:2px 0px;
+	padding:5px 10px;
+	background-color: #FFFFFF;
+}
+
+ul.sortable > li > span {
+	display: inline-block;
+	font-family: 'NGB';
+	width:100px;
+}
+
+ul.sortable > li > span > i {
+	margin-right:5px;
+}
+
+</style>
+<form id="FrmSettingsInfo" onsubmit="return false">
+<ul class="sortable" id="sortable_widget">
+	<? foreach($widget as $widget_code => $w) {?>
+	<li id="<?=$widget_code?>">
+		<span><i class="fa fa-sort fa-1"></i> <?=$w['name']?></span>
+		<label class="hmis"><input type="radio" name="status[<?=$widget_code?>]" value="expand" class="hmis" <?=($w['status'] == 'expand')?'checked':''?> /> <span class="lbl"> 펼치기</span></label>
+		<label class="hmis"><input type="radio" name="status[<?=$widget_code?>]" value="collapse" class="hmis" <?=($w['status'] == 'collapse')?'checked':''?> /> <span class="lbl"> 접기</span></label>
+		<label class="hmis"><input type="radio" name="status[<?=$widget_code?>]" value="hide" class="hmis" <?=($w['status'] == 'hide')?'checked':''?> /> <span class="lbl"> 숨기기</span></label>
+	</li>
+	<? } ?>
+</ul>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="SettingsInfo.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var SettingsInfo = {
+	init: function() {
+		$("#sortable_widget").sortable({
+			'axis':'y',
+			 containment: "parent"
+		});
+	},
+	save: function() {
+		var formdata = $('#FrmSettingsInfo').serializeArray();
+		var sort = $('#sortable_widget').sortable("toArray");
+		formdata.push({name:'sort',value:sort});
+		$.ajax({
+			url:'/patient_proc/save_widget',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success){
+					PatientInfo.loadWidget();
+					$('.modal-close').trigger('click');	
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})	
+	}
+};
+
+$(function(){
+	SettingsInfo.init();
+})
+</script>
+

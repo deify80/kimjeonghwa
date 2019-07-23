@@ -1,0 +1,486 @@
+<style>
+/* 수술완료(99), 수술예정(98) */
+.status-99,  .status-98 {background-color:#FF8000;}
+/* 수술취소(90), 내원취소(50) */
+.status-90, .status-50{}
+/* 내원상담(52), 내원예약(51) */
+.status-52 {background-color: #009688;}
+.status-51 {background-color: #03A9F4;}
+/* 진행중(11), 예치금(13) */
+.status-11, .status-13 {background-color: #8BC34A;}
+/* 부재 */
+.status-21, .status-22, .status-23 {background-color:#A1887F;}
+/* 종료 */
+.status-00, .status-09 {background-color:#414141;}
+.table > tbody > tr.mydb > td {background-color:#FEFBF1;font-family:'NGB';color:#EC407A;}
+</style>
+
+<h3 class="area-title">
+	<div>검색</div>
+	<div class="button-box" >
+		{? auth.db_input}
+		<!-- <button id="bt-new" onClick="Consulting.add()">신규등록</button> -->
+		<button type="button" class="btn btn-flat-blue" onClick="Consulting.input()"><i class="fa fa-1 fa-pencil"></i> 신규등록</button>
+		{/}
+		{? auth.db_share}
+		<button type="button" class="btn btn-flat-purple" onClick="open_ing()" ><i class="fa fa-1 fa-tasks"></i> DB 분배 현황</button>
+		{/}
+	</div>
+</h3>
+
+<form id="FrmConsultingSearch" onsubmit="return false">
+<input type="hidden" name="permanent_status" value="" data-default=""/>
+<input type="hidden" name="team_code" value="" />
+<input type="hidden" name="type" value="{type}" />
+<input type="hidden" name="limit" id="cnt_search" value="" /><!-- 검색총갯수:엑셀다운로드를 위한 row count -->
+<input type="hidden" name="page" value="{page}" />
+<input type="hidden" name="grant_biz" value="{layout.page.grant_biz}" /><!-- 사업장권한 -->
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:90px" />
+		<col />
+		<col style="width:90px" />
+		<col />
+		<col style="width:90px" />
+		<col />
+		<col style="width:90px" />
+		<col />
+	</colgroup>
+	<tbody>
+		{? layout.login.info.ss_dept_code !='90' || type =='share'}
+		<tr>
+			<th>팀</th>
+			<td colspan="7">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn"><input type="radio" name="team_code" value="" {? !search.team_code}checked{/} data-role="search" />전체</label>
+					{@ cfg.team}
+					<label class="btn"><input type="radio" name="team_code" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		{/}
+		<tr>
+			<th>접수일자</th>
+			<td>
+				<input type="text" name="reg_date_s" class="datepicker" value="{search.reg_date_s}" /> ~ <input type="text" name="reg_date_e" class="datepicker" value="{search.reg_date_e}" />
+			</td>
+			<th>유효기간</th>
+			<td>
+				<input type="text" name="charge_date_s" size="10" class="datepicker" value="{search.charge_date_s}" /> ~ <input type="text" name="charge_date_e" size="10" class="datepicker" value="{search.charge_date_e}" />
+			</td>
+			<th>수술예정시기</th>
+			<td>
+				<input type="text" name="oper_date" class="full" value="{search.oper_date}" />
+			</td>
+			<th>매출</th>
+			<td>
+				<input type="text" name="sales_min" value="{search.sales_min}" style="width:80px" /> ~ <input type="text" name="sales_max" value="{search.sales_max}" style="width:80px" />
+			</td>
+		</tr>
+		<tr>
+			<th>유입경로</th>
+			<td>
+				<select name="path"  data-role="search">
+					<option value="" {? !search.path }selected{/}>-전체-</option>
+					{? auth.ex_path}
+					{@ cfg.path}
+					<option value="{.key_}" {? search.path==.key_}selected{/}>{.value_}</option>
+					{/}
+					{/}
+				</select>
+			</td>
+			<th>상담상태</th>
+			<td>
+				<select name="cst_status" data-role="search">
+					<option value="" {? !search.cst_status }selected{/}>-전체-</option>
+					{@ cfg.status}
+					<option value="{.key_}" {? search.cst_status==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>시술항목</th>
+			<td>
+				<select name="main_category" data-role="search">
+					<option value="" {? !search.main_category }selected{/} >-전체-</option>
+					{@ cfg.category}
+					<option value="{.key_}" {? search.main_category==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>미디어</th>
+			<td>
+				<input type="text" name="media" value="{search.media}" class="full" />
+			</td>
+		</tr>
+		<tr>
+			<th>담당자</th>
+			<td>
+				<select name="charge_user_id" style="width:100px;" data-role="search">
+					<option value="" {? !search.charge_user_id }selected{/} >-전체-</option>
+					{@ cfg.charger}
+					<option value="{.key_}" {? search.charge_user_id==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>컴플레인</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.complain_status}active{/}"><input type="radio" name="complain_status" value="" {? !search.complain_status}checked{/} data-role="search" />전체</label>
+					<label class="btn {? search.complain_status=='Y'}active{/}"><input type="radio" name="complain_status" value="Y" {? search.complain_status=='Y'}checked{/} data-role="search" />예</label>
+					<label class="btn {? search.complain_status=='N'}active{/}"><input type="radio" name="complain_status" value="N" {? search.complain_status=='N'}checked{/} data-role="search" />아니오</label>
+				</div>
+			</td>
+			<th>환불</th>
+			<td>
+				<select name="refund_type" style="width:100px;" data-role="search">
+					<option value="" {? !search.refund_type }selected{/} >-전체-</option>
+					<option value="N" {? search.refund_type=='N'}selected{/}>환불안함</option>
+					<option value="D" {? search.refund_type=='D'}selected{/}>예치금환불</option>
+					<option value="O" {? search.refund_type=='O'}selected{/}>수술비환불</option>
+				</select>
+			</td>
+			<th>수술지역</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.locale}active{/}"><input type="radio" name="locale" value="" {? !search.locale}checked{/} data-role="search" />전체</label>
+					<label class="btn {? search.locale=='ko'}active{/}"><input type="radio" name="locale" value="ko" {? search.locale=='ko'}checked{/} data-role="search" />한국</label>
+					<label class="btn {? search.locale=='cn'}active{/}"><input type="radio" name="locale" value="cn" {? search.locale=='cn'}checked{/} data-role="search" />중국</label>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>CPA</th>
+			<td>
+				<select name="cpa" data-default="!='wait'">
+					<option value="!='wait'">-전체-</option>
+					<option value="invalid">무효</option>
+					<option value="valid">유효</option>
+				</select>
+			</td>
+			<th>검색어</th>
+			<td colspan="5">
+				<input type="text" name="word" id="word" class="full" value="{search.word}" placeholder="고객명 or 연락처 or 메신저" />
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="Consulting.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button type="button" class="btn btn-lg btn-gray" onclick="Consulting.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	<div class="button-box">
+		{? auth.data_download}
+		<button type="button" class="btn btn-lightgray" onclick="Consulting.excel()"><i class="fa fa-1 fa-file-excel-o" style="color:#0091EA"></i> 엑셀다운로드</button>
+		{/}
+	</div>
+</h3>
+
+<table class="table table-bordered table-responsive table-list table-striped table-hover" id="consulting">
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th>CPA</th>
+			<th>상담상태</th>
+			{? auth.ex_path}
+			<th>유입경로</th>
+			{/}
+			{? auth.m_check}
+			<th class="visible-lg">미디어</th>
+			{/}
+			<th><i class="fa fa-1 fa-link" style="color:#FF7070" data-toggle="tooltip" title="환자연동"></i></th>
+			<th>접수일자</th>
+			{? type=='99'}
+			<th>수술완료일</th>
+			{/}
+			<th class="visible-lg">최종상담</th>
+			<th>고객명</th>
+			<th>생년월일</th>
+			<th class="visible-lg">성별</th>
+			<th>연락처</th>
+			<th>시술항목</th>
+			<th>시술부위</th>
+			<th>담당자</th>
+			<th>팀</th>
+			<th>재문의</th>
+			<th class="visible-lg">매출</th>
+
+			{? auth.ex_chargedate}
+			<th>유효기간</th>
+			{/}
+		</tr>
+	</thead>
+	<tbody id="consulting_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\cst_seqno}" data-grant="${\grant_view}" class="{if permanent_status=='Y'}mydb{/if}">
+		<td data-link="no">{if accept_date} ${\idx} {\else} <i class="fa fa-1 fa-send" style="color:#FF7070" data-toggle="tooltip" title="신규DB"></i> {/if}</td>
+		<td data-link="no"><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${\cst_seqno}" data-mobile="${\tel}"><span class="lbl"></span></label></td>
+		<td>${\cpa_mark}</td>
+		<td><span class="label label-xs status-${\cst_status}">${\status}</span></td>
+		{? auth.ex_path}
+		<td><span style="{if path =='R'}color:#F79646{/if}">${\path_txt}</span></td>
+		{/}
+		{? auth.m_check}
+		<td class="visible-lg">${\media}</td>
+		{/}
+		<td data-link="no">
+			{if patient_no>0}
+			<a href="javascript:;" onclick="window.open('/patient/info/${\patient_no}')"><i class="fa fa-1 fa-link" style="color:#FF7070"></i></a>
+			{\else}
+			<i class="fa fa-1 fa-link" style="color:#E3E3E3"></i>
+			{/if}
+		</td>
+		<td>${\reg_date}</td>
+		{? type=='99'}
+		<td>${\surgery_date}</td>
+		{/}
+		<td class="visible-lg">{if mod_date} ${\mod_date} {if memo.length>0} <span class="badge red" data-toggle="tooltip" title="${\memo[0].memo}" data-html=true>${\memo.length}</span> {/if}{/if}</td>
+		<td>${\name}</td>
+		<td>${\birth} {if birth}(${\age}){/if}</td>
+		<td class="visible-lg">{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {elseif sex=='M'} <i class="fa fa-1 fa-male f-blue"></i> {\else}-{/if}</td>
+		<td>${\tel}</td>
+		<td>${\main_category}</td>
+		<td>${\sub_category}</td>
+		<td>${\manager}</td>
+		<td>${\manager_team}</td>
+		<td>
+			{if duplicate_db > 0}
+			<span class="badge blue">${\duplicate_db}</span>
+			{\else }
+			<span class="badge">${\duplicate_db}</span>
+			{/if}
+		</td>
+		<td class="visible-lg">{if patient_sales == 0}<span class="f-null">0</span>{\else}${HmisCommon.numberFormat(patient_sales)}{/if}</td>
+
+		{? auth.ex_chargedate}
+		<td>${\charge_date}</td>
+		{/}
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="Consulting.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="Consulting.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="Consulting.load(${\p.num})">${\p.num}</a></li>
+		{/for}
+		<li><a href="javascript:;" onclick="Consulting.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="Consulting.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<!-- 엑셀다운로드용폼:S -->
+<form id="FrmExcel" method="post" target="sms_popup"></form>
+<!-- 엑셀다운로드용폼:E -->
+
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var Consulting = {
+	page:1,
+	type:'{type}',
+	init: function() {
+		this.createDatepicker();
+
+		$('[data-role="search"]').on('change.search',function() {
+			Consulting.setPage(1);
+			Consulting.load();
+		});
+
+		this.load($('input[name="page"]').val());
+
+		HmisCommon.searchInit('FrmConsultingSearch');
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	createClick: function() {
+		$('#consulting_list > tr > td[data-link!="no"]').on('click',function(event) {
+			var parent = $(this).parents();
+			if(parent.data('grant') != 'Y') {
+				HmisAlert.alert('선택한 DB에 접근할 권한이 없습니다.');
+				return false;
+			}
+			// document.location.reload();
+			document.location.href = "/consulting/input/"+parent.data('no');
+		})
+	},
+	createDatepicker : function(){
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmConsultingSearch');
+		this.type = '{type}';
+		this.load();
+	},
+	input: function() {
+		var title = 'DB 등록';
+		var modal = new HmisModal('dbinput', {width:800, top:200});
+		modal.callback = this.reload;
+		modal.open(title,'/db/input',{type:'consulting'});
+	},
+	reload: function() {
+		Consulting.load(Consulting.page);
+	},
+	load: function(page) {
+		HmisLoading.show('#consulting_list');
+		var p = page || this.page;
+		Consulting.setPage(p);
+
+		var me = this;
+		var search = $('#FrmConsultingSearch').serialize();
+		$.ajax({
+			url:'/consulting/consulting_list_paging',
+			data:{
+				limit:15,
+				type:this.type,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#consulting_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					// console.log(html);
+					target.append(html);
+				}
+				else {
+					var td_cnt = $('table#consulting > thead > tr > th').length;
+					target.append('<tr><td colspan="'+td_cnt+'">검색된 DB가 없습니다.</td></tr>');
+				}
+
+
+				me.createClick();
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				// $('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').val(r.data.count.search);
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+
+				$('#sales_total').html(HmisCommon.numberFormat(r.data.sum.sales_total));
+
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	setPermanent: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('DB를 선택하세요.');
+			return false;
+		}
+
+		HmisAlert.confirm("선택하신 "+checked.length+"개의 DB를 MY DB로 설정하시겠습니까?", function(r){
+			if(r) {
+				var chk = checked.map(function () {return this.value;}).get();
+				$.ajax({
+					type : "POST",
+					url : "/consulting_proc/do_permanent",
+					dataType:'json',
+					data : {
+						'chk':chk
+					},
+					success : function(r) {
+
+						HmisAlert.alert(r.msg, function() {
+							if(r.success){
+								$("#cnt_mydb").html(r.data.permanent_total);
+								Consulting.reload();
+							}
+						});
+					}
+				});
+			}
+
+		})
+	},
+	displayPermanent: function(mode) {
+		HmisCommon.formReset('FrmConsultingSearch');
+		HmisCommon.setValue($('input[name="permanent_status"]'),"Y");
+
+
+		if(mode == 'share') {
+			this.type = 'share';
+			HmisCommon.setValue($('input[name="team_code"]'),"{layout.login.info.ss_team_code}");
+		}
+		else {
+			this.type = '{type}';
+			if(mode == 'thismonth') {
+				HmisCommon.setValue($('input[name="reg_date_s"]'),"{=date('Y-m-01')}");
+				HmisCommon.setValue($('input[name="reg_date_e"]'),"{=date('Y-m-t')}");
+			}
+		}
+		this.load(1);
+	},
+	sms: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('문자발송 대상DB를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		$('#FrmSms').empty();
+		$.each(checked, function(i,e) {
+			var mobile = $(e).data('mobile');
+			if(!mobile) return true;
+			$('#FrmSms').append('<input type="hidden" name="sms[]" value="'+mobile+'" />');
+		})
+
+		open_sms();
+		$('#FrmSms').submit();
+
+	},
+	excel: function() {
+		var search = $('#FrmConsultingSearch').serialize();
+		var limit = $('#cnt_search').val();
+		if(limit > 500) {
+			HmisAlert.confirm("엑셀변환데이터가 500건 이상으로 다운로드 시간이 1분이상 소요될수 있습니다.<br />다운로드받으시겠습니까?", function(r) {
+				if(r) {
+					document.location.href = '/consulting/excel?'+search;
+				}
+			})
+		}
+		else {
+			document.location.href = '/consulting/excel?'+search;
+		}
+
+	}
+}
+
+
+$(function() {
+	Consulting.init();
+});
+
+</script>

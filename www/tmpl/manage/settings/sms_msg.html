@@ -1,0 +1,104 @@
+<form id="FrmSmsMsg" name="FrmSmsMsg" onsubmit="return false">
+<div style="margin-top:10px">
+	<div class="btn-group hmis orange" data-toggle="buttons" id="tab">
+		{@ cfg.label}
+		<label class="btn"><input type="radio" name="no" value="{.no}" onchange="SMSMsg.load(this)" >{.sms_name}</label>
+		{/}
+	</div>
+
+	<!--{*
+	<div style="float:right">
+		<button type="button" class="btn btn-flat-blue" onclick="SMSMsg.settings(0)"><i class="fa fa-1 fa-gear"></i> 문구기본설정</button>
+	</div>
+	*}-->
+</div>
+
+
+<div id="inner"></div>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+</div>
+
+</form>
+
+<style>
+ul.helper li {line-height:1.8em;}
+</style>
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span>
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul class="helper">
+		<li><b style="margin-right:10px">[이름]</b>예약자명(예:홍길동)</li>
+		<li><b style="margin-right:10px">[예약일]</b> 예약날짜(예:0월 0일)</li>
+		<li><b style="margin-right:10px">[예약시각]</b> 예약시각(예:00시 00분)</li>
+	</ul>
+
+</div>
+
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var SMSMsg = {
+	init: function() {
+		var radio = $('input[name="no"]').eq('0');
+		radio.parent('label').addClass('active');
+		radio.trigger('change');
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			//promptPosition : "topLeft",
+			display:'alert',
+			showOneMessage:true,
+
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmSmsMsg").validationEngine('attach',option);
+
+	},
+	load: function(el) {
+		$('#inner').load('/settings/sms_msg_inner', {no:el.value});
+	},
+	save: function() {
+		var formdata = $('#FrmSmsMsg').serialize();
+		$.ajax({
+			url:'/settings_proc/save_smsmsg',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg);
+			}
+		})
+	},
+	insertType: function() {
+		var title = '신규 등록';
+		var modal = new HmisModal('dbinput', {width:800, top:200});
+		modal.callback = this.reload;
+		modal.open(title,'/db/input',{type:'db'});
+	},
+	insertAt: function(myValue) {
+		var myField = document.FrmSmsMsg.msg;
+		//IE support
+		if (document.selection) {
+			myField.focus();
+			sel = document.selection.createRange();
+			sel.text = myValue;
+		}
+		//MOZILLA and others
+		else if (myField.selectionStart || myField.selectionStart == '0') {
+			var startPos = myField.selectionStart;
+			var endPos = myField.selectionEnd;
+			myField.value = myField.value.substring(0, startPos)+ myValue+ myField.value.substring(endPos, myField.value.length);
+		} else {
+			myField.value += myValue;
+		}
+	}
+}
+
+$(function() {
+	SMSMsg.init();
+})
+</script>

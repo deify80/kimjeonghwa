@@ -1,0 +1,51 @@
+<table class="table table-bordered table-list table-striped">
+	<colgroup>
+		<col style="width:50px" /><!-- 번호 -->
+		<col style="width:100px" /><!-- 수술날짜 -->
+		<col style="width:60px" /><!-- 진료구분 -->
+		<col style="width:60px" /><!-- 과세구분 -->
+		<col /><!-- 진료부위/항목 -->
+		<col style="width:100px" /><!-- 총매출 -->
+		<col style="width:100px" /><!-- 정상수가 -->
+		<col style="width:100px" /><!-- 수납액 -->
+		<col style="width:100px" /><!-- 미수금 -->
+		<col style="width:100px" /><!-- 환불액 -->
+		<col style="width:100px" /><!-- 재료비 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>수술날짜</th>
+			<th>진료구분</th>
+			<th>과세구분</th>
+			<th>진료부위/항목</th>
+			<th>총매출</th>
+			<th>정상수가</th>
+			<th>수납액</th>
+			<th>미수금</th>
+			<th>환불액</th>
+			<th>재료비</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td>{.date_project}</td>
+			<td><span class="label label-xs {? .type=='수술'} label-error {: .type=='진료'} label-purple {:} label-orange {/}">{.type}</span></td>
+			<td>{? .tax_type=='tax'}과세{:}비과세{/}</td>
+			<td>{? .type=='진료'}-{:}{.treat_nav_long}{/}</td>
+			<td><span title="기본매출액:{=number_format(.amount_basic)}원<br />추가매출액:{=number_format(amount_addition)}원" data-toggle="tooltip" data-html="true">{=number_format(.amount_total)}</span></td>
+			<td>{? .type=='진료'}-{:}<span data-toggle="tooltip" title="{.op_type_txt}">{=number_format(cost)}</span>{/}</td>
+			<td><span title="현금:{=number_format(.paid_cash)}<br />카드:{=number_format(.paid_card)}<br />계좌이체:{=number_format(.paid_bank)}" data-toggle="tooltip" data-html="true">{=number_format(.paid_total)}</span></td>
+			<td>{=number_format(.amount_unpaid)}</td>
+			<td>{=number_format(.amount_refund)}</td>
+			<td>{=number_format(.amount_material)}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="11" class="center">등록된 수술별 수납내역이 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>

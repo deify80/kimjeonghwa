@@ -1,0 +1,84 @@
+
+<script>
+	$(document).ready(function() {
+		$("button, input[type=button]").button();
+	});
+	
+	function save_line_add( ){
+		var save_line_str = "";
+		if( $.trim($('#approval_user').text()) == "" ){
+			alert('결재라인을 선택하여 주세요.');
+			return;
+		}
+		
+		if( $.trim($('#save_title').val()) == "" ){
+			alert('결재라인명을 입력해 주세요.');
+			return;
+		}
+		
+		// 결재라인 값들 가져오기 및 적용
+		$('select#approval_user').find('option').each(function() {    		
+			//alert($(this).val());
+			if( save_line_str != "" ){
+				save_line_str += "-";	
+			}
+			
+			save_line_str += ""+$(this).val();
+    	});
+		
+		// 참조라인 값들 가져오기 및 적용
+		save_line_str += ":";	
+		cnt = 0;
+		$('select#refer_user').find('option').each(function() { 
+				if( cnt != 0 ){
+					save_line_str += "-";	
+				}
+				
+				save_line_str += ""+$(this).val();
+				cnt++;
+	    	});
+		
+		//alert( save_line_str );
+		var url = "/business_proc/save_line_add/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "save_title="+$('#save_title').val()+"&save_person="+save_line_str,
+				dataType: "json",
+				success: function(result_data){
+              	}
+          });
+		  
+		  alert('결재라인이 저장되었습니다.');
+		  $('#line_save-area').dialog('close');
+	}
+</script>
+		
+<div style="width: 95%;margin: auto;">
+		
+		<table class="basic-table">
+			<colgroup>
+				<col width="20%" />
+				<col width="" />
+			</colgroup>
+			
+			<tbody>
+				<tr>
+					<th>
+					결재라인명
+					</th>					
+					<td>
+					<input type="text" id="save_title" name="save_title" style="width:95%"><br />
+					- 현재 설정된 결재라인을 해당명으로 저장합니다. 결재라인보기에서 확인 가능합니다.
+					</td>
+				</tr>
+				
+			</tbody>
+			
+		</table>
+		
+		<div class="tool-box">
+		<button onClick="save_line_add();">저장하기</button>
+		<button id="bt-save" onClick="$('#line_save-area').dialog('close');">닫기</button>
+		</div>
+</div>

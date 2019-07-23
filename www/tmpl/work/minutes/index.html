@@ -1,0 +1,194 @@
+<h3 class="area-title">회의록 검색</h3>
+<form id="FrmMinutesSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>회의일자</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e"> 
+				<!-- 	
+				<div class="btn-group hmis" data-toggle="buttons">
+					<label class="btn"><input type="radio" name="search_days" checked onchange="GoodsList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"> 오늘</label>
+					<label class="btn"><input type="radio" name="search_days"  onchange="GoodsList.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"> 이번주</label>
+					<label class="btn"><input type="radio" name="search_days"  onchange="GoodsList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"> 이번달</label>
+				</div>	 
+				-->
+				<ul class="btn-group btn-group-xs">
+					<li onclick="Minutes.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<li onclick="Minutes.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+					<li onclick="Minutes.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			<th>회의구분</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="type" value="all" data-role="reload" checked="" ><span>전체</span></label>
+					<label class="btn"><input type="radio" name="type" value="간부회의" data-role="reload"><span>간부회의</span></label>
+					<label class="btn"><input type="radio" name="type" value="팀장회의" data-role="reload"><span>팀장회의</span></label>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>검색어</th>
+			<td colspan="3"><input type="text" name="search_word" class="full" placeholder="주요안건"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="Minutes.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="Minutes.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	회의록 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 회의록 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 회의록 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="Minutes.openInput()"><i class="fa fa-pencil fa-1"></i> 회의록 등록</button>
+		<!-- <span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="GoodsList.openMove()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button> -->
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px"><!-- 번호 -->
+		<col style="width:120px"><!-- 회의일자 -->
+		<col style="width:120px"><!-- 회의구분 -->
+		
+		<col ><!-- 주요안건 -->
+		<col style="width:200px"><!-- 제목 -->
+		<col style="width:100px"><!-- 작성자 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>회의일시</th>
+			<th>구분</th>
+			<th>주요안건</th>
+			<th>참석자</th>
+			<th>작성자</th>
+		</tr>
+	</thead>
+	<tbody id="minutes_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td>${minutes_date}</td>
+		<td>${type}</td>
+		<td class="left"><a href="javascript:;" onclick="Minutes.openView('${no}')" class="link">${issues}</a></td>
+		<td>${attendees}</td>
+		<td>${writer_name}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="PatientList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="PatientList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="PatientList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var Minutes = {
+	init: function() {
+		this.load();
+		HmisCommon.createDatepicker();
+
+		$('[data-role="reload"]').change(function() {
+			Minutes.load();
+		});
+	},
+	reload: function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmMinutesSearch').serialize();
+		
+		$.ajax({
+			url:'/work/minutes_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#minutes_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="6">검색된 회의록이 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	openView: function(minutes_no) {
+		
+		var modal = new HmisModal('minutes_view', {width:900, top:200});
+		modal.open('회의록','/work/minutes_view',{minutes_no:minutes_no});
+	},
+	openInput: function(minutes_no) {
+		var title = (minutes_no)?'회의록 수정':'회의록 등록';
+		var modal = new HmisModal('minutes_input', {width:900, top:200});
+
+		modal.open(title,'/work/minutes_input',{minutes_no:minutes_no});
+	},
+	reset: function() {
+		$('#FrmMinutesSearch')[0].reset();
+		this.load();
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	}
+}
+
+$(function(){
+	Minutes.init();
+})
+</script>

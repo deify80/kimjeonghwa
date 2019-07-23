@@ -1,0 +1,218 @@
+<!-- 대표님 전용 상담팀 보고서 -->
+<h3 class="area-title">보고서 검색</h3>
+<form id="FrmReportReceiveSearch" onsubmit="return false">
+<input type="hidden" name="mode" value="<?=$mode?>" />
+<input type="hidden" name="report_code" value="<?=$report['code']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>문서종류</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="report_code" value="all" checked data-role="reload"><span>전체</span></label>
+					{@ report}
+					<label class="btn"><input type="radio" name="report_code" value="D003" data-role="reload"><span>일일매출보고</span></label>
+					{/}
+					<label class="btn"><input type="radio" name="report_code" value="W003" data-role="reload"><span>주간매출보고</span></label>
+				</div>
+			</td>
+			<th>상신일</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e"> 
+				<ul class="btn-group btn-group-xs">
+					<li onclick="ReportListReceive.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<li onclick="ReportListReceive.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+					<li onclick="ReportListReceive.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			
+		</tr>
+		<tr>
+			<th>검색</th>
+			<td colspan="3">
+				<input type="text" name="word" class="full" placeholder="문서번호 or 제목" >
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="ReportListReceive.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="ReportListReceive.reset()">처음으로</button>
+</div>
+</form>
+
+<h3 class="area-title">
+	<?=$report['name']?> 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 문서 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 문서수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col style="width:60px"><!-- 선택 -->
+		<col style="width:100px"><!-- 결재상태 -->
+		<col style="width:200px"><!-- 문서번호 -->
+		<col style="width:150px"><!-- 문서종류 -->
+		<col ><!-- 제목 -->
+		<col style="width:150px"><!-- 결재진행 -->
+		
+		<col style="width:120px"><!-- 작성자 -->
+		<col style="width:120px"><!-- 작성일자 -->
+		
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th>결재상태</th>
+			<th>문서번호</th>
+			<th>문서종류</th>
+			<th>제목</th>
+			<!-- <th>나의결재</th> -->
+			<th>결재진행상태</th>
+			
+			<th>작성자</th>
+			<th>작성일자</th>
+		</tr>
+	</thead>
+	<tbody id="report_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></label></td>
+		<td>
+			<span class="label label-xs label-${sign_status}">
+				{if sign_status == 'wait'}
+				<!-- <i class="fa fa-1 fa-minus" data-toggle="tooltip" title="${me_status}"></i> -->
+				{elseif sign_status == 'view'}
+				<!-- <i class="fa fa-1 fa-check" data-toggle="tooltip" title="${me_status}"></i> -->
+				{elseif sign_status == 'approved'} 
+				<!-- <i class="fa fa-1 fa-circle-o" data-toggle="tooltip" title="${me_status}"></i> -->
+				{elseif sign_status == 'rejected'} 
+				<!-- <i class="fa fa-1 fa-times" data-toggle="tooltip" title="${me_status}"></i> -->
+				{/if}
+				${me_status}
+			</span>
+		</td>
+
+		<td>${report_number}</td>
+		<td>${report_name}</td>
+		<td class="left">
+			<a href="javascript:;" onclick="ReportListReceive.openView(${no})" class="link">${title}</a>
+			{if cnt_comment.cnt>0}<span class="badge {if cnt_comment.cnt == cnt_comment.cnt_readed} gray {else} red {/if}" data-toggle="tooltip" title="의견수">${cnt_comment.cnt}</span>{/if}
+		</td>
+		
+		<td>${waiter.name}${waiter.position} ${waiter.status}</td>
+		
+		
+		<td>${writer_info.name} ${writer_info.position}</td>
+		<td>${date_insert}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="ReportListReceive.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="ReportListReceive.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="ReportListReceive.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="ReportListReceive.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="ReportListReceive.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var ReportListReceive = {
+	page:1,
+	init: function() {
+		this.load(1);
+
+		$('[data-role="reload"]').on('change',function() {
+			ReportListReceive.load();
+		});
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+	},
+	openView: function(no) {
+		var title = '보고서 확인';
+		var modal = new HmisModal('reportview', {width:1000, top:70});
+		modal.callback = this.reload;
+		modal.open(title,'/report/view',{no:no});
+	},
+	reload: function(){
+		ReportListReceive.load(ReportListReceive.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmReportReceiveSearch').serialize();
+		
+		$.ajax({
+			url:'/report/lists_receive_paging',
+			data:{
+				ceo:1,
+				group:'consulting',
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#report_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					
+				}
+				else {
+					target.append('<tr><td colspan="10">검색된 받은보고서가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmReportReceiveSearch');
+		this.load();
+	}
+}
+
+$(function() {
+	ReportListReceive.init();
+})
+</script>

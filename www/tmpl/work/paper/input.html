@@ -1,0 +1,233 @@
+<form id="input-frm" enctype="multipart/form-data" method="post" action="/work_proc/add_paper">
+<input type="hidden" name="seqno" id="seqno" value="{row.seqno}">
+<input type="hidden" name="mode" id="mode" value="{mode}">
+
+<h3 class="area-title">
+	{? mode == 'ADD' }
+	신규등록
+	{:}
+	{row.title} - {row.name}
+	{/}
+	{? valid_modify}
+	<div class="button-box">
+		<button type="submit" class="btn btn-flat-blue"><i class="fa fa-1 fa-save"></i> 저장</button>
+	</div>
+	{/}
+</h3>
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:100px" />
+			<col />
+		</colgroup>
+		<tr>
+			<th>등록일자</th>
+			<td>{row.reg_date}</td>
+		</tr>
+		<tr>
+			<th>팀</th>
+			<td>{row.team_name}</td>
+		</tr>
+		<tr>
+			<th>작성자</th>
+			<td>{row.name}</td>
+		</tr>
+		<tr>
+			<th>서류명</th>
+			<td>
+				<select name="paper_type" id="paper_type" class="validate[required]" style="width:150px;">
+					<option value="">-선택-</option>
+					{@ paper_type}
+					
+						<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>제목</th>
+			<td><input type="text" size="65" name="title" id="title" class="validate[required]" value="{row.title}"></td>
+		</tr>
+		<tr>
+			<th>비고</th>
+			<td><textarea rows="8" style="width:400px;" name="info" id="info">{row.info}</textarea></td>
+		</tr>
+		<tr>
+			<th>첨부파일</th>
+			<td style="height: 210px;vertical-align: top;padding-top: 5px;">
+				{? is_array(file_list) }
+					{? valid_modify }
+					<div style="margin:5px 0;">
+						<button type="button" class="btn btn-flat-orange" onclick="WorkPaper.remove()" ><i class="fa fa-1 fa-trash"></i> 선택삭제</button>
+					</div>
+					{/}
+					<ul style="margin-bottom: 10px;">
+						{@ file_list}
+						<li>
+							<label class="hmis"><input type="checkbox" name="chk[]" value="{.seqno}" class="hmis"/><span class="lbl"></span></label> 
+							{? .is_img}
+							<a href="javascript:;" onclick="WorkPaper.openView('{.seqno}');" class="underline">{.file_name}</a>
+							{:}
+							<a href="javascript:;" onclick="WorkPaper.download('{.seqno}')" class="underline">{.file_name}</a>
+							{/}
+						</li>
+						{/}
+					</ul>
+				{/}
+				<ul id="file-area">				
+					<li><input type="file" name="userfile[]" size="60"> <span class='badge bt-add' id='bt-add'>+</span></li>
+				</ul>
+				<div class="progress">
+						<div class="bar"></div>
+						<div class="percent">0%</div>
+				</div>
+				<div id="status"></div>
+			</td>
+		</tr>
+	</table>
+</form>
+
+{? mode == 'MODIFY' }
+<form id="FrmPaperComment">
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:100px">
+			<col>
+		</colgroup>
+		<tbody>
+		<tr>
+			<th>의견</th>
+			<td>
+				<form id="FrmReportComment" onsubmit="return false">
+					<input type="hidden" name="paper_no" value="{row.seqno}">
+					<input type="text" name="comment" value="" style="width:300px" placeholder="의견을 남겨주세요." class="validate[required]" data-errormessage-value-missing="의견을 입력하세요." autocomplete="off"> <button type="submit" class="btn btn-onlyicon"><i class="fa fa-1 fa-pencil f-blue"></i></button>
+				</form>
+				<div id="comment_lists"></div>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+{/}
+<script>
+var WorkPaper = {
+	paper_no:'{row.seqno}',
+	init: function() {
+		if ($("#mode").val() == "MODIFY") {
+			$("#paper_type").val("{row.paper_type}");
+		}
+		
+		    		
+		$("#input-frm").validationEngine('attach');    	
+		var bar = $('.bar');
+		var percent = $('.percent');
+		var status = $('#status');
+		
+		$("#input-frm").validationEngine('attach');
+		$('#input-frm').ajaxForm({
+				beforeSend : function() {
+					status.empty();
+					var percentVal = '0%';
+					bar.width(percentVal)
+					percent.html(percentVal);
+				},
+				uploadProgress : function(event, position, total, percentComplete) {
+					var percentVal = percentComplete + '%';
+					bar.width(percentVal)
+					percent.html(percentVal);
+				},
+				success : function() {
+					var percentVal = '100%';
+					bar.width(percentVal)
+					percent.html(percentVal);
+				},
+				complete: function(result_data){
+					
+					var obj = $.parseJSON(result_data.responseText);	
+					go_input(obj.seqno);
+					grid_reload();
+					
+				}
+		});
+		
+		$( "input[type='file']" ).change(function() {
+	  	  $(".progress").show();
+		});	
+
+
+		//댓글
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.saveComment();
+			}
+		});
+
+		$("#FrmPaperComment").validationEngine('attach',option);
+		this.loadComment();
+	},
+	openView : function(seqno) {
+		window.open("/work/view_common_file/{row.seqno}/"+seqno, "file_popup", "toolbar=no, scrollbars=yes, resizable=no, top=0, left=0, width=950, height=900");
+	},
+	download : function(seqno) {
+		document.location.href = "/work/download/{row.seqno}/"+seqno;
+	},
+	remove: function() {
+		if (is_checked("input-frm") == 0) {
+			alert("삭제할 항목을 한개 이상 선택해주세요.");
+			return;
+		}
+		
+		if (!confirm("삭제를 진행하시겠습니까?")) {
+			return;
+		}
+		
+		$.ajax({
+ 			type : "POST",
+ 			url : "/work_proc/remove_common_file",
+ 			data : $("#input-frm").serialize(),
+ 			success : function(result_data) { 				
+ 				go_input("{row.seqno}");			
+ 			}
+ 		});
+	},
+	saveComment: function() {
+		var formdata = $('#FrmPaperComment').serialize();
+		$.ajax({
+			url:'/work_proc/comment_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					WorkPaper.loadComment();
+					$('#FrmPaperComment')[0].reset();
+
+				}
+			}
+		})
+	},
+	removeComment: function(no) {
+		$.ajax({
+			url:'/work_proc/comment_remove',
+			data:{
+				comment_no:no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					WorkPaper.loadComment();
+				}
+			}
+		})
+	},
+	loadComment: function() {
+		$('#comment_lists').load('/work/comment_lists', {paper_no:this.paper_no});
+	}
+}
+
+$(function(){
+	WorkPaper.init();
+})
+
+</script>

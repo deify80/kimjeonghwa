@@ -1,0 +1,167 @@
+<form id="FrmSettingsType" onsubmit="return false;">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr id="input_insert">
+			<th>예약유형 등록</th>
+			<td>
+				<div>
+					<input type="text" id="type_name" style="width:150px" autocomplete="off" data-errormessage-value-missing="예약유형명을 입력하세요." class="validate[required]" /> 
+					<button type="submit" class="btn btn-onlyicon" ><i class="fa fa-pencil fa-1 f-blue"></i></button>
+				</div>
+			</td>
+		</tr>
+		<tr id="input_update" style="display:none">
+			<th><span id="type_name_label" style="color:#4CAF50;"></span> 수정</th>
+			<td>
+				<div>
+					<input type="text" id="type_name_modify" style="width:150px" autocomplete="off" data-errormessage-value-missing="예약유형명을 입력하세요." class="validate[required]" /> 
+					<button type="button" class="btn btn-onlyicon" onclick="SettingsType.modifyType()"><i class="fa fa-edit fa-1" style="color:#4CAF50"></i></button>
+					<button type="button" class="btn btn-onlyicon" onclick="SettingsType.cencelSet()"><i class="fa fa-undo fa-1 f-gray"></i></button>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="dashed" style="margin:10px 0px"></div>
+
+<div id="sort_type">
+	<? foreach($types as $type_code => $type_name) {?>
+	<div class="label-default" style="margin-right:0px" data-name="<?=$type_name?>" data-code="<?=$type_code?>">
+		<i class="fa fa-sort fa-1 f-warning"></i><span><?=$type_name?></span>
+		<i class="fa fa-edit fa-1 link" style="position:absolute;right:25px;color:#4CAF50;" onclick="SettingsType.modifySet(this);" data-toggle="tooltip" title="수정"></i>
+		<i class="fa fa-times fa-1 link f-error" style="position:absolute;right:5px;" onclick="SettingsType.removeType(this);" data-toggle="tooltip" title="삭제"></i>
+	</div>
+	<? } ?>
+</div>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="SettingsType.save();">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<script type="text/javascript">
+var SettingsType = {
+	target:{},
+	init: function(){
+		$('#sort_type').sortable({
+			axis:'y',
+			containment:'parent'
+		});
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.addType();
+			}
+		});
+
+		$("#FrmSettingsType").validationEngine('attach',option);
+
+		this.buildType();
+	},
+	addType: function() {
+		var type_name = $('#type_name').val();
+
+
+			
+		var tpl = $('<div class="label-default" style="margin-right:0px"><i class="fa fa-sort fa-1 f-warning"></i><span>'+type_name+'</span><i class="fa fa-edit fa-1 link" style="position:absolute;right:25px;color:#4CAF50;" data-toggle="tooltip" title="수정"></i><i class="fa fa-times link f-error" style="position:absolute;right:5px;" data-toggle="tooltip" title="삭제"></i></div>');
+		
+		tpl.find('.fa-times').on('click', function(r){
+			SettingsType.removeType(this);
+		});
+
+		tpl.find('.fa-edit').on('click', function(r){
+			SettingsType.modifySet(this);
+		});
+
+		tpl.data({
+			code:'new',
+			name:type_name
+		})
+
+		$('#sort_type').append(tpl);
+		$('#type_name').val('');
+	
+		
+		this.buildType();
+
+	},
+	removeType: function(e) {
+		$(e).parent('div.label-default').remove();
+		this.buildType();
+	},
+	modifyType: function(){
+		var type_name = $('#type_name_modify').val();
+
+		if(!type_name) {
+			HmisAlert.alert('변경할 예약유형을 입력하세요.');
+			return false;
+		}
+
+		if(!this.target) return false;
+
+		this.target.find('span').html(type_name);
+		this.target.data('name',type_name);
+		this.cencelSet();
+	},
+	modifySet: function(e){
+		this.target = $(e).parent('div.label-default');
+		var data = this.target.data();
+		$('#input_insert').css('display','none');
+		$('#input_update').css('display','');
+		$('#type_name_label').html(data.name);
+		$('#type_name_modify').val(data.name);
+	},
+	cencelSet: function(){
+		$('#input_insert').css('display','');
+		$('#input_update').css('display','none');
+		$('#mode').val('insert');
+	},
+	buildType : function() {
+		var cnt = $('#sort_type').find('div.label-default').length;
+		if(cnt < 1 ){
+			$('#sort_type').html('<div class="null" style="text-align:center;padding-bottom:14px">등록된 예약유형이 없습니다.');
+		}
+		else {
+			$('#sort_type').find('div.null').remove();
+		}
+	},
+	save: function() {
+		var sort = [];
+		$.each($('#sort_type > div'), function(i,e) {
+			sort.push({name:$(e).data('name'), 'code':$(e).data('code')});
+		});
+		HmisAlert.confirm('저장하시겠습니까?', function(r) {
+			if(!r) return false;
+			$.ajax({
+				url:'/treat_proc/save_settings',
+				data:{
+					'group_code':'06',
+					'sort':sort
+				},
+				dataType:'json',
+				type:'POST',
+				success: function(r) {
+					if(r.success) {
+						$('.modal-close').trigger('click');	
+						Schedule.load();
+					}
+					else {
+						HmisAlert.alert(r.msg);
+					}
+				}
+			});
+		})
+	}
+}
+
+$(function(){
+	SettingsType.init();
+})
+</script>

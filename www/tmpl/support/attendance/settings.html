@@ -1,0 +1,158 @@
+<ul id="bg_detp" class="btn-group btn-group-sm" style="margin-top:10px">
+	<li id="dept_all" class="active"><a href="javascript:;" onclick="AttendanceSettings.load()">전체</a></li>
+	<? foreach($cfg['dept'] as $dc=>$dept){?>
+	<li id="dept_<?=$dc?>" ><a href="javascript:;" onclick="AttendanceSettings.load('<?=$dc?>')"><?=$dept?></a></li>
+	<? } ?>
+</ul>
+
+
+<h3 class="area-title">근태설정
+	<div class="button-box">
+	<button class="btn btn-theme" onclick="AttendanceSettings.save()"><i class="fa fa-save"></i> 설정저장</button>
+</div>
+</h3>
+<form id="FrmAttendanceSettings">
+<table class="table table-bordered table-list table-striped">
+	<colgroup>
+		<col width="150px">
+		<col width="180px">
+		<col width="180px">
+		<col width="180px">
+		<col>
+		<col width="70px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>팀명</th>
+			<th>정상출근 시각</th>
+			<th>정상퇴근 시각</th>
+			<th>야간근무 기준시각</th>
+			<th>근무일</th>
+			<th>통계</th>
+		</tr>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+</form>
+
+<!-- 템플릿:S -->
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${team_name}</td>
+		<td>
+			<select name="set[${team_code}][time_in_hour]">
+				<? foreach($cfg['hour'] as $hour){?>
+				<option value="<?=$hour?>" {if time_in_hour == '<?=$hour?>'}selected{/if}><?=$hour?></option>
+				<? } ?>
+			</select> :
+			<select name="set[${team_code}][time_in_minute]">
+				<? foreach($cfg['minute'] as $minute){?>
+				<option value="<?=$minute?>" {if time_in_minute == '<?=$minute?>'}selected{/if}><?=$minute?></option>
+				<? } ?>
+			</select>
+		</td>
+		<td>
+			<select name="set[${team_code}][time_out_hour]">
+				<? foreach($cfg['hour'] as $hour){?>
+				<option value="<?=$hour?>" {if time_out_hour == '<?=$hour?>'}selected{/if}><?=$hour?></option>
+				<? } ?>
+			</select> :
+			<select name="set[${team_code}][time_out_minute]">
+				<? foreach($cfg['minute'] as $minute){?>
+				<option value="<?=$minute?>" {if time_out_minute == '<?=$minute?>'}selected{/if}><?=$minute?></option>
+				<? } ?>
+			</select>
+		</td>
+		<td>
+			<input type="checkbox" name="set[${team_code}][use_night]" class="hmis" value="Y" onclick="AttendanceSettings.toggle('${team_code}', this.checked)" {if use_night=='Y'}checked{/if}><span class="lbl"></span>
+			<select name="set[${team_code}][time_night_hour]" data-group="time_night_${team_code}" {if use_night!='Y'}disabled{/if}>
+				<? foreach($cfg['hour'] as $hour){?>
+				<option value="<?=$hour?>" {if time_night_hour == '<?=$hour?>'}selected{/if}><?=$hour?></option>
+				<? } ?>
+			</select> :
+			<select name="set[${team_code}][time_night_minute]" data-group="time_night_${team_code}" {if use_night!='Y'}disabled{/if}>
+				<? foreach($cfg['minute'] as $minute){?>
+				<option value="<?=$minute?>" {if time_night_minute == '<?=$minute?>'}selected{/if}><?=$minute?></option>
+				<? } ?>
+			</select>
+		</td>
+		<td>
+			<? 
+			foreach($cfg['day'] as $k=>$day){
+				if(in_array($k, array('0','6'))) {
+					$cls = ($k=='0')?'f-error':'f-blue';
+				}
+				else {
+					$cls = '';
+				}
+			?>
+			<label class="hmis <?=$cls?>"><input type="checkbox" class="hmis" name="set[${team_code}][days_work][<?=$k?>]" value="Y" {if AttendanceSettings.inArray(days_work,'<?=$k?>') }checked{/if}><span class="lbl"> <?=$day?></span></label>
+			<? } ?>
+		</td>
+		<td>
+			<input type="checkbox" name="set[${team_code}][use_statistics]" value="Y" class="hmis" {if use_statistics=='Y'}checked{/if}><span class="lbl"></span>
+		</td>
+	</tr>
+</textarea>
+<!-- 템플릿:E -->
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+
+var AttendanceSettings = {
+	inArray: function(array, value) {			
+		return ($.inArray(value, array)!=-1)?true:false;
+	},
+	load: function(dept_code) {
+		var me = this;
+		$('#bg_detp li').removeClass('active');
+		if(dept_code) $('#bg_detp li#dept_'+dept_code).addClass('active');
+		else $('#dept_all').addClass('active');
+
+		$.ajax({
+			url:'/attendance_proc/settings_get',
+			data:{
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="5">검색된 팀이 없습니다.</td></tr>');
+				}
+			}
+		})
+	},
+	save: function() {
+		if(!confirm('설정을 저장하시겠습니까?')) return false;
+		var formdata = $('#FrmAttendanceSettings').serializeArray();
+		$.ajax({
+			url:'/attendance_proc/settings_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				alert(r.msg);
+			}
+		})
+	},
+	toggle: function(team_code, checked) {
+		$('select[data-group="time_night_'+team_code+'"]').attr('disabled', !checked);
+	}
+}
+
+$(function(){
+	AttendanceSettings.load();
+});
+</script>

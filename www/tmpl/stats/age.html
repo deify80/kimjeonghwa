@@ -1,0 +1,117 @@
+<div class="area-body" style="width:">
+<h3 class="area-title">검색</h3>
+<form id="FrmSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>분배일자</th>
+			<td>
+				<input type="text" name="search[start_date]" id="sdate_s" class="datepicker lg" value="{cfg.today}"> ~ <input type="text" name="search[end_date]" id="sdate_e" class="datepicker lg" value="{cfg.today}">
+				<ul class="btn-group btn-group-xs">
+						<li onclick="StatusMain.setDate('{cfg.today}','{cfg.today}');"><a href="javascript:;">오늘</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.weekday_db}','{cfg.today}');"><a href="javascript:;">이번주</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.cur_month}','{cfg.today}');"><a href="javascript:;">이번달</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+					</ul>
+			</td>
+			<th>팀</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="search[team_code]" value="" checked data-role="reload"> 전체
+					</label>
+					{@ cfg.team}
+					<label class="btn">
+						<input type="radio" name="search[team_code]" value="{.key_}" data-role="reload" /> {.value_}
+					</label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>유입경로</th>
+			<td>
+				<select name="search[path]" style="width:120px;" data-role="reload">
+					<option value="">::전체::</option>
+					{@ cfg.path}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>미디어코드</th>
+			<td>
+				<select name="search[media]" style="width:120px;" data-role="reload">
+					<option value="">::전체::</option>
+					{@ cfg.media}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="StatusMain.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="StatusMain.reset()">처음으로</button>
+</div>
+
+<div class="dashed"></div>
+<h3 class="area-title">연령별 상담현황
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="StatusMain.excel();"><i class="fa fa-file-excel-o"></i> EXCEL</button>
+	</div>
+</h3>
+
+<div id="inner" style="padding: 0;margin: 0;"></div>
+
+
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var StatusMain = {
+	init: function() {
+		HmisCommon.createDatepicker();
+		this.load();
+		var me = this;
+		$('[data-role="reload"]').on('change',function() {
+			me.load();
+		});
+
+		//setInterval(StatusMain.load, 1000*60*2);
+	},
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmSearch').serializeArray();
+		$('#inner').load('/stats/age_inner', formdata);
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmSearch');
+		this.load();
+	},
+	excel: function() {
+		var formdata = $('#FrmSearch').serialize();
+		document.location.href="/stats/age_inner?mode=excel&"+formdata;
+	}
+}
+
+$(function(){
+	StatusMain.init();
+});
+
+
+</script>
+</div>

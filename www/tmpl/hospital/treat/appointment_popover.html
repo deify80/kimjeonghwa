@@ -1,0 +1,35 @@
+<div style="width:260px">
+	<dl class="inline">
+		<dt>환자명</dt>
+		<dd>{patient.name} {? patient.sex=='F'}<i class="fa fa-1 fa-female f-pink"></i>{:}<i class="fa fa-1 fa-male f-blue"></i>{/}</dd>
+		<dt>환자레벨</dt>
+		<dd>{patient.grade.code}{? patient.grade_type!='N'}-{patient.grade_type}{/}</dd>
+		<dt>휴대폰/메신저</dt>
+		<dd>{=if_empty(patient.mobile)} / {=if_empty(patient.messenger)}</dd>
+		<dt>생년월일</dt>
+		<dd>{=if_empty(patient.birth)}</dd>
+		<dt>유입경로</dt>
+		<dd>{=if_empty(patient.path)}</dd>
+		<dt style="float:none">환자특이사항</dt>
+		<dd style="margin-left:20px">{=if_empty(nl2br(patient.comment))}</dd>
+	</dl>
+	<div class="dashed" style="margin:10px 0px"></div>
+	<dl class="inline">
+		<dt>담당의사</dt>
+		<dd>{=if_empty(patient.doctor_name)}</dd>
+		<dt>담당실장</dt>
+		<dd>{=if_empty(patient.manager_name)}</dd>
+		<dt>접수자</dt>
+		<dd>{=if_empty(rs.acceptor_name)}</dd>
+		<dt style="float:none">진료항목</dt>
+		<dd style="margin-left:20px">
+			{@ rs.treat_info}
+			<div>
+				{.region} &gt; {.item}
+			</div>
+			{/}
+		</dd>
+		<dt style="float:none">예약특이사항</dt>
+		<dd style="margin-left:20px">{=if_empty(nl2br(rs.comment))}</dd>
+	</dl>
+</div>

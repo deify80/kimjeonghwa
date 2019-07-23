@@ -1,0 +1,16 @@
+<!-- 기안서 포맷 -->
+<script type="text/javascript">
+var SettleFormat = {
+	settle_no:'<?=$settle_no?>',
+	init:function() {
+		if(!this.settle_no) {
+			$("#title").val("");
+			CKEDITOR.instances['content'].setData("다음의 내용으로 업무를 진행하고자 하오니 검토 후 재가바랍니다.<br/>< 다 음 ><br /><br />1. 목적/사유 :<br />2. 업체명 : <br />3. 기간   : <br />4. 내용(활용범위등) : <br />5. 결제금액(V.A.T 포함) : <br />6. 결제요청일 : <br />7. 결제계좌 : <br />8. 기타사항(첨부서류 등) : <br />");
+		}
+	}
+};
+
+$(function(){
+	SettleFormat.init();
+});
+</script>

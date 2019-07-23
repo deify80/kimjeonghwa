@@ -1,0 +1,72 @@
+<h3 class="area-title">거래처 검색</h3>
+<form id="FrmClientSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>검색어</th>
+			<td>
+				<input type="hidden" name="sf" name="client_name">
+				<input type="text" name="sw" style="width:100%" placeholder="거래처명">
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="ClientLists.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="ClientLists.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+<h3 class="area-title">
+	거래처 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">
+
+		검색된 거래처 <span id="cnt_search" class="f-bold  f-blue">0</span>개
+		<span class="split">|</span>
+		총 거래처 <span id="cnt_total"class="f-bold">0</span>개
+	</span>
+
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="ClientLists.input();"><i class="fa fa-plus" style="vertical-align: middle"></i> 거래처등록</button>
+	</div>
+</h3>
+
+
+<div id="inner"></div>
+
+
+<script type="text/javascript">
+var ClientLists = {
+	page:1,
+	init: function() {
+		this.load(1);
+	},
+	load: function(page) {
+		var p = page || this.page;
+		var search = $('#FrmClientSearch').serialize();
+		$('#inner').load('/stock/client_lists_inner', {page:p, search:search}, function() {
+			ClientLists.page = p;
+		})
+	},
+	reset: function() {
+		$('#FrmClientSearch')[0].reset();
+		this.load(1);
+	},
+	input: function(no) {
+		var title = (no)?'거래처 수정':'거래처등록';
+		var modal = new HmisModal('client_input', {width:800, top:200});
+		modal.callback = this.reload;
+		modal.open(title,'/stock/client_input',{no:no});
+	}
+}
+
+$(function() {
+	ClientLists.init();
+})
+</script>

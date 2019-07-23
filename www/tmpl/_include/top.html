@@ -1,0 +1,34 @@
+<div class="area-logo">
+	<a href="/main/msg"><img src="/images/layout/logo_top.png" style="width:55px;"></a>
+	<span><a href="/main/msg" style="color:#33691E">{layout.login.info.ss_biz_name}</a></span>
+</div>
+
+<ul class="top_nav" style="cursor: pointer;">
+
+{@ layout.menu.top}
+	<li class="{? .me}selected{/}"><a href="{.href}" class="top-menu" >{.name}</a></li>
+{/}
+</ul>
+
+<!-- 비밀번호변경:S -->
+<div style="float: right; text-align: right; margin-right: 20px; padding-top: 15px; cursor: pointer;padding-left:10px">
+	{? layout.login.info.ss_duty_code == "9"}
+	<button class="btn btn-theme-dark" onclick="open_bbs('bbs_sinmungo')">신문고</button>&nbsp;
+	{/}
+	<button class="btn btn-theme-dark" onclick="document.location.href='/login/logout'">로그아웃</button>&nbsp;
+	<button class="btn btn-theme-dark" onclick="open_password()">비밀번호 변경</button>
+
+	<!-- 20170220 kruddo : 대표님 모바일 버전 로그인 시 PC버전 보기 기능 추가 -->
+	{? layout.login.info.ss_user_id == "kakwon"}
+	<button class="btn" onclick="device_link('M')">모바일버전</button>
+	{/}
+	<!-- 20170220 kruddo : 대표님 모바일 버전 로그인 시 PC버전 보기 기능 추가 -->
+</div>
+<!-- 비밀번호변경:E -->
+
+
+<div style="float: right; text-align: right; margin-right: 4px; padding-top: 18px;">
+	HB성형외과
+	<span style="color: #fff;">&nbsp;{? layout.login.info.ss_team_name}[{layout.login.info.ss_team_name}]{/} {layout.login.info.ss_name} {layout.login.info.ss_position_name}</span>
+
+</div>

@@ -1,0 +1,57 @@
+<style type="text/css">
+    td {
+        mso-number-format: "\@";
+    }
+</style>
+<table border="1" style="font-size: 11px; width:100%;border-collapse: collapse;text-align: center;">
+	<tr>
+		<th colspan="10" rowspan="2" style="border-bottom:solid #fff 0px;"></th>
+		<th>&nbsp;&nbsp;&nbsp;&nbsp;팀 장&nbsp;&nbsp;&nbsp;&nbsp;</th>
+		<th>&nbsp;&nbsp;&nbsp;&nbsp;이 사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+		<th>&nbsp;&nbsp;&nbsp;&nbsp;대 표&nbsp;&nbsp;&nbsp;&nbsp;</th>
+	</tr>
+	<tr>
+		<td style="height: 60px;"></td>
+		<td style="height: 60px;"></td>
+		<td style="height: 60px;"></td>
+	</tr>
+</table>
+
+<table border="1" style="font-size: 11px; border-collapse: collapse;width:100%;">
+	<thead>
+		<tr style="background-color: #cccccc; height: 30px;">
+			<th>접수일자</th>
+			<th>유입경로</th>
+			<th>고객명</th>
+			<th>최종상담</th>
+			<th>전화번호</th>
+			<th>메신저</th>
+			<th>시술항목</th>
+			<th>시술부위</th>
+			<th>담당자</th>
+			<th>팀</th>
+			<th>상담상태</th>
+			<th>미디어</th>
+			<th>비고</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.reg_date}</td>
+			<td>{.path}</td>
+			<td>{.name}</td>
+			<td>{.mod_date}</td>
+			<td>{.tel}</td>
+			<td>{.messenger}</td>
+			<td>{.main_category}</td>
+			<td>{.sub_category}</td>
+			<td>{.manager}</td>
+			<td>{.manager_team}</td>
+			<td>{.status}</td>
+			<td>{.media}</td>
+			<td></td>
+		</tr>
+		{/}	
+	</tbody>
+</table>

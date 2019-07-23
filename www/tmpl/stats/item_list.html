@@ -1,0 +1,112 @@
+<table class="table table-bordered table-form table-center table-hover" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+	<colgroup>	
+		<col style="width:150px" />
+		<col style="width:80px" />
+		<col style="width:80px" />
+		<col style="width:80px" />
+		<col style="width:80px" />
+	</colgroup>
+	<thead>
+		<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+			<th>상담유형</th>
+			<th>DB분배</th>
+			<th>분배율</th>
+			<th>수술완료</th>
+			<th>수술율</th>
+			<? 
+			foreach($team_list as $tidx=>$team) { 
+				if($total_list['team'][$tidx]<1) continue;
+			?>
+			<th><?=$team?></th>
+			<? } ?>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<th class="total" rowspan="2">총합/비율</th>
+			<th rowspan="2"><?=$total['sum']?></th>
+			<th rowspan="2">100%</th>
+			<th rowspan="2"><?=$total['99']?></th>
+			<th rowspan="2"><?=if_empty($total['rate_99'].'%','<span class="f-null">0%</span>')?></th>
+			<!-- <th class="total f-error f-bold"><?=array_sum($total_list['team'])?></th>-->
+			<? 
+			foreach($team_list as $tidx=>$team) { 
+				if($total_list['team'][$tidx]<1) continue;
+			?>
+			<th class="total f-blue f-bold"><?=if_empty($total_list['team'][$tidx],'<span class="f-null">0</span>')?></th>
+			<? } ?>
+		</tr>
+		<tr>
+			<? 
+			foreach($team_list as $tidx=>$team) {
+				if($total_list['team'][$tidx]<1) continue;
+			?>
+			<th class="total f-blue f-bold">
+				<?
+				$rate=($total_list['team'][$tidx]>0 && array_sum($total_list['team'])>0)? round($total_list['team'][$tidx]/array_sum($total_list['team'])*100, 1):'';
+				echo if_empty($rate,'<span class="f-null">0%</span>','%s%%');
+				?>
+			</th>
+			<? } ?>
+		</tr>
+		<? 
+		foreach($total['category'] as $cidx=>$val) { 
+			// if($total_list['team'][$tidx]<1) continue;
+		?>
+		<tr>
+			<th rowspan="2">
+				<span data-toggle="tooltip" title="<?=$val['code']?>"><?=$val['name']?></span>
+			</th>
+			<th rowspan="2" class="total"><?=if_empty($val['cnt'],'<span class="f-null">0</span>')?></th>
+			<th rowspan="2" class="total"><?=if_empty($val['rate']['assign'].'%','<span class="f-null">0%</span>')?></th>
+			<th rowspan="2" class="total"><?=if_empty($val['status']['99'],'<span class="f-null">0</span>')?></th>
+			<th rowspan="2" class="total"><?=if_empty($val['rate']['99'].'%','<span class="f-null">0%</span>')?></th>
+
+			<!--
+			<th class="total f-error">
+				<?=if_empty($val['cnt'],'<span class="f-null">0</span>')?>
+			</th>
+			-->
+			<? foreach($team_list as $tidx=>$team) { 
+				if($total_list['team'][$tidx]<1) continue;
+			?>
+			<td><?=if_empty($list[$tidx][$cidx],'<span class="f-null">0</span>') ?></td>
+			<? } ?>
+		</tr>
+		<tr>
+			<!--
+			<th class="total f-error">
+				<? 
+				$rate = ($val['cnt']>0 && $total['sum']>0)? round($val['cnt']/$total['sum']*100, 1):'';
+				echo if_empty($rate,'<span class="f-null">0</span>','%s%%');
+				?>
+			</th>
+			-->
+			<? 
+			foreach($team_list as $tidx=>$team) { 
+				if($total_list['team'][$tidx]<1) continue;
+			?>
+			<td>
+				<?
+				$rate = ($list[$tidx][$cidx]>0 && $total_list['team'][$tidx]>0)? round($list[$tidx][$cidx]/$total_list['team'][$tidx]*100, 1):'';
+				echo if_empty($rate,'<span class="f-null">0%</span>','%s%%');
+				?>
+			</td>
+			<? } ?>
+		</tr>	
+		<? } ?>
+		
+	</tbody>
+</table>
+
+<Script type="text/javascript">
+var ItemList = {
+	init: function() {
+		$('[data-toggle="tooltip"]').tooltip();
+	}
+}
+
+$(function() {
+	ItemList.init();
+})
+</Script>

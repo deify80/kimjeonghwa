@@ -1,0 +1,212 @@
+<h3 class="area-title">계좌 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.account_type}active{/}"><input type="radio" name="account_type" value="" {? !search.account_type}checked{/} data-role="search" />전체</label>
+					<label class="btn {? search.account_type=='C'}active{/}"><input type="radio" name="account_type" value="C" {? search.account_type=='C'}checked{/} data-role="search" />현금</label>
+					<label class="btn {? search.account_type=='A'}active{/}"><input type="radio" name="account_type" value="A" {? search.account_type=='A'}checked{/} data-role="search" />계좌</label>
+				</div>
+			</td>
+			<th>금융기관</th>
+			<td>
+				<select name="bank_code"  data-role="search">
+					<option value="">::금융기관::</option>
+					{@ cfg.bank}
+					<option value="{.key_}" {? rs.bank_code==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>사업장</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.biz_id}active{/}"><input type="radio" name="biz_id" value="" {? !search.biz_id}checked{/} data-role="search" />전체</label>
+					{@ cfg.biz}
+					<label class="btn {? search.biz_id==.kye_}active{/}"><input type="radio" name="biz_id" value="{.key_}" data-role="search" />{.value_}</label>
+					{/}	
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>검색</th>
+			<td colspan="5"><input type="text" name="word" class="full" placeholder="계좌명"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="AccountList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="AccountList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	계좌 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 계좌수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 계좌수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="AccountList.openInput()"><i class="fa fa-pencil fa-1"></i> 계좌등록</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<!-- <col width="40px"> --><!-- 선택 -->
+		<col width="120px"><!-- 사업장 -->
+		<col style="width:170px" /><!-- 계좌명 -->
+		<col style="width:80px" /><!-- 구분 -->
+		<col style="width:100px" /><!-- 금융기관 -->
+		<col /><!-- 계좌번호 -->
+		<col style="width:120px" /><!-- 입금총액 -->
+		<col style="width:120px" /><!-- 출금총액 -->
+		<col style="width:120px" /><!-- 최초잔액 -->
+		<col style="width:120px" /><!-- 현재잔액 -->
+		<col style="width:120px" /><!-- 등록일 -->
+		<col width="80px"><!-- 사용여부 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<!-- <th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th> -->
+			<th>사업장</th>
+			<th>계좌명</th>
+			<th>구분</th>
+			<th>금융기관</th>
+			<th>계좌번호</th>
+			<th>입금총액</th>
+			<th>출금총액</th>
+			<th>최초잔액</th>
+			<th>현재잔액</th>
+			<th>등록일</th>
+			<th>사용여부</th>
+		</tr>
+	</thead>
+	<tbody id="account_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<!-- <td><input type="checkbox" class="hmis" name="checked[]" value="${account_seqno}"><span class="lbl"></span></td> -->
+		<td>${\biz_name}</td>
+		<td><a href="javascript:;" class="link" onclick="AccountList.openInput('${\account_seqno}')">${\account_name}</a></td>
+		<td>${\account_type_txt}</td>
+		<td>${\bank_name}</td>
+		<td>${\account_no}</td>
+		<td>${HmisCommon.numberFormat(amount_in)}</td>
+		<td>${HmisCommon.numberFormat(amount_out)}</td>
+		<td>${HmisCommon.numberFormat(balance)}</td>
+		<td>${HmisCommon.numberFormat(amount_now)}</td>
+		<td>${\reg_date}</td>
+		<td>{if use_flag == 'Y'}<span class="label label-xs label-theme">사용</span>{\else}<span class="label label-xs">사용안함</span>{/if}</td>
+
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="AccountList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="AccountList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="AccountList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="AccountList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="AccountList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var AccountList = {
+	page:1,
+	init: function() {
+		this.load(1);
+
+		$('[data-role="search"]').on('change.search',function() {
+			AccountList.load(1);
+		});
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	openInput: function(account_seqno) {
+		var title = (account_seqno)?'계좌 정보 수정':'새 계좌 등록';
+		var modal = new HmisModal('account_input', {width:800, top:200});
+		modal.callback = function() {
+			AccountList.load(1);
+		};
+		modal.open(title,'/finance/account_input',{account_seqno:account_seqno});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		$.ajax({
+			url:'/finance/account_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#account_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="14">검색된 계좌정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	}
+}
+
+$(function() {
+	AccountList.init();
+})
+</script>

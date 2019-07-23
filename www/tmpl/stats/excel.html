@@ -1,0 +1,43 @@
+<!-- <style type="text/css">
+    td {
+        mso-number-format: "@";
+    }
+</style> -->
+
+
+<table border="1" style="font-size: 11px; border-collapse: collapse;width:100%;">
+	<thead>
+		<tr style="background-color: #cccccc; height: 30px;">
+			<th>번호</th>
+			<th>상담팀</th>
+			<th>성명</th>
+			<th>유입경로</th>
+			<th>미디어코드</th>
+			<th>수술일</th>
+			<th>담당의</th>
+			<th>수술내용</th>
+			<th>op수납</th>
+			<th>예치금</th>
+			<th>환불금액</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td>{.team_name}</td>
+			<td>{.name}</td>
+			<td>{.path_name}</td>
+			<td>{.media}</td>
+			<td>{.date_project}</td>
+			<td>{.doctor_name}</td>
+			<td>{.treat_nav}</td>
+			<td>{.amount_paid}</td>
+			<td>{.manager_team}</td>
+			<td>{.amount_deposit}</td>
+			<td>{.amount_refund}</td>
+			<td></td>
+		</tr>
+		{/}	
+	</tbody>
+</table>

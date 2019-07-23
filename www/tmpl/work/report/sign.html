@@ -1,0 +1,296 @@
+<table class="table table-bordered2">
+	<col style="width:200px"  />
+	<col style="width:40px" />
+	<col />
+	<tr>
+		<td style="vertical-align: top">
+			<input type="text" id="search_person" class="search full" />
+			<div style="width:100%;border:solid 1px #E3E3E3;height:370px;margin-top:5px;" id="person_tree"></div>
+		</td>
+		<td style="vertical-align:middle;text-align:center">
+			<button type="button" class="btn btn-onlyicon" data-toggle="tooltip" title="" onclick="ReportSign.addPerson()" data-original-title="추가" style="margin:0px 0px"><i class="fa fa-arrow-right fa-1 f-blue"></i></button>
+			<!-- <button type="button" class="btn btn-onlyicon" data-toggle="tooltip" title="" onclick="ReportInput.openLine('approval')" data-original-title="제거" style="margin-top:10px"><i class="fa fa-arrow-left fa-1 f-blue"></i></button>	 -->
+		</td>
+		<td style="vertical-align:top">
+			<select class="" id="signline_list" style="margin-bottom:0px" onchange="ReportSign.loadLineUser(this.value)">
+				<option value="">::결제선선택::</option>
+				<? foreach($cfg['signline'] as $signline){?>
+				<option value="<?=$signline['no']?>"><?=$signline['line_name']?></option>
+				<?}?>
+			</select>
+			<button class="btn btn-onlyicon" onclick="ReportSign.saveLine('update')"><i class="fa fa-pencil f-theme fa-1" data-toggle="tooltip" title="결재선 수정"></i></button>
+			<button class="btn btn-onlyicon" onclick="ReportSign.removeLine()"><i class="fa fa-trash f-error fa-1" data-toggle="tooltip" title="결재선 삭제"></i></button>
+			<button class="btn btn-onlyicon" onclick="ReportSign.addLine()"><i class="fa fa-plus f-blue fa-1" data-toggle="tooltip" title="새 결재선"></i></button>
+			
+			<table class="table table-bordered table-form" style="border-color:#8BC34A">
+				<tr>
+					<th style="padding:2px"><label class="hmis"><input type="radio" name="type" value="approval" class="hmis" checked><span class="lbl"></span> 결재자</label></th>
+				</tr>
+				<tr>
+					<td style="vertical-align:top;">
+						<div id="approval_list" style="height:175px;overflow-y:hidden"></div>
+					</td>
+				</tr>
+			</table>
+
+			<table class="table table-bordered table-form">
+				<tr>
+					<th style="padding:2px"><label class="hmis"><input type="radio" name="type" value="reference" class="hmis"><span class="lbl"></span> 참조자</label></th>
+				</tr>
+
+				<tr>
+					<td style="vertical-align:top;padding:0px">
+						<div id="reference_list" style="height:125px;"></div>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<div class="area-button">
+	<button type="button" onclick="ReportSign.apply()" class="btn btn-theme btn-lg">적용하기</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<style>
+#person_tree {font-family: 'NG' !important;}
+</style>
+<link rel="stylesheet" type="text/css" href="/lib/js/dhtmlxTree/dhtmlxtree.css"/>
+<script src="/lib/js/dhtmlxTree/dhtmlxtree.js"></script>
+<!-- <script src="/lib/js/dhtmlxTree/dhtmlxtree_start.js"></script> -->
+<script type="text/javascript">
+var ReportSign = {
+	max:5,
+	init: function() {
+		this.createTree();
+		this.createSort();
+		$('#search_person').on('keyup', function() {
+			ReportSign.searchTree();
+		})
+	},
+	createSort: function() {
+		$('#approval_list').sortable({
+			axis:'y',
+			containment:'parent',
+			placeholder:false
+		});
+	},
+	createTree: function() {
+		var tree;
+		
+		tree = new dhtmlXTreeObject("person_tree","100%","100%",0);
+		tree.setImagePath("/lib/js/dhtmlxTree/imgs/dhxtree_skyblue/");
+		tree.setDataMode("json");
+		// tree.enableTreeImages(false);
+		tree.load("/manage/tree","json");
+		tree.attachEvent('onDblClick', function(selectedId){
+			var item_type = tree.getUserData(selectedId,'type');
+			if(item_type=='user') {
+				var data = {user_name:tree.getItemText(selectedId), user_id:selectedId};
+				ReportSign.appendPerson(data);
+			}
+		})
+		tree.attachEvent('onClick', function(selectedId) {
+			var item_type = tree.getUserData(selectedId,'type');
+			if(item_type!='user') {
+				if(tree.getOpenState(selectedId)>0) {
+					tree.closeItem(selectedId);
+				}
+				else {
+					tree.openItem(selectedId);
+				}
+				
+			}
+		})
+		this.tree = tree;
+	},
+	searchTree: function() {
+		var search = $('#search_person').val();
+		this.tree.findItem(search,0,1)
+	},
+	saveLine: function(mode, data) {
+		var data = data || [];
+		
+		if(mode == 'update') {
+			var line_no = $('#signline_list').val();
+			if(!line_no) {
+				HmisAlert.alert('수정할 결재선을 선택하세요.');
+				return false;
+			}
+
+			data.push({name:'no', value:line_no});
+		}
+
+		data.push({name:'mode', value:mode});
+		
+		
+		var person = this.getPerson();
+
+		var approval = $(person.approval).map(function(){ return this.user_id}).get();
+		var reference = $(person.reference).map(function(){ return this.user_id}).get();
+		data.push({name:'approval', value:approval});
+		data.push({name:'reference',value:reference});
+	
+		$.ajax({
+			url:'/report_proc/sign_line_save',
+			data:data,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg);
+				ReportSign.loadLine();
+			}
+		})
+	},
+	removeLine: function(){
+		var line_no = $('#signline_list').val();
+		if(!line_no) {
+			HmisAlert.alert('삭제할 결재선을 선택하세요.');
+			return false;
+		}
+		
+		$.ajax({
+			url:'/report_proc/sign_line_remove',
+			data:{
+				line_no:line_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg);
+				if(r.success) {
+					ReportSign.loadLine();
+					ReportSign.resetPerson();
+				}
+			}
+		});
+	},
+	addLine: function() {
+		if(!this.checkPerson()) {
+			HmisAlert.alert("결재자를 선택하세요.");
+			return false;
+		}
+		var title = '결재선 저장';
+		var modal = new HmisModal('signline', {width:400, top:200});
+		// modal.callback = this.loadLine;
+		modal.open(title,'/report/sign_line');
+	},
+	loadLine: function() {
+		$.ajax({
+			url:'/report/sign_line_list',
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					var select = $('#signline_list');
+					select.find('option:gt(0)').remove();
+					$.each(r.data, function(i,e) {
+						select.append('<option value="'+e.no+'">'+e.line_name+'</option>');
+					})
+				}
+			}
+		})
+	},
+	loadLineUser: function(line_no) {
+		$.ajax({
+			url:'/report/sign_line_users',
+			data:{
+				line_no:line_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					ReportSign.resetPerson();
+
+					$.each(r.data, function(type,users){
+						$.each(users, function(i,user) {
+							ReportSign.appendPerson(user, type);
+						})
+					})
+				}
+			}
+		});
+	},
+	addPerson: function() {
+		var selectedId = this.tree.getSelectedItemId();
+		var item_type = this.tree.getUserData(selectedId,'type');
+		if(item_type=='user') {
+			var data = {user_name:this.tree.getItemText(selectedId), user_id:selectedId};
+			this.appendPerson(data);
+		}
+		else {
+			HmisAlert.alert('직원을 선택하세요.');
+			return false;
+		}
+	},
+	resetPerson: function () {
+		$('#approval_list').empty();
+		$('#reference_list').empty();
+	},
+	checkPerson :  function() {
+		var len = $('#approval_list > div').length;
+		if(len<1) return false;
+		else return true;
+	},
+	appendPerson: function(data, appendType) {
+		var appendType = appendType || $('[name="type"]:checked').val();
+		
+		if(appendType == 'approval') {
+			if($('#approval_list > div').length>=this.max) {
+				HmisAlert.alert('최대 5명의 결재자를 지정할수 있습니다.');
+				return false;
+			}	
+		}
+		
+		if($('div.person#'+data.user_id).length>0) {
+			HmisAlert.alert('이미 추가한 직원입니다.');
+			return false;	
+		}
+
+		if(appendType == 'approval') {
+			var tpl = $('<div class="label-default person" style="margin:0px 0px 5px 0px;text-align:left" id="'+data.user_id+'"><i class="fa fa-sort fa-1 f-green"></i> '+data.user_name+'<i class="fa fa-times link f-error" style="position:absolute;right:5px;"></i></div>');
+
+		}
+		else {
+			var tpl = $('<div class="label-default person" style="display:inline-block;margin:5px 0px 0px 5px;padding-right:20px;text-align:left" id="'+data.user_id+'">'+data.user_name+'<i class="fa fa-times link f-error" style="position:absolute;right:5px;"></i></span>');
+		}
+
+		tpl.data(data);
+		tpl.find('.fa-times').on('click', function(r){
+			ReportSign.removePerson(this);
+		});
+
+		$('#'+appendType+'_list').append(tpl)
+	},
+	removePerson: function(e) {
+		$(e).parent('div.label-default').remove();
+	},
+	getPerson: function() {
+		var approval = [], reference = [];
+		$.each($('#approval_list > div'), function(i,e) {
+			approval.push($(e).data());
+		});
+
+		$.each($('#reference_list > div'), function(i,e) {
+			reference.push($(e).data());
+		});
+
+		var person = {
+			approval:approval,
+			reference:reference
+		}
+
+		return person;
+	},
+	apply: function() {
+		var person = this.getPerson();
+		$('#HmisModal_sign .modal-close').trigger('click', person);	
+	}
+}
+
+$(function() {
+	ReportSign.init();
+})
+</script>

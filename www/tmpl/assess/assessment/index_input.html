@@ -1,0 +1,127 @@
+
+<form id="FrmInoutInput" onsubmit="return false">
+<input type="hidden" name="mode" value="<?=$mode?>" />
+<input type="hidden" name="inout_no" value="<?=$rs['no']?>" /><!-- 입출고Pk -->
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>		
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td >
+				<select name="biz_info" id="biz_info">
+					<option value="">-사업장-</option>
+					<? foreach(  $this->session->userdata( 'ss_my_biz_list' ) as $i=>$val){ ?>
+					<option value="<?=$i?>" <?=($rs['biz_info']==$i)?'selected':''?>><?=$val?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>등급노출</th>
+			<td colspan="3">
+				<label class="hmis"><input type="radio" name="is_rating" value="Y" class="hmis validate[required]" <?=($rs['is_rating']=='Y')?'checked':''?> /><span class="lbl"> Y </span></label>
+				<label class="hmis"><input type="radio" name="is_rating" value="N" class="hmis validate[required]" <?=($rs['is_rating']=='N')?'checked':''?> /><span class="lbl"> N</span></label> 
+			</td>	
+		</tr>
+		<tr>
+			<th>구분</th>
+			<td>
+			  <select name="syear" class="validate[required]">
+				<option value="2015" <?=($rs['syear']=='2015')?'selected':''?>  >2015
+				<option value="2016" <?=($rs['syear']=='2016')?'selected':''?> >2016				
+			  </select>   
+			  <select name="firsthalf" class="validate[required]">
+				<option value="상" <?=($rs['firsthalf']=='상')?'selected':''?> >상
+				<option value="하" <?=($rs['firsthalf']=='하')?'selected':''?> >하
+			  </select>   			  
+			</td>
+			<th>평가기간</th>
+			<td colspan="3">
+				<input type="text" name="sdate" value="<?=$rs['sdate']?>" class="validate[required] datepicker" /> ~
+				<input type="text" name="ldate" value="<?=$rs['ldate']?>" class="validate[required] datepicker" />				
+			</td>
+		</tr>
+		<tr>
+			<th>성과평가</th>
+			<td >
+				<label class="hmis"><input type="radio" name="is_result" value="Y" class="hmis validate[required]" <?=($rs['is_result']=='Y')?'checked':''?> /><span class="lbl"> Y </span></label>
+				<label class="hmis"><input type="radio" name="is_result" value="N" class="hmis validate[required]" <?=($rs['is_result']=='N')?'checked':''?> /><span class="lbl"> N</span></label> 
+			</td>
+			<th>역량평가</th>
+			<td >
+				<label class="hmis"><input type="radio" name="is_cocy" value="Y" class="hmis validate[required]" <?=($rs['is_cocy']=='Y')?'checked':''?> /><span class="lbl"> Y </span></label>
+				<label class="hmis"><input type="radio" name="is_cocy" value="N" class="hmis validate[required]" <?=($rs['is_cocy']=='N')?'checked':''?> /><span class="lbl"> N</span></label> 
+			</td>
+			<th>다면평가</th>
+			<td >
+				<label class="hmis"><input type="radio" name="is_ifs" value="Y" class="hmis validate[required]" <?=($rs['is_ifs']=='Y')?'checked':''?> /><span class="lbl"> Y </span></label>
+				<label class="hmis"><input type="radio" name="is_ifs" value="N" class="hmis validate[required]" <?=($rs['is_ifs']=='N')?'checked':''?> /><span class="lbl"> N</span></label> 
+			</td>			
+		</tr>
+		<tr>
+			<th>평가노출</th>
+			<td >
+				<label class="hmis"><input type="radio" name="is_exposure" value="Y" class="hmis validate[required]" <?=($rs['is_exposure']=='Y')?'checked':''?> /><span class="lbl"> Y </span></label>
+				<label class="hmis"><input type="radio" name="is_exposure" value="N" class="hmis v" <?=($rs['is_exposure']=='N')?'checked':''?> /><span class="lbl"> N</span></label> 
+			</td>
+			<th >메모</th>
+			<td colspan="3">
+				<input type="text" name="etc" value="<?=$rs['etc']?>"  style="width:90%;"/> 
+			</td>			
+		</tr>
+	</tbody>
+</table>
+<div id="showdatevie"></div>
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" id="setting_button" onclick="InoutInput.setSaveMode('22')">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var InoutInput = {
+	saveMode:'continue',
+	init : function() {
+		HmisCommon.createDatepicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmInoutInput").validationEngine('attach',option);
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+	save: function() {
+		// if(!confirm('저장하시겠습니까?')) return false;
+		var me = this;
+		var formdata = $('#FrmInoutInput').serialize();
+		$.ajax({
+			url:'/assessment_proc/index_save',
+			data:formdata, 
+			dataType:'html',
+			type:'POST',
+			success: function(r){
+//				alert ('등록되었습니다.') ;
+				$('.modal-close').trigger('click');				
+				InoutInList.reload();
+			}
+		})
+	}
+}
+
+$(function() {
+	InoutInput.init();
+})
+</script>

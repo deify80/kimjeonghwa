@@ -1,0 +1,104 @@
+
+<!-- <h3>수술완료고객</h3> -->
+<div id="biz_title"  class="hide">
+	<p style="text-align:center; font-size:20px; font-weight:bold">매출현황( {=search_date} )</p>
+	<table id="sign_box" class="table table-center" style="margin-top:5px;margin-bottom:0px">
+		<tr>
+			<td colspan="12">
+			</td>
+			<td style="width:300px">
+				담당 : {layout.login.info.ss_name} {layout.login.info.ss_position_name} ({=date('Y-m-d')})
+			</td>
+		</tr>
+		<tr>
+			<td colspan="12">
+			</td>
+			<td style="width:300px">
+				<table id="sign_box" class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px" border="1">
+					<tr>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;담 당 자&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;이    사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;대표이사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+					</tr>
+					<tr>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<table class="table table-center table-list">
+	<colgroup>
+		<col/>
+		<col width="800px" />
+	</colgroup>
+	<tr>
+		<td></td>
+		<td>
+			<table class="table table-bordered table-center table-list" border="1">
+				<colgroup>
+					<col width="150px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+					<col width="80px" />
+				</colgroup>
+
+				<thead>
+					<tr>
+						<th></th>
+						<th>온라인</th>
+						<th>전화</th>
+						<th>워킹</th>
+						<th>소개</th>
+						<th>실시간상담</th>
+						<th>온라인상담</th>
+						<th>카카오톡</th>
+						<th>합계</th>
+					</tr>
+				</thead>
+				<tbody>
+
+
+					<tr>
+						<th>
+							당일 부여 DB<br>
+							<font style="font-size:6pt">({=db_date})</font>
+						</th>
+						<td>{=number_format(date_list.path_L)}</td>
+						<td>{=number_format(date_list.path_T)}</td>
+						<td>{=number_format(date_list.path_W)}</td>
+						<td>{=number_format(date_list.path_1+date_list.path_6+date_list.path_5)}</td>
+						<td>{=number_format(date_list.path_P)}</td>
+						<td>{=number_format(date_list.path_O)}</td>
+						<td>{=number_format(date_list.path_K)}</td>
+						<td>{=number_format(date_list.path_total)}</td>
+					</tr>
+
+					<tr>
+						<th>
+							월 누적 DB<br>
+							<font style="font-size:6pt">({=db_date_period})</font>
+						</th>
+						<td>{=number_format(list.path_L)}</td>
+						<td>{=number_format(list.path_T)}</td>
+						<td>{=number_format(list.path_W)}</td>
+						<td>{=number_format(list.path_1+list.path_6+list.path_5)}</td>
+						<td>{=number_format(list.path_P)}</td>
+						<td>{=number_format(list.path_O)}</td>
+						<td>{=number_format(list.path_K)}</td>
+						<td>{=number_format(list.path_total)}</td>
+					</tr>
+				</tbody>
+			</table>
+		</td>
+	</tr>
+</table>

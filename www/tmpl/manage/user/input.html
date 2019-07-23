@@ -1,0 +1,191 @@
+<form id="FrmUserInput" onsubmit="return false">
+<input type="hidden" name="hst_code" value="H000" />
+<input type="hidden" id="user_id" value="" /><!-- 아이디 중복체크 -->
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>소속 <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="" data-original-title="사번생성을 위한 정보로 변경할수 없는 정보입니다."></i></th>
+			<td colspan="3">
+				<label class="hmis"><input type="radio" name="prefix" value="CM" class="hmis" checked /><span class="lbl"> 씨엠엘티디</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>ID</th>
+			<td>
+				<input type="text" name="user_id" class="validate[required,custom[userid],equals[user_id]] required" data-errormessage-pattern-mismatch="아이디(ID) 중복체크가 필요합니다." />
+				<button type="button" class="btn btn-flat-lightgray btn-onlyicon" onclick="UserInput.checkDuplicate()" data-toggle="tooltip" title="" data-original-title="중복확인"><i class="fa fa-check fa-1"></i></button>
+			</td>
+
+			<th>직원명(한글)</th>
+			<td>
+				<input type="text" name="name" class="validate[required] required" />
+			</td>
+		</tr>
+		<tr>
+			<th>휴대폰번호</th>
+			<td>
+				<input type="text" name="mobile" value="" class="full" data-mask="mobile"/>
+			</td>
+			<th>이메일</th>
+			<td>
+				<input type="text" name="email" value="" class="validate[custom[email]] full" />
+			</td>
+		</tr>
+		<tr>
+			<th>사업장</th>
+			<td colspan="3">
+				<? foreach($cfg['biz'] as $biz_code=>$biz_name){?>
+				<label class="hmis"><input type="checkbox" name="biz_id[]" value="<?=$biz_code?>" class="hmis validate[minCheckbox[1]]" /><span class="lbl"> <?=$biz_name?></span></label>
+				<? } ?>
+			</td>
+		</tr>
+		<tr>
+			<th>부서/팀</th>
+			<td colspan="3">
+				<select name="dept_code" onchange="HmisCommon.loadTeam(this.value);" class="validate[required] required">
+					<option value="">::부서선택::</option>
+					<? foreach($cfg['dept'] as $i=>$val) {?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? } ?>
+				</select>
+				<select name="team_code" id="sb_team"  style="display:none;" autocomplete="off"  class="validate[required] required">
+					<option value="all">::팀선택::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>직급</th>
+			<td>
+				<select name="position_code">
+					<option value="">::직급선택::</option>
+					<? foreach($cfg['position'] as $i=>$val) {?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>직책</th>
+			<td>
+				<select name="duty_code">
+					<option value="">::직책선택::</option>
+					<? foreach($cfg['duty'] as $i=>$val) {?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>재직상태</th>
+			<td>
+				<label class="hmis"><input type="radio" name="status" value="1" class="hmis" checked /><span class="lbl"> 근무</span></label>
+				<label class="hmis"><input type="radio" name="status" value="2" class="hmis" /><span class="lbl"> 휴직</span></label>
+				<label class="hmis"><input type="radio" name="status" value="0" class="hmis" /><span class="lbl"> 퇴직</span></label>
+			</td>
+			<th>입사일</th>
+			<td><input type="text" name="join_date" class="datepicker lg validate[required] required" value="<?=date('Y-m-d')?>" /></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span>
+	<div class="dashed" style="margin:7px 0px"></div>
+	<div>
+		<ul>
+			<li style="margin-bottom:3px"><b class="" style="margin-right:10px">사번</b>규칙에 따라 자동생성됩니다. (MD+입사년월+구분자+순번, 예시: MD1507N01(MD21) YS1507N01(여신))</li>
+			<li style="margin-bottom:3px"><b class="" style="margin-right:10px">비밀번호</b> `1234567`로 기본 설정됩니다.</li>
+		</ul>
+	</div>
+
+</div>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">등록</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var UserInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			// promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmUserInput").validationEngine('attach',option);
+
+		$('input[data-mask="mobile"]').mask('010-9999-9999');
+		HmisCommon.createDatepicker();
+	},
+	save: function() {
+		var formdata = $('#FrmUserInput').serialize();
+		$.ajax({
+			url:'/manage_proc/add_user',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				HmisAlert.alert(r.msg);
+				if(r.success) {
+					$('.modal-close').trigger('click', [r.data]);
+					UserList.load(1);
+				}
+			}
+		})
+	},
+	checkDuplicate : function() { //아이디 중복체크
+		var el = $('input[name="user_id"]');
+		var value = el.val();
+		if(!value) {
+			HmisAlert.alert('ID를 입력하세요.');
+			return false;
+		}
+		$.ajax({
+			url:'/manage_proc/check_duplicate',
+			data:{
+				field:'user_id',
+				value:value
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					el.validationEngine('hide');
+					$('#user_id').val(value);
+					HmisAlert.alert('사용가능한 아이디(ID)입니다.');
+				}
+				else {
+					$('#user_id').val('');
+					HmisAlert.alert('이미 존재하는 아이디(ID)입니다.');
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	UserInput.init();
+})
+</script>

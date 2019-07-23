@@ -1,0 +1,299 @@
+
+<form id="FrmInoutInput" onsubmit="return false">
+<input type="hidden" name="inout_no" value="<?=$_POST[inout_no]?>" />
+<input type="hidden" name="ifevaluation" value="<?=$row2['ifevaluation']?>" />
+<input type="hidden" name="first_inout_no" value="<?=$row2['ifevaluation']?>" />
+
+	<table class="table table-bordered table-form" >
+		<colgroup>
+			<col width="220px;">
+			<col>
+			<col width="220px;">			
+		</colgroup>
+		<tbody>
+			<tr>
+				<th colspan="3">
+					<select name="biz_info" id="biz_info"  style="width:120px" >
+						<option value="">-사업장-</option>
+						<? foreach( $biz_info as $i=>$val){ ?>
+						<option value="<?=$this->session->userdata( 'ss_hst_code' ) ?>"><?=$val?></option>
+						<? } ?>
+					</select>
+					<select name="dept_info" id="dept_info" style="width:110px">
+						<option value="">-부서명-</option>
+					</select>
+					<select name="team_info" id="team_info" style="width:100px">
+						<option value="">-팀명-</option>
+					</select>
+					<input type="text"name="search_user" id="search_user" style="width:50px;"  onKeyDown="enterLogin(event)">	
+					<button type="button" class="btn btn-flat-purple btn-onlyicon"  onclick="IndexSeSesput.search_user();"><i class="fa fa-search fa-1"  data-role="tooltip" title="검색"></i></button>
+					<button type="button" class="btn btn-onlyicon" onclick="IndexSeSesput.line_reset();"><i class="fa fa-refresh fa-1 f-green"  data-role="tooltip" title="새로고침"></i></button>
+				</th>
+			</tr>			
+			<tr>
+				<td>
+					<select name="user_info" id="user_info" multiple style="width:100%;height:350px;" >							
+					</select>
+				</td>
+				<td style="text-align:center;">
+					<a href="javascript:;" onclick="IndexSeSesput.approval_refer('approval_user');"><i class="fa fa-arrow-right"></i><br><br><br>
+					<a href="javascript:;" onclick="IndexSeSesput.delformate();"><i class="fa fa-arrow-left"></i>
+				</td>
+				<td>
+					<select name="approval_user" id="approval_user" multiple style="width:100%;height:350px;" >				
+					</select>				
+				</td>
+			</tr>			
+			
+		</tbody>
+	</table>
+
+	<div id="showdatevie"></div>
+	<div class="area-button">
+		<button type="button" class="btn btn-theme btn-lg" onclick="IndexSeSesput.save()">저장</button>
+		<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+	</div>
+
+</form>
+<script>
+function enterLogin(e) {
+	if(e.keyCode == 13) {
+		IndexSeSesput.search_user();
+	} 
+}
+</script>
+<script type="text/javascript">
+var IndexSeSesput = {
+	saveMode:'continue',
+	init : function() {
+		
+		HmisCommon.createDatepicker();
+		IndexSeSesput.get_user_info_right();
+		$( "select#user_info" ).dblclick(function() {
+			IndexSeSesput.approval_refer('approval_user');
+		});
+
+		$('select#biz_info').change(function(){
+			var hst_code = $(this).val();
+			var url = "/assessment/get_dept_json/"+hst_code;
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#dept_info').html(rows);
+					}
+				});
+				IndexSeSesput.get_user_info('hst', hst_code);
+
+		});
+
+		$( "select#dept_info" ).change(function() {
+			  var dept_code = $(this).val();
+			  //$("#team_info").append("<option value='1'>aaaaaaaa</option>");
+			  var url = "/assessment/get_team_json/"+dept_code;			  
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){	         
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 //$("#team_info").append("<option value='"+index+"'>"+entry+"</option>");
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#team_info').html(rows);
+					}
+				});	
+			  
+			  IndexSeSesput.get_user_info('dept', dept_code);
+		});
+		
+		$( "select#team_info" ).change(function() {
+			var team_code = $(this).val();
+			
+			IndexSeSesput.get_user_info('team', team_code);
+		});
+
+	},
+	line_reset: function () {
+		$("select#biz_info").val("").attr("selected", "selected");
+		$('select#dept_info').html("<option value=''>-부서명-</option>");
+		$('select#team_info').html("<option value=''>-팀명-</option>");
+		$('select#user_info').html("");
+		$('select#approval_user').html("");
+		this.get_user_info( 'hst', '' );
+	},
+	get_user_info: function ( what, code ) {
+		var code_arr;
+
+		var pseq_no = '<?=$row2[re_no]?>' ;
+
+		var url = "/assessment/get_user_info_json/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "what="+what+"&code="+code+"&seq_nos="+pseq_no,
+				dataType: "json",
+				success: function(result_data){
+
+					var rows = "";
+					
+					if (result_data != null && result_data != "") {				    	
+						$.each(result_data, function(index, entry){	
+							index = index.replace('_','');
+							rows += "<option value='"+index+"'>"+entry+"</option>";
+						});
+					}
+
+					$('select#user_info').html(rows);
+			}
+		});
+	},
+	get_user_info_right: function ( ) {
+		var code_arrs = "<?=$row2['competency_val']?>" ;
+		var url = "/assessment/get_user_info_json_right/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "code_arr="+code_arrs,
+				dataType: "json",
+				success: function(result_data){
+					var rows = "";
+					
+					if (result_data != null && result_data != "") {				    	
+						$.each(result_data, function(index, entry){	
+							index = index.replace('_','');
+							rows += "<option value='"+index+"'>"+entry+"</option>";
+						});
+					}
+
+					$('select#approval_user').html(rows);
+			}
+		});
+	},
+	approval_refer : function(id) { // 결재, 참조라인 넣기
+		var str = "";
+		var rows = "";		
+		var check = [];
+		var cnt = 0;
+		
+		// 결재라인에 있는지 체크
+		$('select#approval_user').find('option').each(function() {    		
+			check.push($(this).val());
+			cnt++;
+		});		
+		
+		// 참조라인에 있는지 체크
+		$('select#refer_user').find('option').each(function() {    		
+			check.push($(this).val());
+		});
+		
+		// 결재 및 참조라인에 없다면 넣기
+		$( "select#user_info option:selected" ).each(function() {
+			if( $.inArray( $( this ).val(), check ) == -1 ){				
+				
+				if( "approval_user" == id && cnt >= 100 ){					
+					return false;
+				}
+				
+				$("#"+id).append("<option value='"+$( this ).val()+"'>"+$( this ).text()+"</option>");
+					
+				cnt++;
+			}				
+		});
+	},
+	delformate : function( ) {
+		$('#approval_user option:selected').remove();
+	},
+	search_user : function( ) {
+		this.get_user_info( 'search', $('#search_user').val() );
+	},
+	loaddetails: function( ptcode ) {
+
+		var pcode = ptcode ;  		
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+
+		$.ajax({
+			url:'/assessment/details_list_paging',
+			data:{
+				code:pcode
+			},			
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				if ( pcode == 'Q')
+				{
+					var tmpl = TrimPath.parseDOMTemplate('popup_tmpl_list');
+					var target = $('#popup_team_list');
+				} else {
+					var tmpl = TrimPath.parseDOMTemplate('popup_tmpl_list2');
+					var target = $('#popup_team_list2');
+				}
+
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+					
+				}
+				else {
+					target.append('<tr><td colspan="12">검색된 입출고 내역이 없습니다.</td></tr>');
+				}				
+			}
+		})
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+	save: function() {
+		// if(!confirm('저장하시겠습니까?')) return false;
+		var me = this;
+		var check_approval = [];		
+
+		if( $.trim($('#approval_user').text()) == "" ){
+			alert('평가자를 등록해주세요');
+			return;
+		}		
+
+		// 결재라인 값들 가져오기 및 적용
+		$('select#approval_user').find('option').each(function() {    
+			check_approval.push($(this).val());
+    	});
+
+		var formdata = $('#FrmInoutInput').serialize()+"&approval_name="+check_approval;
+		
+		$.ajax({
+			url:'/assessment_proc/assessment_view_act',
+			data:formdata, 
+			dataType:'html',
+			type:'POST',
+			success: function(r){
+				$('.modal-close').trigger('click');
+				ThreeList.lode() ;
+				InoutList.reload();
+
+			}
+		})
+	}
+}
+
+$(function() {
+	IndexSeSesput.init();
+})
+</script>

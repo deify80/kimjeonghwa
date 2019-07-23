@@ -1,0 +1,230 @@
+<form id="FrmMediaInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="code" value="{item.code}" />
+<input type="hidden" name="group_code" value="{cfg.group_code}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr {? mode == 'update' &&  item.depth == '1'}style="display:none"{/} >
+			<th>미디어그룹</th>
+			<td>
+				{? cfg.direct}
+					<input type="hidden" name="parent_code" value="{item.parent_code}" />
+					<div class="minheight">{cfg.media_group[item.parent_code]}</div>
+				{:}
+				<select name="parent_code" onchange="CostMatchInput.change(this.value)">
+					<option value="">미디어그룹추가</option>
+					{@ cfg.media_group}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+				{/}
+			</td>
+		</tr>
+
+		<tr>
+			<th>미디어<span id="media_label">{? item.depth==1 || !cfg.direct}그룹{:}항목{/}</span>명</th>
+			<td>
+				<input type="text" name="title" value="{item.title}" class="validate[required] required" style="width:300px" data-errormessage-value-missing="미디어코드를 입력하세요."/>
+			</td>
+		</tr>
+		<tr id="media_etc" style="{? item.depth<2}display:none{/}">
+			<th>설명</th>
+			<td>
+				<input type="text" name="etc" class="full" value="{item.etc}" />
+			</td>
+		</tr>
+
+		<!-- 20170227 kruddo : 미디어코드 > 링크 추가 -->
+		<tr id="media_link" style="{? item.depth<2}display:none{/}">
+			<th>링크 &nbsp;<span class='addlink badge lg green' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-plus"></i></span></th>
+			<td>
+				<table class="dynatable" width="100%">
+					<colgroup>
+						<col />
+						<col style="width:40px" />
+						<col style="width:25px" />
+						<!-- <col style="width:25px" /> -->
+					</colgroup>
+					{? !media_link_info}
+					<tr class="prototypeLink">
+						<td>
+							<input type="text" class="full" name="link[]" value="" />
+						</td>
+						<td style="text-align:center">
+							<span class='linkgo badge lg green' style='cursor:pointer;vertical-align: middle;'>GO</span>
+						</td>
+<!-- 						<td style="text-align:center">
+							<span class='addlink badge lg green' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-plus"></i></span>
+						</td> -->
+						<td style="text-align:center">
+							<span class='removelink badge lg red' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-minus"></i></span>
+						</td>
+					</tr>
+
+					{:}
+						{@ media_link_info}
+						<tr class="prototypeLink">
+							<td>
+								<input type="text" class="full" name="link[]" value="{.link}" />
+							</td>
+							<td style="text-align:center">
+								<span class='linkgo badge lg green' style='cursor:pointer;vertical-align: middle;'>GO</span>
+							</td>
+<!-- 							<td style="text-align:center">
+								<span class='addlink badge lg green' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-plus"></i></span>
+							</td> -->
+							<td style="text-align:center">
+								<span class='removelink badge lg red' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-minus"></i></span>
+							</td>
+						</tr>
+						{/}
+					{/}
+				</table>
+			</td>
+		</tr>
+
+		<!-- 20170227 kruddo : 미디어코드 > 링크 추가 -->
+
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{? mode == 'update'}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="CostMatchInput.remove()">삭제</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+
+<!-- 추가템플릿:S -->
+<!-- <textarea id="tmpl_format" style="display:none;">
+	<tr  id='${id}' class="tr_row">
+		<td><input type='text' class="full" name='link[]' id='link[]' value='${id}'></td>
+		<td style="text-align:center"><span class='badge lg green' onClick='CostMatchInput.linkgo();' style='cursor:pointer;vertical-align: middle;'>GO</span></td>
+		<td style="text-align:center"><span class='badge lg red' onClick="CostMatchInput.removelink('${id}')" style='cursor:pointer;vertical-align: middle;'><i class="fa fa-minus"></i></span></td>
+	</tr>
+</textarea> -->
+<!-- 추가템플릿:E -->
+
+<!-- <script type="text/javascript" src="/js/template.js"></script> -->
+<script type="text/javascript">
+
+var CostMatchInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition : "centerRight",
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmMediaInput").validationEngine('attach',option);
+	},
+	change : function(v) {
+		if(v) {
+			var group_txt = '항목';
+			$('#media_etc').css('display','');
+			$('#media_link').css('display','');
+		}
+		else {
+			var group_txt = '그룹';
+			$('#media_etc').css('display','none');
+			$('#media_link').css('display','none');
+		}		
+		$('#media_label').text(group_txt);
+	},
+	save: function(){
+		var formdata = $('#FrmMediaInput').serialize();
+		$.ajax({
+			url:'/settings_proc/save_media',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					// document.location.relod();
+					HmisCommon.reloadBody('/settings/media') ;
+					// $('.area-body').html(';ddd');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	remove: function() {
+		var msg = ('{item.depth}'=='1')?'하위에 포함된 항목이 함께 삭제됩니다.<br />':'';
+		HmisAlert.confirm(msg+'정말 삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/settings_proc/remove_media',
+					data:{
+						code:'{item.code}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function(){
+							if(r.success) {
+								$('.modal-close').trigger('click');
+								HmisCommon.reloadBody('/settings/media');
+							}	
+						})
+						
+					}
+				})
+			}
+		})
+	},
+
+
+}
+
+$(function(){
+	CostMatchInput.init();
+
+	// 20170228 kruddo : 링크 추가
+	$("span.addlink").on('click', function () {
+        //var master = $(this).parents("table.dynatable");
+		var master = $(this).parent().parent().parent().parent().find(".dynatable");
+		var prot = master.find(".prototypeLink:first").clone(true);
+		prot.find(".full").val("");
+        master.find("tbody").append(prot);
+    });
+
+	// 20170228 kruddo : 링크 삭제
+	$("span.removelink").on("click", function () {
+		var master = $(this).parent().parent().parent().parent().parent().find(".dynatable");
+        
+		if(master.find(".prototypeLink").length > 1){
+			$(this).parent().parent().remove();
+		}
+		else{
+			master.find(".prototypeLink").find(".full").val("");
+		}
+
+
+    });
+
+	// 20170228 kruddo : 링크 이동
+	$("span.linkgo").on("click", function () {
+		var link = $(this).parent().parent().find(".full").val();
+		if(link != ""){
+			if(link.substring(0, 7) != "http://" && link.substring(0, 7) != "https://"){
+				link = "http://"+link;
+			}
+			window.open(link);
+		}
+    });
+})
+
+
+</script>

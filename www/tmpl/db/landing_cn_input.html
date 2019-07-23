@@ -1,0 +1,98 @@
+<form id="FrmLandingInput">
+<input type="hidden" name="mode" value="<?=$mode?>" />
+<input type="hidden" name="landing_no" value="<?=$rs['no']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="150px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>랜딩항목</th>
+			<td>
+				<select name="category_code" >
+					<option value="">::항목선택::</option>
+					<? foreach($cfg['category'] as $category_code => $category_name) {?>
+					<option value="<?=$category_code?>" <?=($rs['category_code']==$category_code)?'selected':''?> ><?=$category_name?></option>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>제목(TITLE)</th>
+			<td>
+				<input type="text" name="title" value="<?=$rs['title']?>" class="validate[required] full" /> 
+			</td>
+		</tr>
+		<tr>
+			<th>keywords</th>
+			<td>
+				<textarea name="keywords" style="height:50px;" class="full hmis"><?=$rs['keywords']?></textarea>
+			</td>
+		</tr>
+		<tr>
+			<th>description</th>
+			<td>
+				<textarea name="description" style="height:100px;" class="full hmis"><?=$rs['description']?></textarea>
+			</td>
+		</tr>
+
+		
+		<tr>
+			<th>웹 템플릿 경로 <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="" data-original-title="landing/ 이하 경로를 입력해주세요."></i></th>
+			<td>
+				<input type="text" name="tmpl_web" value="<?=$rs['tmpl_web']?>" class="validate[required] full" /> 
+			</td>
+		</tr>
+		<tr>
+			<th>모바일 템플릿 경로 <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="" data-original-title="landing/ 이하 경로를 입력해주세요."></i></th>
+			<td>
+				<input type="text" name="tmpl_mobile" value="<?=$rs['tmpl_mobile']?>" class="validate[required] full" /> 
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var LandingInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmLandingInput").validationEngine('attach',option);
+	},
+	save: function() {
+		var formdata = $('#FrmLandingInput').serialize();
+		$.ajax({
+			url:'/db_proc/landing_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('.modal-close').trigger('click');	
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	LandingInput.init();
+})
+</script>

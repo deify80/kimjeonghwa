@@ -1,0 +1,105 @@
+<style>
+table.main-summary {
+	width: 100%;
+	margin: auto;
+	text-align: center;
+	border: 1px solid #fff;
+}
+
+table.main-summary tr th {
+	height: 24px;
+	background-color: #666;
+	color: #fff;
+	border-top: 2px solid #71a9d3;
+}
+
+table.main-summary tr td {
+	height: 24px;
+	border-bottom: 1px dotted #ccc;
+}
+
+table.main-summary tr td.last {
+	height: 24px;
+	border-bottom: 1px solid #999;
+}
+
+div.main-container {
+	width: 525px;
+	font-size: 12px;
+	font: '돋움';
+	color: #666;
+	margin: auto;
+	padding-top: 50px;
+}
+
+div.table-header {
+	/*width: 525px;*/
+	height: 20px;
+	position: relative;
+}
+
+div.table-header div.left {
+	position: absolute;
+	top: 0;
+	left: 3px;
+}
+
+div.table-header div.right {
+	position: absolute;
+	top: 0;
+	right: 3px;
+}
+
+div#contents {
+	margin: auto;
+}
+</style>
+<script>
+	$(document).ready(function() {
+		$('body > .ui-layout-west').trigger('layoutpaneremove');
+		$( ".main-summary tr" ).last().children("td").addClass( "last" );
+	});
+</script>
+<div class="main-container" style="width:100%">
+	<!-- 상담팀만 노출 -->
+	{? layout.login.info.ss_dept_code == '70'}
+	<div class="table-header">
+		<div class="left">
+			신규 <strong>{=count(list)}</strong>건
+		</div>
+		<div class="right"><?=date("Y-m-d")?></div>
+	</div>
+	<table cellpadding="0" cellspacing="0" class="main-summary">
+		<colgroup>
+			<col width="25%">
+			<col width="15%">
+			<col width="25%">
+			<col width="25%">
+		</colgroup>
+		<thead>
+			<tr>
+				<th>유입경로</th>
+				<th>이름</th>
+				<th>시술항목</th>
+				<th>시술부위</th>
+			</tr>
+		</thead>
+		<tbody>
+			{@ list}
+			<tr>
+				<td>{.path}</td>
+				<td><a href="/consulting/input/{.cst_seqno}">{.name}</a></td>
+				<td>{.main_category}</td>
+				<td>{.sub_category}</td>
+			</tr>
+			{:}
+			<tr>
+				<td colspan="4">해당 내역이 존재하지 않습니다.</td>
+			</tr>
+			{/}
+		</tbody>
+	</table>
+	{:}
+	메인
+	{/}
+</div>

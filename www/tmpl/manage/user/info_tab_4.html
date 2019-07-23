@@ -1,0 +1,123 @@
+<form id="FrmUserInfoTab4" onsubmit="return false">
+<input type="hidden" name="no" value="<?=$basic['no']?>" />
+<input type="hidden" name="tab_no" value="4" />
+<h2>채용정보</h2>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>채용구분</th>
+		<td >
+			<select name="recruit_info[type]">
+				<option value="">::채용구분 선택::</option>
+				<? foreach($cfg['recruit']['type'] as $v){ ?>
+				<option value="<?=$v?>" <?=($v==$basic['recruit_info']['type'])?'selected':''?>><?=$v?></option>
+				<?}?>
+			</select>
+		</td>
+		<th>분류</th>
+		<td colspan="3">
+			<? foreach($cfg['recruit']['job'] as $v){ ?>
+			<label class="hmis"><input type="radio" name="recruit_info[job]" value="<?=$v?>" class="hmis" data-ui="change" <?=($basic['recruit_info']['job']==$v)?'checked':''?> /><span class="lbl"> <?=$v?></span></label>
+			<? } ?>
+		</td>
+	</tr>
+	<tr>
+		<th>소개/추천인</th>
+		<td>
+			<input type="text" name="recruit_info[recommender]" value="<?=$basic['recruit_info']['recommender']?>" />
+		</td>
+		<th>비고</th>
+		<td colspan="3">
+			<input type="text" name="recruit_info[etc]" class="full" placeholder="특이사항" value="<?=$basic['recruit_info']['etc']?>" />
+		</td>
+	</tr>
+	</tbody>
+</table>
+
+<h2 style="margin-top:20px">긴급연락처</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>성명</th>
+		<td >
+			<input type="text" name="emergency_info[name]" value="<?=$basic['emergency_info']['name']?>" />
+		</td>
+		<th>관계</th>
+		<td >
+			<input type="text" name="emergency_info[relationship]" value="<?=$basic['emergency_info']['relationship']?>" />
+		</td>
+		<th>연락처</th>
+		<td >
+			<input type="text" name="emergency_info[phone]" value="<?=$basic['emergency_info']['phone']?>" />
+		</td>
+	</tr>
+	<tr>
+		<th>주소</th>
+		<td colspan="5">
+			<input type="text" name="emergency_info[zipcode]" id="zipcode" class="" value="<?=$basic['emergency_info']['zipcode']?>" placeholder="우편번호" readonly /> <button type="button" onclick="HmisCommon.post('zipcode','address')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+			<input type="text" name="emergency_info[address]" id="address" value="<?=$basic['emergency_info']['address']?>" style="width:250px" placeholder="주소" readonly />
+			<input type="text" name="emergency_info[address_detail]" value="<?=$basic['emergency_info']['address_detail']?>" style="width:150px" placeholder="상세주소" />
+		</td>
+	</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg" onclick="document.location.href='/manage/user_main'">목록</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var UserInfoTab = {
+	init: function() {
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmUserInfoTab4").validationEngine('attach',option);
+
+	},
+	save: function() {
+		HmisAlert.confirm('변경사항을 저장하시겠습니까?',function(r) {
+			if(!r) return false;
+			var formdata = $('#FrmUserInfoTab4').serialize();
+			$.ajax({
+				url:'/manage_proc/save_user_tab',
+				data:formdata,
+				dataType:'json',
+				type:'POST',
+				success: function(r) {
+					HmisAlert.alert(r.msg);
+				}
+			})	
+		})
+		
+	}
+}
+
+$(function(){
+	UserInfoTab.init();
+})
+</script>

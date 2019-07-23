@@ -1,0 +1,153 @@
+
+<div class="dashed"></div>
+<h3 class="area-title">
+	평가설정 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">Total <span id="cnt_total" class="f-bold  f-error">0</span>개 <span class="split">|</span> 
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="InoutInList.openInput()"><i class="fa fa-pencil fa-1"></i> 평가설정 등록</button>
+	</div>
+</h3>
+<br>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px">
+		<col width="120px">
+		<col width="100px">
+		<col width="120px">
+		<col width="220px">
+		<col width="80px">
+		<col width="80px">
+		<col width="80px">
+		<col width="80px">
+		<col >	
+		<col width="90px">
+		<col width="90px">	
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>사업장</th>
+			<th>구분</th>
+			<th>노출</th>
+			<th>평가기간</th>
+			<th>성과평가</th>
+			<th>역량평가</th>
+			<th>다면평가</th>
+			<th>등급노출</th>
+			<th>비고</th>
+			<th>설정</th>
+			<th>수정</th>			
+		</th>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${no}</td>
+		<td>${biz_list_name}</td>
+		<td>${syear} - ${firsthalf}</td>
+		<td><span class="label label-normal label-attendance-${is_exposure_key}">${is_exposure_val}</span></td>
+		<td>${sdate} ~ ${ldate} </td>
+		<td><span class="label label-normal label-attendance-${is_result_key}">${is_result_val}</span></td>				
+		<td><span class="label label-normal label-attendance-${is_cocy_key}">${is_cocy_val}</span></td>
+		<td><span class="label label-normal label-attendance-${is_ifs_key}">${is_ifs_val}</span></td>
+		<td><span class="label label-normal label-attendance-${is_rating_key}">${is_rating_val}</span></td>
+		<td style="text-align:left;">${etc}</td>
+		<td><button type="button" class="btn btn-onlyicon" onclick="InoutInList.openInputsetting('${no}')"><i class="fa fa-cog fa-1"></i> 설정</button></td>
+		<td><button type="button" class="btn btn-onlyicon" onclick="InoutInList.openInput('${no}')"><i class="fa fa-pencil fa-1 f-blue" data-role="tooltip" title="기본정보 수정"></i> 수정</button></td>		
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="InoutInList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutInList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="InoutInList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="InoutInList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutInList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var InoutInList = {
+	page:1,
+	group_code:"<?=$cfg['group']?>",
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	openInput: function(inout_no) {
+		var title = (inout_no)?'평가설정 수정':'평가설정 등록';
+		var modal = new HmisModal('inout_input', {width:850, top:200});
+		modal.open(title,'/assessment/inout_insert',{inout_no:inout_no});
+	},
+	openInputsetting: function(inout_no) {
+		var title = (inout_no)?'평가설정':'평가설정';
+		var modal = new HmisModal('inout_input', {width:1200, top:200});
+		modal.open(title,'/assessment/index_setting',{inout_no:inout_no});
+	},	
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		
+		$.ajax({
+			url:'/assessment/inout_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="11">내역이 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+
+			}
+		})
+	}
+}
+
+$(function() {
+	InoutInList.init();
+})
+</script>

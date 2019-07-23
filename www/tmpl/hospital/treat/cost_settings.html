@@ -1,0 +1,78 @@
+<form id="FrmCostSettings" onsubmit="return false">
+<input type="hidden" name="pack" value="treat" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>재수술</th>
+			<td>
+				<select name="cost[re]">
+					<option value="direct" {? settings.re=='direct'}selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? settings.re==.value_}selected{/}>정상수가의 {.value_}%</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>해외수가Ⅰ</th>
+			<td>
+				<select name="cost[abroad_1]">
+					<option value="direct" {? settings.abroad_1=='direct'}selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? settings.abroad_1==.value_}selected{/}>정상수가의 {.value_}%</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>해외수가Ⅱ</th>
+			<td>
+				<select name="cost[abroad_2]">
+					<option value="direct" {? settings.abroad_2=='direct'}selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? settings.abroad_2==.value_}selected{/}>정상수가의 {.value_}%</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="CostSettings.save();">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var CostSettings = {
+	init: function(){
+
+	},
+	save: function() {
+		var formdata = $('#FrmCostSettings').serialize();
+		$.ajax({
+			url:'/treat_proc/settings_cost',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg, function() {
+					if(r.success) {
+						$('.modal-close').trigger('click');		
+					}
+				});
+			}
+		})
+	}
+}
+
+$(function() {
+	CostSettings.init();
+})
+</script>

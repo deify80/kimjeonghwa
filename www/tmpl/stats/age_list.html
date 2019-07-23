@@ -1,0 +1,54 @@
+<table class="table table-bordered table-center table-form table-hover" style="width:3500px" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+		<thead>
+			<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th rowspan="2">나이</th>
+				<th colspan="3">전체</th>
+				<? foreach($category_list as $j=>$val): ?>
+				<th colspan="3"><?=$val?></th>
+				<? endforeach; ?>
+			</tr>
+			<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th>DB수</th>
+				<th>수술완료</th>
+				<th>수술율</th>
+				<? foreach($category_list as $j=>$val): ?>
+				<th>DB수</th>
+				<th>수술완료</th>
+				<th>수술율</th>
+				<? endforeach; ?>
+			</tr>
+		</thead>
+		<tbody>
+			<? if(is_array($list)): ?>
+			<tr>
+				<th class="total">합계</th>
+				<th class="total f-error"><?=$sum_list['sum']['all']?></th>
+				<th class="total f-error"><?=$sum_list['sum']['success']?></th>
+				<th class="total f-error"><?=($sum_list['sum']['all'] > 0 && $sum_list['sum']['success'] > 0)? round($sum_list['sum']['success']/$sum_list['sum']['all']*100, 1).'%':'';?></th>
+				<? foreach($category_list as $j=>$val): ?>
+				<th class="total f-error"><?=$sum_list[$j]['all']?></th>
+				<th class="total f-error"><?=$sum_list[$j]['success']?></th>
+				<th class="total f-error"><?=($sum_list[$j]['all'] > 0 && $sum_list[$j]['success'] > 0)? round($sum_list[$j]['success']/$sum_list[$j]['all']*100, 1).'%':'';?></th>
+				<? endforeach; ?>
+			</tr>
+			<? for($i=17; $i<=68; $i++): ?>
+			<tr>
+				<th><?=$i?>세</th>
+				<th class="total f-notice"><?=$total_list[$i]['all']?></th>
+				<th class="total f-notice"><?=$total_list[$i]['success']?></th>
+				<th class="total f-notice"><?=($total_list[$i]['success'] > 0 && $total_list[$i]['all'] > 0)? round($total_list[$i]['success']/$total_list[$i]['all']*100, 1).'%':'';?></th>
+				<? foreach($category_list as $j=>$val): ?>
+				<td><?=$list[$i][$j]?></td>
+				<td><?=$success_list[$i][$j]?></td>
+				<td><?=($success_list[$i][$j] > 0 && $list[$i][$j] > 0)? round($success_list[$i][$j]/$list[$i][$j]*100, 1).'%':'';?></td>
+				<? endforeach; ?>
+			</tr>
+			<? 
+			$sum_list['sum']['all'] += $total_list[$i]['all'];
+			$sum_list['sum']['success'] += $total_list[$i]['success'];
+			?>
+			<? endfor; ?>
+			
+			<? endif; ?>
+		</tbody>
+	</table>

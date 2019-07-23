@@ -1,0 +1,437 @@
+<script src="/js/jquery.money.js"></script>
+<script>
+var lastsel;
+$(document).ready(function() {
+
+	set_list();
+	
+	open_calendar("#srch_start_date");
+	open_calendar("#srch_end_date");
+	open_calendar("#daily_date");
+	
+	$("#bt-report").button("option", "icons", {
+		primary : "ui-icon-document"
+	});
+	
+	
+	$('#select-area').dialog({
+		autoOpen : false,
+		width : 340,
+		height : 180,
+		resizable : false,
+		position : {of: "#bt-report"},
+		show : {
+			effect : "blind"
+		}
+	});
+
+	$('[data-role="reload"]').change(function() {
+		grid_reload();
+	});
+	
+	
+});
+
+
+function set_list() {
+	$("#list").jqGrid(
+			{
+				width : 1200,
+				height : 'auto',
+				url : "/finance/statement_lists",
+				datatype : "json",
+				colNames : [ "번호", "등록일자", "발생일자", "계좌명",  "구분", "은행명","계좌번호","거래처","통화", "입금액", "출금액", "처리방식", "거래상세내역", "seqno", "mode", "valid_modify", "수정"],
+				colModel : [ {
+					name : "no",
+					index : "no",
+					width : 30,
+					align : "center",
+					sortable:false					
+				}, {
+					name : "reg_date",
+					index : "reg_date",
+					width : 75,
+					align : "center",
+					sortable:false
+				}, {
+					name : "plan_date",
+					index : "plan_date",
+					width : 60,
+					align : "center",
+					sortable:false,
+					editable:true,
+					editoptions : {
+						dataInit:function (e) { 
+							select_date();
+						}
+					}
+				}, {
+					name : "account_seqno",
+					index : "account_seqno",
+					width : 80,
+					align : "center",
+					sortable:false,
+					editable:true,
+					edittype:"select",
+					editrules:{		
+						required:true
+					},
+					editoptions: {
+						value:"<?=$account_list?>",
+						dataEvents: [
+				             {
+				               type: 'change',
+				               fn: function(e) {
+				            	   set_account(this.value);
+				               }
+				             }
+				           ]								
+					}
+				}, {
+					name : "account_type",
+					index : "account_type",
+					width : 30,
+					align : "center",
+					sortable:false,
+					editable:true,
+					editoptions: { readonly: 'readonly' }
+				}, {
+					name : "bank_name",
+					index : "bank_name",
+					width : 60,
+					align : "center",
+					sortable:false,
+					editable:true,
+					editoptions: { readonly: 'readonly' }
+				},  {
+					name : "account_no",
+					index : "account_no",
+					width : 80,
+					classes: "grid-col-narrow",
+					align : "center",
+					sortable:false,
+					editable:true,
+					editoptions: { readonly: 'readonly' }
+				}, {
+					name : "trade_customer",
+					index : "trade_customer",
+					align : "center",
+					width : 80,
+					sortable:false,
+					editable:true,
+					editrules:{		
+						required:true
+					}
+				}, {
+					name : "currency",
+					index : "currency",
+					align : "center",
+					width : 30,
+					sortable:false,
+					editable:true,
+					editoptions: { readonly: 'readonly' }
+				}, {
+					name : "in_amount",
+					index : "in_amount",
+					width : 60,
+					align : "right",
+					sortable:false,
+					editable:true,
+					editoptions : {
+						dataEvents : [ {
+							type : 'keyup',
+							fn : function(e) {
+								set_amount_field('I');
+								$(this).toPrice();
+							}
+						} ]
+					}
+				}, {
+					name : "out_amount",
+					index : "out_amount",
+					width : 60,
+					align : "right",
+					sortable:false,
+					editable:true,
+					editoptions : {
+						dataEvents : [ {
+							type : 'keyup',
+							fn : function(e) {
+								set_amount_field('O');
+								$(this).toPrice();
+							}
+						} ]
+					}			
+				}, {
+					name : "process_category",
+					index : "process_category",
+					width : 50,
+					align : "center",
+					sortable:false,
+					editable:true,
+					edittype:"select",
+					editoptions: {value:"<?=$process_list?>"},
+					editrules:{		
+						required:true
+					}
+				}, {
+					name : "info",
+					index : "info",
+					width : 130,
+					align : "left",
+					sortable:false,
+					editable:true,
+					edittype:"textarea",
+					editrules:{		
+						required:true
+					}
+				},{
+					name : "seqno",
+					index : "seqno",
+					editrules:{
+                         edithidden:true
+                      }, 
+                    hidden:true,
+                    editable: true
+				},{
+					name : "mode",
+					index : "mode",
+					editrules:{
+                         edithidden:true
+                      }, 
+                    hidden:true,
+                    editable: true   
+				},{
+					name : "valid_modify",
+					index : "valid_modify",
+					editrules:{
+                        edithidden:true
+                    }, 
+                    hidden:true,
+                    editable: true      
+				},{
+					name: 'edit', 
+					width:45, fixed:true, 
+					sortable:false, 
+					resize:false, 
+					formatter:'actions', 
+					formatoptions:{
+						keys:true,
+						delbutton : false,
+						onEdit:function(id) {
+							if(id && id!==lastsel){
+								$('#list').jqGrid('restoreRow',lastsel);
+								$('#list').jqGrid('editRow',id,false);								
+							
+								lastsel=id;
+							}
+                        }	
+					},
+					classes:'grid-col-last'
+				}],				
+				editurl : "/finance/statement_add",
+				rowNum : 20,
+				rowList : [ 10, 20, 30 ],
+				pager : "#pager",
+				viewrecords : true,
+				sortorder : "desc",
+				caption : "목록",
+				footerrow : true,
+				userDataOnFooter : true,
+				onSelectRow: function(id) {
+					if ($("input[name=valid_modify]").val() == "N") {
+						alert("당일 데이터만 수정 가능합니다.");
+						$('#list').jqGrid('restoreRow',id);
+					}
+					$('#bt-new').attr('disabled',false);
+				}
+			});
+
+	$("#list").jqGrid("navGrid", "#pager", {
+		edit : false,
+		add : false,
+		del : false,
+		search : false
+	});
+	$("#list").jqGrid('inlineNav', "#pager",  { edit: false});	
+	$("#list").bind("jqGridInlineAfterSaveRow", function (e) {
+		$("#list").trigger("reloadGrid");
+	});
+	
+}
+
+
+
+function set_account(account_seqno) {
+	$.ajax({
+		type : "GET",
+		url : "/finance/set_account/"+account_seqno,
+		data : "",
+		success : function(result_data) {
+			var obj = $.parseJSON(result_data);
+			$("input[name=account_type]").val(obj.account_type_txt);
+			$("input[name=account_no]").val(obj.account_no);
+			$("input[name=bank_name]").val(obj.bank_name);
+			$("input[name=currency]").val(obj.currency);
+			
+		}
+	});
+}
+
+
+function set_amount_field(type) {
+	if (type == "I") {
+		$("input[name=out_amount]").val("");
+	} else if (type == "O") {
+		$("input[name=in_amount]").val("");
+	}
+}
+
+
+function grid_reload() {
+	var data = $("#srch-frm").serialize();
+	var url = "/finance/statement_lists?" + data;
+	
+	$("#list").jqGrid("setGridParam", {
+		url : url,
+		page : 1
+	}).trigger("reloadGrid");
+}
+
+
+function open_select() {
+	$("#select-area").dialog("open");
+}
+
+
+
+function open_report() {
+	var type = $("input[name=date_type]:checked").val();
+	var data = $("#report-frm").serialize();
+	window.open("/finance/report/"+type+"?"+data, "report_popup", "toolbar=no, scrollbars=yes, resizable=no, top=0, left=0, width=800, height=700");
+}
+
+
+
+function select_date(){
+	$("input[name=plan_date]").datepicker({
+		defaultDate : "+w",
+		changeMonth : true,
+		dateFormat:"yy-mm-dd",
+		dayNamesMin : [ '일', '월', '화', '수', '목', '금',
+						'토' ],
+				monthNames : [ '1월', '2월', '3월', '4월', '5월',
+						'6월', '7월', '8월', '9월', '10월', '11월',
+						'12월' ],
+				monthNamesShort : [ '1월', '2월', '3월', '4월',
+						'5월', '6월', '7월', '8월', '9월', '10월',
+						'11월', '12월' ]	
+	});
+}
+
+</script>
+
+<div id="select-area" title="보고서">
+<form id="report-frm">
+	<div style="text-align: right;margin-bottom: 5px;margin-top: 10px;">
+	<button id="bt-view" onClick="open_report();">미리보기</button>
+	</div>
+	<table class="basic-table">
+		<colgroup>
+			<col width="25%">
+			<col width="">
+		</colgroup>
+		<tbody>
+			
+			<tr>
+				<th>선택</th>
+				<td><input type="radio"  name="date_type"  value="daily" checked> 자금일보 <input type="radio" name="date_type" value="weekly"> 주간일보</td>
+			</tr>
+						
+			<tr>
+				<th>기간</th>
+				<td>
+				<span id="daily_period" class="period_area">
+				<input type="text" name="daily_date" id="daily_date" size="10" class="datepicker" value="<?=date('Y-m-d')?>"> 
+				</span>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</form>
+</div>
+<h3 class="area-title">검색</h3>
+<form id="srch-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="100px" />
+			<col />
+			<col width="100px" />
+			<col />
+			<col width="100px" />
+			<col />
+			<col width="100px" />
+			<col />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>구분</th>
+				<td>
+				<select name="srch_account_type" style="width:100px;" data-role="reload">
+					<option value="">-전체-</option>
+					<? foreach($this->config->item( 'account_type' ) as $i=>$val): ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+				</td>
+				<th>은행명</th>
+					<td>
+					<select name="srch_bank_code" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($bank_list as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+					</select>
+				</td>
+				<th>처리방식</th>
+				<td>
+					<select name="srch_process_category" style="width:100px;" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($this->config->item( 'process_category' ) as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+					</select>
+				</td>
+				<th>통화</th>
+				<td>
+					<select name="srch_process_currency" style="width:100px;" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($this->config->item( 'currency_type' ) as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+					</select>
+				</td>
+				
+			</tr>
+			<tr>
+			<th>거래처</th>
+				<td>
+					<input type="text" name="srch_trade_customer" size="30">
+				</td>
+				<th>발생일자</th>
+				<td colspan="5">
+					<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker">
+					<button id="bt-srch" onclick="grid_reload();">검색</button>
+					<button id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<!-- <div class="tool-box">
+<button id="bt-report" onClick="open_select();">일보</button>
+</div> -->
+<div class="tool-box">
+<button id="bt-new" onClick="jQuery('#list').jqGrid('addRow');$('#bt-new').attr('disabled',true);">입출금등록</button>
+</div>
+<table id="list"></table>
+<div id="pager"></div>

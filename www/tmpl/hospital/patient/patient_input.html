@@ -1,0 +1,210 @@
+{? mode == 'insert'}
+<form id="FrmPatientInputSearch" onsubmit="return false">
+<!-- <input type="hidden1" name="group_code" value="{rs.group_code}" /> --><!-- ?? -->
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>상담고객 검색 <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="상담기록이 있는 고객데이터에서 검색합니다."></i> </th>
+			<td>
+				<div>
+					<input type="search" name="name" id="search_consluting" class="search" style="width:350px" autocomplete="off" placeholder="환자이름 or 휴대폰번호 or 메신저" /> 
+					<button type="submit" class="btn btn-flat-blue" onclick="PatientInput.search()" ><i class="fa fa-search fa-1"></i> 검색</button>
+					<button type="button" class="btn btn-gray" onclick="PatientInput.reset()"><i class="fa fa-refresh fa-1"></i> 처음으로</button>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<div class="dashed" style="margin:10px 0px"></div>
+{/}
+
+<form id="FrmPatientInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" /><!-- insert:추가 / update:수정 -->
+<input type="hidden" name="no" value="{rs.no}" />
+
+{inc.patient}
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var PatientInput = {
+	init: function() {
+
+		$('input[data-mask="jumin"]').mask('999999-9999999');
+		$('input[data-mask="mobile"]').mask('019-9999-9999');
+		$('input[data-mask="date"]').mask('9999/99/99');
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmPatientInput").validationEngine('attach',option);
+
+		//중복체크
+		// $('input[data-errormessage-pattern-mismatch]').on('blur.duplicate', function(){
+		// 	me.checkDuplicate(this.name);
+		// });
+
+		//환자검색
+		this.createAutocomplete();
+
+		
+	},
+	search: function() {
+		var search_el = $("#search_consluting");
+		search_el.autocomplete('enable');
+		search_el.autocomplete("search", search_el.val());
+	},
+	selectPatient: function(data) {
+		$.each(data, function(i,e) {
+			switch(i) {
+				case 'tel':
+					$('#FrmPatientInput [name="mobile"]').val(e).trigger('focus');
+				break;
+				case 'addr':
+					$('#FrmPatientInput [name="address"]').val(e);
+				break;
+				case 'sex':
+					$('#FrmPatientInput [name="sex"][value="'+e+'"]').prop("checked",true);
+				break;
+				case 'team_code':
+					$('#FrmPatientInput [name="manager_team_code"] option[value="'+e+'"]').prop("selected",true);
+					HmisCommon.loadUser(e, data.charge_user_id,'patient_form');
+				break;
+				case 'path':
+					$('#FrmPatientInput [name="path_code"] option[value="'+e+'"]').prop("selected",true);
+				break;
+				default:
+					$('#FrmPatientInput [name="'+i+'"]').val(e).trigger('focus');
+				break;
+			}
+		})
+	},
+	createAutocomplete: function(){
+		var me = this;
+		var el = $('#search_consluting');
+		el.autocomplete({
+			minLength: 1,
+			disabled: true,
+			select: function(event, ui) {
+				if(ui.item.rs.cst_seqno > 0) {
+					//중복값 체크
+					
+					$.ajax({
+						url:'/patient_proc/check_duplicate',
+						data:{
+							field:'cst_seqno',
+							value:ui.item.rs.cst_seqno 
+						},
+						dataType:'json',
+						type:'POST',
+						success: function(r){
+							if(r.success) {
+								me.selectPatient(ui.item.rs);
+							}
+							else {
+								HmisAlert.alert("이미 환자로 등록된 상담고객입니다.");
+								return false;
+							}
+						}
+					})
+					
+				}
+			
+				$(this).val('');
+				return false;
+
+			},
+			delay:500,
+			source:function(request, response) {
+				$.ajax({
+					url: "/patient/consulting_list",
+					data:{
+						search_word:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.name+' - '+v.search,
+									value: v.name,
+									rs:v
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 상담고객이 없습니다.',
+								value:'',
+								no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				if(el.val().length<2) {
+					HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+					return false;
+				}
+				el.autocomplete('enable');
+				el.autocomplete("search",el.val());
+			}
+			else {
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+	},
+	save: function() {
+		var me = this;
+		var formdata = $('#FrmPatientInput').serialize();
+		$.ajax({
+			url:'/patient_proc/save_patient',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					HmisAlert.alert(r.msg, function(){
+						$('.modal-close').trigger('click', [r.data]);		
+					});
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		});
+	},
+	reset: function() {
+		HmisAlert.confirm('입력하신 데이터를 초기화하시겠습니까?',function(r) {
+			if(r) {
+				HmisCommon.formReset('FrmPatientInput');
+			}
+		})
+	}
+};
+$(function() {
+	PatientInput.init();
+})
+</script>

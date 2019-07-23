@@ -1,0 +1,128 @@
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:100px" />
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>
+				고객검색
+			</th>
+			<td>
+				<input type="search"  id="search_appointment" class="search" style="width:300px" autocomplete="off" placeholder="고객명 or 연락처 or 차트번호" /> 
+				<button type="button" class="btn btn-flat-blue btn-onlyicon" onclick="AppointmentSearch.search()" ><i class="fa fa-search fa-1"></i></button>
+				<!-- <button type="button" class="btn btn-gray" onclick="PatientInput.reset()"><i class="fa fa-refresh fa-1"></i> 처음으로</button> -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div class="dashed" style="margin:10px 0px"></div>
+
+<div id="search_error" class="well error" style="display:;margin-bottom:5px;">
+	정확한 검색결과를 위해서 검색어를 2자리 이상입력해주세요.
+</div>
+
+<table class="table table-bordered table-list" style="margin-top:0px">
+	<colgroup>
+		<col style="width:50px" />
+		<col style="width:100px" />
+		<col style="width:100px" />
+		<col style="width:100px" />
+		<col style="width:80px" />
+		<col style="width:80px" />
+		<col />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>환자명</th>
+			<th>예약일자</th>
+			<th>예약시간</th>
+			<th>담당의사</th>
+			<th>상태</th>
+			<th>진료부위</th>
+		</tr>
+	</thead>
+	<tbody id="search_result">
+		<tr>
+			<td colspan="7">검색결과가 없습니다.</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<textarea id="tmpl_search" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>${\name}</td>
+		<td>${\appointment_date}</td>
+		<td>${\appointment_time}</td>
+		<td>${\doctor_name}</td>
+		<td>${\status_text}</td>
+		<td style="white-space: nowrap; text-overflow: ellipsis;overflow: hidden;" ><span title="${\treat_info}" data-toggle="tooltip">${\treat_info}</span></td>
+	</tr>
+</textarea>
+
+<script type="text/javascript">
+var AppointmentSearch = {
+	init: function() {
+		$('#search_appointment').on('keypress',function(e){
+			if(e.keyCode === 13) {
+				AppointmentSearch.search();
+			}
+		});
+	},
+	search: function() {
+		var q = $('#search_appointment').val();
+		if(q.length <2) {
+			HmisAlert.alert("검색어는 2글자 이상 입력해 주세요.", function(){
+				$('#search_appointment').focus();
+			});
+			return false;
+		}
+
+		$('#search_result').html('<tr><td colspan="7">검색중입니다...</td></tr>');
+		$.ajax({
+			url:'/treat_proc/search_appointment',
+			data:{
+				query:q
+			},
+			type:'POST',
+			dataType:'json',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_search');
+				var target = $('#search_result');
+				target.empty();
+				
+					var html = '';
+					$.each(r.data, function(i,e){
+						if(i>100) return true;
+						html += tmpl.process(e);
+						
+					});
+					target.append(html);
+					$('[data-toggle="tooltip"]').tooltip();
+				if(r.data.length>=100) {
+					$('#search_error').html("검색 결과가 너무 많아 100건만 표시합니다. ");
+				}
+				else if(r.data.length < 1){
+					$('#search_error').html('<b>검색된 예약정보가 없습니다.</b>');	
+					$('#search_result').html('<tr><td colspan="7">검색된 예약정보가 없습니다.</td></tr>');
+				}
+				else {
+					$('#search_error').html(r.data.length+'건의 예약정보가 검색되었습니다.');		
+				}
+			},
+			complete: function() {
+			}
+		})
+	}
+};
+
+$(function() {
+	AppointmentSearch.init();
+})
+</script>

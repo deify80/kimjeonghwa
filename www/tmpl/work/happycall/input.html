@@ -1,0 +1,216 @@
+<style>
+.ui-autocomplete {z-index:2000;}
+</style>
+
+<form id="FrmHappycall">
+
+<input type="hidden" name="mode" id="mode" value="{mode}">
+<input type="hidden" name="happycall_no" value="{rs.no}">
+<input type="hidden" name="cst_seqno" id="cst_seqno" value="{rs.cst_seqno}">
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>고객</th>
+			<td>
+				<input type="text" class="validate[required] required search" name="customer" id="customer" placeholder="고객명 or 연락처" value="{rs.custome_name}" autocomplete="off" style="width:200px" />
+			</td>
+			<th>수술일자</th>
+			<td>
+				<input type="text" name="operation_date" value="{rs.operation_date}" class="datepicker lg">
+			</td>
+		</tr>
+		<tr>
+			<th>진료부위</th>
+			<td colspan="3">
+				<span id="treat_nav">{rs.treat_nav}</span>
+				<input type="hidden" id="treat_cost_no" name="treat_cost_no" value="{rs.treat_cost_no}">
+				<button type="button" onclick="HmisCommon.treat('HappycallInput.callbackTreat','')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<button type="button" onclick="HappycallInput.resetTreat()" id="btn_treat_reset" class="btn btn-flat-lightgray btn-onlyicon {? !rs.treat_cost_no}hide{/}"><i class="fa fa-times fa-1"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<th>담당자</th>
+			<td>
+				<select name="manager_team_code" id="sb_team" onchange="HappycallInput.loadUser(this.value)">
+					<option value="">::팀선택::</option>
+					{@ cfg.team}
+					<option value="{.key_}" {? rs.manager_team_code == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="sb_user" style="display:none">
+					<option value="">::팀원선택::</option>
+				</select>
+			</td>
+			<th>담당의</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? rs.doctor_id==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>해피콜 내용</th>
+			<td colspan="3">
+				<textarea name="comment" class="validate[required] hmis" style="height:100px;">{rs.comment}</textarea>
+			</td>
+		</tr>
+		<tr>
+			<th>특이사항</th>
+			<td colspan="3">
+				<textarea  name="comment_special" class="hmis" style="height:100px;">{rs.comment_special}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	{? rs.grant}
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var HappycallInput = {
+	init:function() {
+		HmisCommon.createDatepicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmHappycall").validationEngine('attach',option);
+
+		$("#customer").autocomplete({
+			delay:500,
+			source: "/consulting/search_customer",
+			minLength: 2,
+			select: function( event, ui ) {
+				$("#cst_seqno").val(ui.item.id);
+			},
+			focus: function( event, ui ) {
+				$("#cst_seqno").val(ui.item.id);
+				event.preventDefault();
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				e.preventDefault();
+			}
+		});
+
+		this.loadUser($('select[name="manager_team_code"]').val(), "{rs.manager_id}");
+		this.loadTreatItem( "{rs.treat_region_code}", "{rs.treat_item_code}");
+	},
+	loadUser: function(team_code, user_id) {
+		var team_code = team_code || $('#sb_team').val();
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!="all"]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (i==user_id)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	loadTreatItem: function(region_code, item_code) {
+		var region_code = region_code || $('#sb_treat_region').val();
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (i==item_code)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	save: function() {
+		if ($("#cst_seqno").val() == "") {
+			HmisAlert.alert("고객이 정상적으로 선택되지 않았습니다.");
+			$("#customer").focus();
+			return false;
+		}
+
+		var formdata = $("#FrmHappycall").serialize();
+		$.ajax({
+			url : "/work_proc/save_happycall",
+			data : formdata,
+			dataType:'json',
+			type:'POST',
+			success : function(result_data) {
+				HmisAlert.alert('저장되었습니다.', function() {
+					$('.modal-close').trigger('click');
+				});
+
+				// Happycall.reload();
+				//
+				// $("#msg-area").html("저장 완료했습니다.");
+				// $("#msg-area").dialog("open");
+
+			}
+		});
+	},
+	callbackTreat: function(d) {
+		$('#treat_nav').html(d.nav.join(' &gt '));
+		$('#treat_cost_no').val(d.no);
+		$('#btn_treat_reset').removeClass('hide');
+		this.cost = d.cost;
+
+	},
+	resetTreat: function() {
+		$('#treat_nav').html('미지정');
+		$('#treat_cost_no').val('');
+		$('#btn_treat_reset').addClass('hide');
+	},
+}
+
+$(function(){
+	HappycallInput.init();
+})
+</script>

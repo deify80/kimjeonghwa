@@ -1,0 +1,104 @@
+<table class="table table-bordered table-form table-center table-hover" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+	<thead>
+		<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+			<th>성형외과</th>
+			<th>합계/비율</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th><?=$val?></th>
+			<? endforeach; ?>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach($team_list['normal'] as $i=>$team_name): 
+			$total = $total_list['normal'];
+			if($total['team'][$i]<1) continue;
+		?>
+		<tr>
+			<th rowspan="2">
+				<?=$team_name?>
+			</th>
+			<th class="total f-notice">
+				<?=if_empty_number($total['team'][$i])?>
+			</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val) { ?>
+			<td><?=if_empty_number($list[$i][$j])?></td>
+			<? } ?>
+		</tr>
+		<tr>
+			<th class="total f-notice">
+				<?=($total['team'][$i]>0 && array_sum($total['team'])>0)? round($total['team'][$i]/array_sum($total['team'])*100, 1).'%':'<span class="f-null">0%</span>'?>
+			</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<td><?=($list[$i][$j]>0 && $total['team'][$i]>0)? round($list[$i][$j]/$total['team'][$i]*100, 1).'%':'<span class="f-null">0%</span>'?></td>
+			<? endforeach; ?>
+		</tr>	
+		<? endforeach; ?>
+		<tr>
+			<th class="total" rowspan="2">총합/비율</th>
+			<th class="total f-error"><?=array_sum($total['team'])?></th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th class="total f-error"><?=if_empty_number($total['cst_status'][$j])?></th>
+			<? endforeach; ?>
+		</tr>
+		<tr>
+			<th class="total f-error">100%</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th class="total f-error"><?=($total['cst_status'][$j]>0 && array_sum($total['team'])>0)? round($total['cst_status'][$j]/array_sum($total['team'])*100, 1).'%':'<span class="f-null">0%</span>'?></th>
+			<? endforeach; ?>
+		</tr>
+	</tbody>
+</table>
+
+<? if(count($team_list['etc']) > 0) {?>
+<div class="dashed" style="margin:10px 0px"></div>
+<table class="table table-bordered table-form table-center table-hover" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+	<thead>
+		<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+			<th>피부과</th>
+			<th>합계/비율</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th><?=$val?></th>
+			<? endforeach; ?>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach($team_list['etc'] as $i=>$team_name): 
+			$total = $total_list['etc'];
+			if($total['team'][$i]<1) continue;
+		?>
+		<tr>
+			<th rowspan="2">
+				<?=$team_name?>
+			</th>
+			<th class="total f-notice">
+				<?=if_empty_number($total['team'][$i])?>
+			</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<td><?=if_empty_number($list[$i][$j])?></td>
+			<? endforeach; ?>
+		</tr>
+		<tr>
+			<th class="total f-notice">
+				<?=($total['team'][$i]>0 && array_sum($total['team'])>0)? round($total['team'][$i]/array_sum($total['team'])*100, 1).'%':'<span class="f-null">0%</span>'?>
+			</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<td><?=($list[$i][$j]>0 && $total['team'][$i]>0)? round($list[$i][$j]/$total['team'][$i]*100, 1).'%':'<span class="f-null">0%</span>'?></td>
+			<? endforeach; ?>
+		</tr>	
+		<? endforeach; ?>
+		<tr>
+			<th class="total" rowspan="2">총합/비율</th>
+			<th class="total f-error"><?=array_sum($total['team'])?></th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th class="total f-error"><?=if_empty_number($total['cst_status'][$j])?></th>
+			<? endforeach; ?>
+		</tr>
+		<tr>
+			<th class="total f-error">100%</th>
+			<? foreach($this->config->item('cst_status') as $j=>$val): ?>
+			<th class="total f-error"><?=($total['cst_status'][$j]>0 && array_sum($total['team'])>0)? round($total['cst_status'][$j]/array_sum($total['team'])*100, 1).'%':'<span class="f-null">0%</span>'?></th>
+			<? endforeach; ?>
+		</tr>
+	</tbody>
+</table>
+<? } ?>

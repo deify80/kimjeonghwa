@@ -1,0 +1,108 @@
+<form id="FrmClientInput">
+<input type="hidden" name="no" value="{row.no}" />
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:120px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>거래처명</th>
+				<td><input type="text" name="client_name" value="{row.client_name}" class="validate[required] required" data-errormessage-value-missing="거래처명을 입력하세요."></td>
+			</tr>
+			<tr>
+				<th>담당자</th>
+				<td><input type="text" name="manager_name" value="{row.manager_name}" ></td>
+			</tr>
+			<tr>
+				<th>연락처</th>
+				<td>
+					<input type="text" name="tel" value="{row.tel}" class="validate[required] required" data-errormessage-value-missing="연락처를 입력하세요.">
+				</td>
+			</tr>
+			<tr>
+				<th>주소</th>
+				<td><input type="text" name="address" value="{row.address}" class="full"></td>
+			</tr>
+			<tr>
+				<th>관리메모</th>
+				<td><input type="text" name="memo" value="{row.memo}" class="full"></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div class="area-button">
+		<button type="submit" class="btn btn-theme btn-lg">저장</button>
+		{? mode == 'update'}
+		<button type="button" class="btn btn-flat-orange btn-lg" onclick="ClientInput.remove('{row.no}')">삭제</button>
+		{/}
+		<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+	</div>
+</form>
+
+<script type="text/javascript">
+var ClientInput = {
+	init: function(){
+		var me = this;
+		var option = $.extend({},validation_option, {
+			display:'alert',
+			showOneMessage:true,
+			validationEventTrigger:'submit',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmClientInput").validationEngine('attach',option);
+	},
+	remove: function(no) {
+		if(!confirm('삭제하시겟습니까?')) return false;
+		$.ajax({
+			url:'/stock_proc/client_delete',
+			data:{
+				no:no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					HmisAlert.alert(r.msg, function() {
+						ClientLists.load();
+						$('.modal-close').trigger('click');
+					});
+
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	save: function() {
+		var formdata = $("#FrmClientInput").serialize();
+		$.ajax({
+			url : "/stock_proc/client_save",
+			data : formdata,
+			dataType:'json',
+			type : "POST",
+			success : function(r) {
+				if(r.success){
+					HmisAlert.alert(r.msg, function() {
+						ClientLists.load();
+						$('.modal-close').trigger('click');
+					});
+
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+
+			}
+		});
+	}
+}
+
+$(function() {
+	ClientInput.init();
+})
+
+</script>

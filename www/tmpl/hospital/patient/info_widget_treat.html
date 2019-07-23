@@ -1,0 +1,109 @@
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('treat', '치료일지 등록')" ><i class="fa fa-plus fa-1"></i> 치료일지 등록</button>
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col width="50px">
+		<col width="50px">
+		<col width="120px">
+		<col width="100px">
+		<col width="100px">
+		<col width="300px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_treat[]')"><span class="lbl"></span></label></th>
+			<th>치료일자</th>
+			<th>담당의사</th>
+			<th>간호사</th>
+			<th>진료부위</th>
+			<th>치료내용</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@list}
+		<tr>
+			<td>{.idx}</td>
+			<td><label class="hmis"><input type="checkbox" class="hmis" name="checked_treat[]" value="{.no}"><span class="lbl"></span></label></td>
+			<td><a href="javascript:;" onclick="WidgetTreat.modify('{.no}')" class="link">{.date_treat}</a></td>
+			<td>{.doctor_name}</td>
+			<td>{.nurse_name}</td>
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" title="{.treat_info}">{.treat_info}</span></td>
+			<td class="left">{.comment}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="7" class="center">등록된 치료일지가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div style="margin-top:7px;position:relative">
+	{? auth.delete}
+	<button type="button" onclick="WidgetTreat.remove()" class="btn btn-flat-orange">삭제</button>
+	{/}
+	<div style="position:absolute;right:0px;bottom:0px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('treat','<?=$paging['first']?>')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('treat','<?=$paging['prev']?>')"><i class="fa fa-angle-left"></i></a></li>
+				{@ paging.block}
+				<li class="{? .equal}active{/}"><a href="javascript:;" onclick="PatientInfo.loadTab('treat','{.num}')">{.num}</a></li>
+				{/}
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('treat','<?=$paging['next']?>')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('treat','<?=$paging['last']?>')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var WidgetTreat = {
+	init: function() {
+	},
+	reload: function(){
+		PatientInfo.load('treat', WidgetTreat.page);
+	},
+	modify: function(no) {
+		PatientInfo.modalWidget('treat', '치료일지 수정', {no:no});
+	},
+	remove: function(){
+		var checked = HmisCommon.getChecked('checked_treat[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 치료일지를 선택하세요.');
+			return false;
+		}
+		
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var treat_no = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/patient_proc/remove_treat',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						treat_no:treat_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							PatientInfo.loadTab('treat');
+							PatientInfo.countTab();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})	
+			}			
+		});
+	}
+};
+
+$(function(){
+	WidgetTreat.init();
+})
+</script>

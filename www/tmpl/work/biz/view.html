@@ -1,0 +1,182 @@
+<script type="text/javascript">
+
+
+
+function comment_save() {
+	var url = "/work_proc/add_biz_comment";
+	var data = $("#comment-frm").serialize();
+	$.ajax({
+		type : "POST",
+		url : url,
+		data : data,
+		success : function(result_data) {
+			var obj = $.parseJSON(result_data);
+			if (obj.is_success == "1") {
+				$("<li><b>"+obj.reg_date+" "+obj.reg_user_name+"</b> "+obj.comment+"</li>").appendTo("#comment_list");
+				$("#comment").val("");
+			}
+		}
+	});
+}
+
+function go_input() {
+	document.location = "/work/biz_log_input/<?=$work_type?>/<?=$row['biz_seqno']?>";
+}
+
+var BizView = {
+	init: function() {
+		$("#comment-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) comment_save();
+			}
+		})
+	},
+	print: function(divName) {
+		$('#sign_box').removeClass('hide');
+		var printContents = document.getElementById(divName).innerHTML;
+		var originalContents = document.body.innerHTML;
+
+		document.body.innerHTML = printContents;
+
+		window.print();
+
+		document.body.innerHTML = originalContents;
+		$('#sign_box').addClass('hide');
+
+	}
+}
+
+$(function() {
+	BizView.init();
+})
+
+
+</script>
+<h3 class="area-title">
+	<div class="button-box">
+		<button type="button" id="bt-print" class="btn btn-flat-purple" onclick="BizView.print('print')"><i class="fa fa-print fa-1"></i> 인쇄</button>
+		<button class="btn btn-flat-blue" onclick="go_input()"  id="bt-modify"><i class="fa fa-pencil fa-1"></i> 수정</button>
+	</div>
+</h3>
+
+<div id="print">
+<div id="sign_box" class="hide" style="float:right;margin-top:0px;padding-bottom:30px;">
+	<table class="table table-bordered basic-table" style="width:280px;">
+		<colgroup>
+			<col style="width:50px" />
+			<col />
+			<col />
+			<col />
+		</colgroup>
+		<tr>
+			<th rowspan="2">결재</th>
+			<th>부서장</th>
+			<th>이사</th>
+			<th>대표이사</th>
+		</tr>
+		<tr>
+			<td style="height:70px"></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</table>
+</div>
+<div class="clear" style="clear:both"></div>
+
+<div style="text-align:center;font-size:30px;margin-bottom:30px"><?=$row['type']?>보고</div>
+
+
+
+<table class="table table-bordered basic-table">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tr>
+		<th>작성일자</th>
+		<td>
+			<?=$row['work_date']?>
+		</td>
+		<th>작성자</th>
+		<td>
+			<?=$row['name']?>
+		</td>
+	</tr>
+	<tr>
+		<th>구분</th>
+		<td>
+			<?=$row['type']?>
+		</td>
+		<th>진행율</th>
+		<td>
+			<?=$row['status']?>
+		</td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td colspan="3">
+			<?=$row['title']?>
+		</td>
+	</tr>
+	<!-- 
+	20170317 kruddo : 삭제
+	<tr>
+		<th>대표님 지시사항</th>
+		<td colspan="3" style="padding-top: 10px;padding-bottom: 10px;">
+			<?=nl2br($row['owner_command'])?>
+		</td>
+	</tr> -->
+	<tr>
+		<th>업무내용</th>
+		<td colspan="3" style="padding-top: 10px;padding-bottom: 10px;">
+			<div style="float: left; width: 48%;border-right: 1px solid #a6c9e2;padding-right: 5px;height: 100%;">
+				<span style="font-weight: bold;line-height: 2em;" id="cur-title"><?=$title_type['cur-title']?></span>
+				<div style="line-height: 2em;"><?=nl2br($row['cur_work'])?></div>
+			</div>
+			<div style="float: left; width: 48%; margin-left: 10px;">
+				<span style="font-weight: bold;line-height: 2em;" id="next-title"><?=$title_type['next-title']?></span>
+				<div style="line-height: 2em;"><?=nl2br($row['next_work'])?></div>
+			</div>
+		</td>
+	</tr>
+	<? if(is_array($url_list)): ?>
+	<tr>
+		<th>첨부파일</th>
+		<td colspan="3" style="padding-top: 10px;padding-bottom: 10px;">
+			<ul>
+				<? foreach($url_list as $i): ?>
+				<li><?=$i->url_type?> - <?=$i->url?> <a href="/work_down/biz/<?=$i->seqno?>" class="underline"><?=$i->file_name?></a></li>
+				<? endforeach; ?>
+			</ul>
+		</td>
+	</tr>
+	<? endif; ?>
+</table>
+</div>
+
+<form id="comment-frm">
+	<input type="hidden" name="biz_seqno" value="<?=$row['biz_seqno']?>">
+	<table class="basic-table" style="margin-top:10px">
+		<colgroup>
+			<col width="120px">
+			<col width="">
+		</colgroup>
+		<tr>
+			<th>참고</th>
+			<td>
+				<p style="padding-top: 5px;">
+					<input type="text" size="120" name="comment" id="comment" class="validate[required]" placeholder="댓글작성">
+					<button type="submit" id="bt-save">등록</button>
+				</p>
+				<ul style="margin: 5px;" id="comment_list">
+					<? foreach($comment_list as $i): ?>
+					<li><b><?=$i->reg_date?> <?=$i->name?></b> <?=$i->comment?></li>
+					<? endforeach; ?>
+				</ul>
+			</td>
+		</tr>
+	</table>
+</form>
+</div>

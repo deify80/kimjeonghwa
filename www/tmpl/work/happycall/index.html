@@ -1,0 +1,314 @@
+<h3 class="area-title">해피콜 검색</h3>
+<form id="FrmHappycallSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col>
+		<col style="width:120px" />
+		<col>
+		<col style="width:120px" />
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>팀</th>
+			<td colspan="5">
+				<div class="btn-group hmis blue" data-toggle="buttons" id="btngroup_team">
+					<label class="btn active">
+						<input type="radio" name="manager_team_code" value="" checked> 전체
+					</label>
+					{@ cfg.team}
+					<label class="btn">
+						<input type="radio" name="manager_team_code" value="{.key_}" > {.value_}
+					</label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>시술항목</th>
+			<td>
+				<select name="treat_region_code" onchange="Happycall.loadTreatItem(this.value)" data-role="reload">
+					<option value="">::진료부위::</option>
+					{@ cfg.treat_region}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+				<select name="treat_item_code" id="scsb_treat_item" style="display:none" data-role="reload">
+					<option value="">::진료항목::</option>
+				</select>
+			</td>
+			<th>등록일자</th>
+			<td>
+				<input type="text" class="datepicker lg" name="date_insert_start" id="sdate_s" value=""> ~ <input type="text" class="datepicker lg" name="date_insert_end" value="" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="Happycall.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">오늘</a></li>
+					<li onclick="Happycall.setDate('{cfg.date.weekday}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번주</a></li>
+					<li onclick="Happycall.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			<th>수술일자</th>
+			<td>
+				<input type="text" class="datepicker lg" name="operation_date_start" id="sdate_s2" value=""> ~ <input type="text" class="datepicker lg" name="operation_date_end" value="" id="sdate_e2">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="Happycall.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}','sdate_s2','sdate_e2');"><a href="javascript:;">오늘</a></li>
+					<li onclick="Happycall.setDate('{cfg.date.weekday}','{=date('Y-m-d')}','sdate_s2','sdate_e2');"><a href="javascript:;">이번주</a></li>
+					<li onclick="Happycall.setDate('{cfg.date.cur_month}','{=date('Y-m-d')},'sdate_s2','sdate_e2');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+
+			<th>담당자</th>
+			<td>
+				<select id="scsb_team" onchange="Happycall.loadUser(this.value, true)" data-role="reload">
+					<option value="">::담당팀::</option>
+					{@ cfg.team}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="scsb_user" data-role="reload" style="display:none">
+					<option value="">::담당자::</option>
+				</select>
+			</td>
+			<th>담당의</th>
+			<td>
+				<select name="doctor_id" data-role="reload">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>검색어</th>
+			<td><input type="text" name="search_word" class="full" placeholder="고객명 or 해피콜내용"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="Happycall.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="Happycall.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	해피콜 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 해피콜 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 해피콜 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="Happycall.openInput()"><i class="fa fa-pencil fa-1"></i> 해피콜 등록</button>
+		<!-- <span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="GoodsList.openMove()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button> -->
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px"><!-- 번호 -->
+		<col style="width:100px"><!-- 등록일자 -->
+		<col style="width:100px"><!-- 수술일자 -->
+		<col style="width:150px"><!-- 고객명 -->
+
+		<col style="width:300px"><!-- 시술항목 -->
+		<col /><!-- 해피콜내용 -->
+		<col style="width:100px"><!-- 담당팀 -->
+		<col style="width:100px"><!-- 담당자 -->
+		<col style="width:100px"><!-- 담당의사 -->
+
+		<!-- <col /> --><!-- 특이사항 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>등록일자</th>
+			<th>수술일자</th>
+			<th>고객명</th>
+			<th>진료부위</th>
+			<th>해피콜내용</th>
+			<th>담당팀</th>
+			<th>담당자</th>
+			<th>담당의사</th>
+			<!-- <th>특이사항</th> -->
+		</tr>
+	</thead>
+	<tbody id="happycall_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>${\date_insert}</td>
+		<td>${\operation_date}</td>
+		<td><a href="javascript:;" onclick="Happycall.openInput('${\no}')" class="link">${\custome_name}</a></td>
+		<td><div class="ellipsis" data-toggle="tooltip" title="${\treat_info}">${\treat_info}</div></td>
+		<td class="left"><div class="ellipsis">${\comment}</div></td>
+		<td>${\manager_team_name}</td>
+		<td>${\manager_name}</td>
+		<td>${\doctor_name}</td>
+
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="Happycall.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="Happycall.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="Happycall.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="Happycall.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="Happycall.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var Happycall = {
+	init: function() {
+		this.load();
+		HmisCommon.createDatepicker();
+		$('input[name="manager_team_code"]').on('change.team',function() {
+			var team_code = $(this).val();
+			$('#scsb_team').val(team_code);
+			Happycall.loadUser(team_code, false);
+			Happycall.load();
+		})
+
+		$('[data-role="reload"]').change(function() {
+			Happycall.load();
+		});
+
+	},
+	reload: function() {
+		Happycall.load(Happycall.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmHappycallSearch').serialize();
+
+		$.ajax({
+			url:'/work/happycall_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#happycall_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+
+				}
+				else {
+					target.append('<tr><td colspan="9">검색된 해피콜이 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	buildRadio: function(team_code) {
+		$('#btngroup_team').find('label').removeClass('active');
+		var radio = $('input:radio[name="manager_team_code"][value="'+team_code+'"]');
+		radio.attr('checked',true);
+		radio.parent('label').addClass('active');
+	},
+	loadUser: function(team_code, build){
+		if(build) this.buildRadio(team_code);
+
+
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	loadTreatItem: function(region_code) {
+
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e.title+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	openInput: function(happycall_no) {
+		var title = (happycall_no)?'해피콜 수정':'해피콜 등록';
+		var modal = new HmisModal('happycall_input', {width:900, top:200});
+		modal.callback = Happycall.reload;
+		modal.open(title,'/work/happycall_input',{happycall_no:happycall_no});
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmHappycallSearch');
+		this.load();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load();
+	}
+}
+
+$(function(){
+	Happycall.init();
+})
+</script>

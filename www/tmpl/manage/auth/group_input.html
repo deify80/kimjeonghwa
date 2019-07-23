@@ -1,0 +1,243 @@
+<form id="FrmGroupInput">
+<input type="hidden" name="mode" value="<?=$cfg['mode']?>" />
+<input type="hidden" name="no" value="<?=$data['no']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>그룹코드</th>
+			<td>
+				<? if($cfg['mode']=='insert') {?>
+				<input type="text" name="code" class="validate[required]" />
+				<? } else { ?>
+				<b><?=$data['group_code']?></b>
+				<? } ?>
+			</td>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="is_use" value="Y" class="hmis" <?=($data['is_use']=='Y')?'checked':''?> /><span class="lbl"> 사용</span></label>
+				<label class="hmis"><input type="radio" name="is_use" value="N" class="hmis" <?=($data['is_use']=='N')?'checked':''?> /><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>그룹설명</th>
+			<td colspan="3">
+				<input type="text" name="comment" style="width:100%" value="<?=$data['comment']?>" />
+			</td>
+		</tr>
+		<tr>
+			<th>권한유형</th>
+			<td colspan="3">
+				<label class="hmis"><input type="radio" name="type" value="include" class="hmis" <?=($data['type']=='include')?'checked':''?> /><span class="lbl"> 포함</span></label>
+				<label class="hmis"><input type="radio" name="type" value="exclude" class="hmis" <?=($data['type']=='exclude')?'checked':''?> /><span class="lbl"> 제외</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="2">직원선택</th>
+			<td colspan="3">
+				<select name="user[]" id="sb_dept" onchange="GroupInput.loadTeam(this.value)" style="vertical-align: bottom" autocomplete="off">
+					<option value="all">전체 부서</option>
+					<? foreach($cfg['dept'] as $dept_no=>$dept) {?>
+					<option value="<?=$dept_no?>"><?=$dept?></option>
+					<? } ?>
+				</select>
+				<select name="user[]" id="sb_team" onchange="GroupInput.loadUser(this.value)" style="display:none;vertical-align: bottom" autocomplete="off">
+					<option value="all">전체 팀</option>
+				</select>
+				<select name="user[]" id="sb_user" style="display:none;vertical-align: bottom" autocomplete="off">
+					<option value="all">전체 직원</option>
+				</select>
+				<button type="button" class="btn btn-flat-blue" onclick="GroupInput.addGrant()" >추가</button>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="3">
+				<div id="user_notice" class="f-notice">권한이 부여된 직원이 없습니다.</div>
+				<div id="user_list">
+					<? foreach($data['users_list'] as $k=>$v) {?> 
+					<div class="label-default" id="<?=$k?>"><?=$v?><i class="fa fa-times pointer" style="position:absolute;right:5px" onclick="GroupInput.removeGrant('<?=$k?>')"></i></div>
+					<? } ?>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var GroupInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.saveGrant();
+			}
+		});
+
+		$("#FrmGroupInput").validationEngine('attach',option);
+
+		this.layoutGrant();
+	},
+	loadTeam : function(dept_no) {
+		var sb_team = $('#sb_team');
+		var sb_user = $('#sb_user');
+		if(dept_no == 'all') {
+			sb_team.val('all').css('display','none');	
+			sb_user.val('all').css('display','none');
+			return false;
+		}
+		else {
+			dept_code = dept_no;
+		}
+
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_team.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');					
+				}
+				else {
+					sb_team.val('all').css('display','none');	
+				}
+				sb_user.val('all').css('display','none');
+			}
+		});
+	},
+	loadUser : function(team_no) {
+		team_no = team_no || $('#sb_team').val();
+		var team_code = (team_no=='all')?'':team_no;
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				key:'no',
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('all');
+					sb.css('display','none');	
+				}
+			}
+		});
+	},
+	addGrant : function() {
+		var text_arr = [];
+		var value_arr = [];
+		var valid = ($('#user_list > div[id^="all"]').length>0)?false:true; //전체부서가 설정되어 있는 경우 무조건 무효
+	
+		$.each($('select[name="user[]"]'), function(i,e) {
+			var value = $(e).val();
+			var text = $(e).find('option:selected').text();
+			if(i>0) {
+				if(value == 'all') return false;
+			}
+			else {
+				if(value == 'all') $('#user_list > div[id!="all"]').remove(); //전체부서를 선택한경우 다른 권한 삭제
+			}
+			
+			value_arr.push(value);
+			text_arr.push(text);
+		});	
+			
+		var div_id = value_arr.join('_');
+		var html = '<div class="label-default" id="'+div_id+'" style="margin-right:0px">';
+		html += text_arr.join(' > ');
+		html += '<i class="fa fa-times pointer" style="position:absolute;right:5px" onclick="GroupInput.removeGrant(\''+div_id+'\')"></i></div>';
+
+		valid = $('#user_list > div[id="'+div_id+'"]').length>0?false:valid; //동일 권한 체크
+		
+		//상위 권한 존재체크
+		var length = value_arr.length;
+		for( var i=0; i<length ; i++) {
+			var match = $('#user_list > div[id="'+value_arr.join('_')+'"]').length;
+			if(match>0) {
+				valid = false;
+				break;
+			}
+			else {
+				value_arr.pop()
+			}
+		}
+		
+
+		if(valid) {
+			$('#user_list > div[id^="'+div_id+'"]').remove(); //하위권한 삭제
+			$('#user_list').append(html);
+			this.layoutGrant();
+		}
+		else {
+			alert('상위권한이나 동일한 권한이 이미 지정되어 있습니다.');
+			return false;
+		}
+	},
+	layoutGrant : function() {
+		var cnt = $('#user_list > div').length;
+		if(cnt > 0) { $('#user_notice').css('display','none'); }
+		else { $('#user_notice').css('display',''); }
+	},
+	saveGrant : function() {
+		var grant_dept = $('div#user_list>div').map(function(){ return $(this).attr('id'); }).get();
+		if(grant_dept.length<1) {
+			alert('한명이상의 직원을 선택하셔야 합니다.');
+			return false;
+		}
+		var formdata = $('#FrmGroupInput').serializeArray();
+		formdata.push({name:'grant', value:grant_dept});
+		
+		$.ajax({
+			url:'/manage_proc/group_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					AuthGroupList.reload();
+					$('.modal-close').trigger('click');			
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		});
+	},
+	removeGrant : function(id) {
+		$('#'+id).remove();
+		this.layoutGrant();
+	}
+}
+
+$(function() {
+	GroupInput.init();
+})
+</script>

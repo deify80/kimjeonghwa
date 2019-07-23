@@ -1,0 +1,234 @@
+<h3 class="area-title">팀 검색</h3>
+<form id="FrmTeamSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사용여부</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn active"><input type="radio" name="status" value="all" data-role="search" checked=""><span>전체</span></label>
+					<label class="btn"><input type="radio" name="status" value="1" /><span> 사용함</span></label>
+					<label class="btn"><input type="radio" name="status" value="0" /><span> 사용안함</span></label>
+				</div>
+			</td>
+			<th>부서</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn active"><input type="radio" name="dept_code" value="all" data-role="search" checked=""><span>전체</span></label>
+					{@ cfg.dept}
+					<label class="btn "><input type="radio" name="dept_code" value="{.key_}" data-role="search"><span>{.value_}</span></label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>		
+			<th>검색어</th>
+			<td colspan="3"><input type="text" name="team_name" class="full" placeholder="팀명 or 팀코드"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="TeamList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="TeamList.reset()">처음으로</button>
+</div>
+
+</form>
+
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	팀 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 팀 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 팀 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="TeamList.openInput()"><i class="fa fa-pencil fa-1"></i> 팀 등록</button>
+		<span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="TeamList.openMove()"><i class="fa fa-arrows fa-1"></i> 팀원이동</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="150px"><!-- 사업장 -->
+		<col width="150px"><!-- 부서 -->
+		<col width="80px"><!-- 팀코드 -->
+		<col ><!-- 팀명 -->
+		<col width="120px"><!-- 팀원수 -->
+		<col width="120px"><!-- 사용여부 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>사업장</th>
+			<th>부서</th>
+			<th>팀코드</th>
+			<th>팀명</th>
+			<th>팀원수</th>
+			<th>사용여부</th>
+		</tr>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${\team_code}"><span class="lbl"></span></td>
+		<td>${\biz_name}</td>
+		<td>${\dept_name}</td>
+		<td>${\team_code}</td>
+		<td><a href="javascript:;" onclick="TeamList.openInput('${\team_code}')" class="link">${\team_name}</a></td>
+		<td>${\count_user} 명</td>
+		<td><a href="javascript:;" onclick="TeamList.setStatus('${\team_code}','${\status}');"><i class="fa fa-check fa-1 {if status!='1'} f-null {/if}"></i></a></td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="TeamList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="TeamList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="TeamList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="TeamList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="TeamList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var TeamList = {
+	page:1,
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+	},
+	reset: function() {
+		$('#FrmTeamSearch')[0].reset();
+		this.load(1);
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	openInput: function(team_code) {
+		var title = (team_code)?'팀 정보 수정':'신규 팀 등록';
+		var modal = new HmisModal('team_input', {width:800, top:200});
+		modal.open(title,'/manage/team_input',{team_code:team_code});
+	},
+	openMove : function() {
+		var modal = new HmisModal('team_move', {width:500, top:200});
+		modal.open('팀원이동','/manage/team_move');
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmTeamSearch').serialize();
+		
+		$.ajax({
+			url:'/manage/team_list',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="6">검색된 팀정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+			}
+		})
+	},
+	loadTeam : function(dept_code) {
+		var sb_team = $('#sb_team');
+
+		if(!dept_code) {
+			sb_team.val('').css('display','none');	
+			return false;
+		}
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				
+				if(r.success){
+					sb_team.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');					
+				}
+				else {
+					sb_team.val('').css('display','none');	
+				}
+			}
+		});
+	},
+	
+	setStatus: function(team_code, status) {
+		console.log(team_code);
+		var me = this;
+		$.ajax({
+			url:'/manage_proc/team_set_status',
+			data:{
+				team_code:team_code, 
+				status:(status=='1')?'0':'1'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					me.reload();
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	TeamList.init();
+})
+</script>

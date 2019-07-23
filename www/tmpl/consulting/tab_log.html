@@ -1,0 +1,36 @@
+<table class="table table-bordered table-list table-striped">
+	<colgroup>
+		<col style="width:50px" /><!-- 번호 -->
+		<col style="width:150px" /><!-- 변경일자 -->
+		<col style="width:100px" /><!-- 팀 -->
+		<col style="width:100px" /><!-- 담당자 -->
+		<col style="width:150px" /><!-- 변경항목 -->
+		<col /><!-- 내용 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>변경일자</th>
+			<th>팀</th>
+			<th>담당자</th>
+			<th>변경항목</th>
+			<th>내용</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td>{.reg_date}</td>
+			<td>{.team_name}</td>
+			<td>{.name}</td>
+			<td>{.title}</td>
+			<td style="text-align:left">{.contents}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="6" class="center">등록된 상담항목 변경이력이 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>

@@ -1,0 +1,106 @@
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('nurse', '수술일지 등록')" ><i class="fa fa-plus fa-1"></i> 수술부위등록</button>
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col style="width:50px" />
+		<col style="width:50px" />
+		<col style="width:120px">
+		<col style="width:100px">
+		<col style="width:100px">
+		<col style="width:300px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_nurse[]')"><span class="lbl"></span></label></th>
+			<th>수술일자</th>
+			<th>담당의사</th>
+			<th>보조의사</th>
+			<th>수술부위</th>
+			<th>치료내용</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td><label class="hmis"><input type="checkbox" class="hmis" name="checked_nurse[]" value="{.no}"><span class="lbl"></span></label></td>
+			<td><a href="javascript:;" onclick="WidgetNurse.modify('{.no}')" class="link">{.date_nurse}</a></td>
+			<td>{.doctor_name}</td>
+			<td>{.assistance_name}</td>
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" title="<?=$row['treat_info']?>">{.treat_info}</span></td>
+			<td class="left">{.comment}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="7" class="center">등록된 수술부위가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div style="margin-top:7px;position:relative">
+	{? auth.delete}
+	<button type="button" onclick="WidgetNurse.remove()" class="btn btn-flat-orange">삭제</button>
+	{/}
+	<div style="position:absolute;right:0px;bottom:0px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('nurse','{paging.first}')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('nurse','{paging.prev}')"><i class="fa fa-angle-left"></i></a></li>
+				{@ paging.block}
+				<li class="{? .equal}active{/}"><a href="javascript:;" onclick="PatientInfo.loadTab('nurse','{.num}')">{.num}</a></li>
+				{/}
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('nurse','{paging.next}')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('nurse','{paging.last}')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var WidgetNurse = {
+	init: function() {
+	},
+	modify: function(no) {
+		PatientInfo.modalWidget('nurse', '수술일지 수정', {no:no});
+	},
+	remove: function(){
+		var checked = HmisCommon.getChecked('checked_nurse[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 수술일지를 선택하세요.');
+			return false;
+		}
+		
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var nurse_no = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/patient_proc/remove_nurse',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						nurse_no:nurse_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							PatientInfo.loadTab('nurse');
+							PatientInfo.countTab();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})	
+			}			
+		});
+	}
+};
+
+$(function(){
+	WidgetNurse.init();
+})
+</script>

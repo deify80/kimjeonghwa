@@ -1,0 +1,155 @@
+<form id="FrmGoodsSearch_popup3" onsubmit="return false">
+	<input type="hidden" name="inout_no" value="<?=$moseqno?>" />
+	<input type="hidden" name="ser_code" value="E" />		
+	<input type="hidden" name="mseq_no" value="<?=$row[no]?>" />
+	
+</form>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td><?=$row['syear']?>-<?=$row['firsthalf']?></td>
+			<th>이름</th>
+			<td><?=$row['name']?></td>
+			<th>직급</th>
+			<td><?=$row['duty_name']?></td>
+			<th>부서명</th>
+			<td><?=$row['dept_name']?></td>
+			<th>팀명</th>
+			<td><?=$row['team_name']?></td>			
+		</tr>
+	</tbody>
+</table>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="100px">
+		<col >
+		<col width="100px">
+	</colgroup>
+	<thead>
+		<tr>	
+			<th>구분</th>
+			<th>설명</th>
+			<th>평가점수</th>
+	</thead>
+	<tbody id="team_acc_list4">
+	</tbody>
+
+	<tbody id="team_acc_total">
+	</tbody>
+
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination2"></div>
+<div id="sdfdsfsfd22"></div>
+<textarea id="tmpl_acc_list4" style="display:none">
+	<tr>
+		<td>${competency}</td>
+		<td style="text-align:left">${contents}</td>
+		<td>
+			<select style="height:22px;" onchange="InoutList4.princupdate(${no},this.value,'tp4');">
+				<option value="">전체
+				<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+				<option value="<?=$k?>" {if c_greetings_princ=='<?=$k?>' } selected {/if}><?=$val?>
+			    <? endforeach;?>
+			</select>				
+		</td>
+	</tr>
+</textarea>
+<textarea id="tmpl_acc_total" style="display:none">
+	<tr>
+		<td colspan="2">평점</td>
+		<td >${c_greetings_princ_total}</td>
+	</tr>
+</textarea>
+
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var InoutList4 = {
+	init: function() {
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	load: function() {
+		
+		var search = $('#FrmGoodsSearch_popup3').serialize() ; 
+		
+		$.ajax({
+			url:'/assessment/select_assess_view',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_acc_list4');
+				var target = $('#team_acc_list4');
+
+				var tmpl2 = TrimPath.parseDOMTemplate('tmpl_acc_total');
+				var target2 = $('#team_acc_total');
+
+				target.empty();
+				target2.empty();
+
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);					
+
+					var html2 = '';
+					$.each(r.data.loop, function(i,e){
+						html2 += tmpl2.process(e);
+					});
+
+					target2.append(html2);		
+				} else {
+					target.append('<tr><td colspan="3">내역이 없습니다.</td></tr>');
+				}
+
+			}
+		})
+	},
+	princupdate: function(pno , princ , pcate) {
+
+		var pno ; 
+		var princ ;
+		var pcate ;
+			
+		$.ajax({
+			url:'/assessment_proc/pronc_update',
+	        data: { vno: pno ,  vprinc: princ , vcate: pcate },	 
+			dataType:'html',
+			type:'POST',
+			success: function(r) {
+//				$("#sdfsfd232131").html(r);	
+				InoutList4.load();
+				ThreeList.load();
+				InoutList.reload();
+			}
+		});
+	}
+}
+
+$(function() {
+	InoutList4.init();
+})
+</script>

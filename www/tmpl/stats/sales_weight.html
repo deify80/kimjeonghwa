@@ -1,0 +1,86 @@
+<form id="FrmSalesSetWeight">
+<input type="hidden" name="pack" value="stats" />
+<input type="hidden" name="field" value="weight" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>구분</th>
+			<th>가중치(%)</th>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach ($cfg['kind'] as $k=>$v){
+			$total_weight += $set[$k];
+		?>
+		<tr>
+			<th><?=$v?></th>
+			<td><input type="text" name="value[<?=$k?>]" value="<?=$set[$k]?>" class="center validate[custom[integer]]" autocomplete="off" id="weight_<?=$k?>" onkeyup="SalesSetWeight.calc()"> %</td>
+		</tr>
+		<? } ?>
+		
+		<tr>
+			<th>합계</th>
+			<td><span id="total_weight"><?=$total_weight?></span>%</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var SalesSetWeight = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmSalesSetWeight").validationEngine('attach',option);
+
+	},
+	save: function() {
+		if(parseInt($('#total_weight').text()) > 100) {
+			alert('가중치 합계가 100을 초과하였습니다.');
+			return false;
+		}
+		var formdata = $('#FrmSalesSetWeight').serialize();
+		$.ajax({
+			url:'/stats_proc/set_config',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					SalesMain.load();
+					$('.modal-close').trigger('click');			
+				}
+			}
+		})
+	},
+	calc : function() {
+		var total = 0
+		$.each($('input[id^="weight_"]'), function(i, e) {
+			var price = parseInt(e.value.replace(/[^0-9]/g,'')) || 0;
+			total+=price;
+			e.value = price;
+			
+		});
+		$('#total_weight').text(total)
+	}
+}
+
+$(function() {
+	SalesSetWeight.init();
+})
+</script>

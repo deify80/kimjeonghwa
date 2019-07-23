@@ -1,0 +1,86 @@
+<form id="FrmCategoryInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}">
+<input type="hidden" name="kind" value="{kind}">
+<input type="hidden" name="parent_code" value="{rs.parent_code}">
+<input type="hidden" name="group_code" value="{rs.group_code}">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		{? kind == 'item'}
+		<tr>
+			<th>상위코드</th>
+			<td>
+				<input type="text" name="code" value="{rs.parent_code}" class="transparent" readonly>
+			</td>
+		</tr>
+		{/}
+		{? mode == 'update'}
+		<tr>
+			<th>{? kind == 'item'}항목{:}분류{/}코드</th>
+			<td>
+				<input type="text" name="code" value="{rs.code}" class="transparent" readonly>
+			</td>
+		</tr>
+		{/}
+		<tr>
+			<th>{? kind == 'item'}항목{:}분류{/}명</th>
+			<td><input type="text" name="title" value="{rs.title}" class="validate[required]"/></td>
+		</tr>
+		<tr>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="use_flag" value="Y" {? rs.use_flag == 'Y'}checked{/} class="hmis" /><span class="lbl"> 사용</span></label>
+				<label class="hmis"><input type="radio" name="use_flag" value="N" {? rs.use_flag == 'N'}checked{/} class="hmis" /><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var CategoryInput = {
+	init: function(){
+		var me = this;
+		var option = $.extend({},validation_option,  {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmCategoryInput").validationEngine('attach',option);
+	},
+	save: function() {
+		var formdata = $('#FrmCategoryInput').serialize();
+		$.ajax({
+			url:'/finance_proc/category_save',
+			data:formdata,
+			dataType:'JSON',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					FinanceSettings.loadClassify(r.data.code);
+					$('.modal-close').trigger('click');	
+				}
+				else {
+					alert(r.msg);
+				}	
+			}
+		})
+	}
+}
+
+$(function(){
+	CategoryInput.init();
+})
+</script>
+

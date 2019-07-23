@@ -1,0 +1,144 @@
+<form id="FrmBuyView" onsubmit="return false">
+<input type="hidden" name="act" id="act" value="">
+<input type="hidden" name="order_no" value="{order.no}">
+<div class="classify-box2 count-{mod}">
+
+	{@ list}
+	<div>
+		<div class="classify">{.name}</div>
+		<table class="table table-bordered">
+			<colgroup>
+				<col style="width:80px">
+				<col style="width:80px">
+				<col>
+				<col style="width:60px">
+				<col style="width:80px">
+				<col style="width:150px">
+			</colgroup>
+			{@ .children}
+			{@ ..children}
+			{? ...index_==0}
+			<tr>
+				<th rowspan="{..count}" style="background-color:#f5f5f5">{..name}</th>
+				<td>{...goods_code}</td>
+				<td>{...goods_name}</td>
+				<td style="text-align:center">{=number_format(...cnt)}</td>
+				<td style="text-align:center">
+					<input type="text" class="full center validate[required,min[0],custom[onlyNumber]]" name="adjust[{...no}][cnt]" value="{...cnt_order}" data-errormessage-value-missing="물품수량을 입력하세요." data-errormessage-range-underflow="최소신청수량은 0입니다." {readonly}>
+				</td>
+				<td>
+					<select name="adjust[{...no}][client_no]" class="full validate[required]" data-errormessage-value-missing="거래처를 선택하세요." {readonly}>
+						<option value="">::거래처선택::</option>
+						{@ (client)}
+						<option value="{....no}" {=checked(....no, ...client_no,'selected')}>{....client_name}</option>
+						{/}
+					</select>
+				</td>
+			</tr>
+			{:}
+			<tr>
+				<td>{...goods_code}</td>
+				<td>{...goods_name}</td>
+				<td style="text-align:center">{=number_format(...cnt)}</td>
+				<td style="text-align:center">
+					<input type="text" class="full center validate[required,min[0],custom[onlyNumber]]" name="adjust[{...no}][cnt]" value="{...cnt_order}" data-errormessage-value-missing="물품수량을 입력하세요." {readonly} data-errormessage-range-underflow="최소신청수량은 0입니다.">
+				</td>
+				<td>
+					<select name="adjust[{...no}][client_no]" class="full validate[required]" data-errormessage-value-missing="거래처를 선택하세요." {readonly}>
+						<option value="">::거래처선택::</option>
+						{@ (client)}
+						<option value="{....no}" {=checked(....no, ...client_no,'selected')}>{....client_name}</option>
+						{/}
+					</select>
+				</td>
+			</tr>
+			{/}
+			{/}
+			{/}
+		</table>
+	</div>
+	{/}
+
+</div>
+<div class="clear"></div>
+
+
+<div class="area-button" style="margin-top:20px">
+	<!--
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	-->
+
+	{? in_array(order.status, array('wait', 'view')) && auth.stock_adjust //대기상태 && 발주서중간승인자인경우에만 삭제가능}
+	<button type="submit" class="btn btn-flat-blue btn-lg" >입고신청</button>
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="BuyView.reject();">입고거부</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var BuyView = {
+	act:null,
+	order_no:'{order.no}',
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmBuyView").validationEngine('attach',option);
+	},
+	save: function() {
+		HmisAlert.confirm('입고신청하시겠습니까?', function(r) {
+			if(r) {
+				$('#act').val('adjust');
+				var formdata = $('#FrmBuyView').serialize();
+				$.ajax({
+					url:'/stock_proc/order_adjust',
+					data:formdata,
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function() {
+							if(r.success) {
+								$('.modal-close').trigger('click');
+							}
+						})
+
+					}
+				})
+			}
+		});
+	},
+	reject: function() {
+		HmisAlert.confirm('반려하시겠습니까?', function(r) {
+			if(r) {
+				$('#act').val('reject');
+				var formdata = $('#FrmBuyView').serialize();
+				$.ajax({
+					url:'/stock_proc/order_reject',
+					data:formdata,
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function() {
+							if(r.success) {
+								$('.modal-close').trigger('click');
+							}
+						})
+
+					}
+				})
+			}
+		});
+
+
+	}
+}
+
+$(function() {
+	BuyView.init();
+})
+</script>

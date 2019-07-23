@@ -1,0 +1,142 @@
+<form id="FrmAccountInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}">
+<input type="hidden" name="hst_code" value="{rs.hst_code}">
+<!-- <input type="hidden" name="biz_id" value="{rs.biz_id}"> -->
+<input type="hidden" name="account_seqno" value="{rs.account_seqno}">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td>
+				<!-- <div class="minheight">{rs.biz_name}</div> -->
+				<select name="biz_id"  data-role="search">
+					<option value="">::사업장선택::</option>
+					{@ cfg.biz}
+					<option value="{.key_}" {? rs.biz_id==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+
+			</td>
+			<th>결제일</th>
+			<td>
+				<input type="text" name="card_payment_date" value="{rs.card_payment_date}" class="validate[required] required" style="width:30px;" maxlength=2/> 일
+			</td>
+		</tr>
+		<tr>
+			<th>카드명</th>
+			<td><input type="text" name="account_name" value="{rs.account_name}" class="validate[required] required" /></td>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="use_flag" value="Y" {? rs.use_flag == 'Y'}checked{/} class="hmis" /><span class="lbl"> Y</span></label>
+				<label class="hmis"><input type="radio" name="use_flag" value="N" {? rs.use_flag == 'N'}checked{/} class="hmis" /><span class="lbl"> N</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>유효기간</th>
+			<td>
+				<input type="text" name="card_expire_date1" value="{rs.card_expire_date1}" class="validate[required] required" style="width:50px;" maxlength="4" /> 년 / 
+				<input type="text" name="card_expire_date2" value="{rs.card_expire_date2}" class="validate[required] required" style="width:30px;" maxlength="2" /> 월
+			</td>
+			<th>결제계좌번호</th>
+			<td>
+				<select name="card_account_seq" class="validate[required] required" >
+					<option value="">::결제계좌번호::</option>
+					{@ cfg.account_list}
+					<option value="{.account_seqno}" {? rs.card_account_seq == .account_seqno}selected{/}>{.account_name}({.bank_name} : {.account_no})</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>카드사</th>
+			<td>
+				<select name="bank_code" class="validate[required] required" >
+					<option value="">::카드사선택::</option>
+					{@ cfg.card}
+					<option value="{.key_}" {? rs.bank_code == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>카드종류</th>
+			<td>
+				<select name="card_kind_code" class="validate[required] required" >
+					<option value="">::카드종류선택::</option>
+					{@ cfg.cardkind}
+					<option value="{.key_}" {? rs.card_kind_code == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+ 		</tr>
+		<tr>
+			<th>카드번호</th>
+			<td>
+				<input type="text" name="card_number" value="{rs.card_number}" class="validate[required] required" />
+			</td>
+			<th>한도</th>
+			<td>
+				<input type="text" name="card_amount_limit" value="{=number_format(rs.card_amount_limit)}" class="validate[required] required number" />
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var AccountInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		this.createNumber();
+
+		$("#FrmAccountInput").validationEngine('attach',option);
+	},
+	save: function() {
+		var me = this;
+		var formdata = $('#FrmAccountInput').serialize();
+		$.ajax({
+			url:'/finance_proc/card_save',
+			data:formdata, 
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				HmisAlert.alert(r.msg, function(){
+					if(r.success) {
+						$('.modal-close').trigger('click');
+					}
+				});
+			}
+		})
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+		
+		})
+	},
+}
+
+$(function() {
+	AccountInput.init();
+})
+</script>

@@ -1,0 +1,263 @@
+<h2 class="report" id="report_name"></h2>
+<form id="FrmReportInput" onsubmit="return false">
+<input type="hidden" name="approval" />
+<input type="hidden" name="reference" />
+<input type="hidden" name="writer_id" value="{writer.id}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:100px" />
+		<col style="width:200px" />
+		<col style="width:100px" />
+		<col style="width:200px" />
+		<col style="width:60px" />
+	</colgroup>
+	<tr>
+		<th>문서종류</th>
+		<td colspan="3">
+			<select name="report_code" id="report_code">
+				{@ cfg.report}
+				<option value="{.key_}">{.name}</option>
+				{/}
+			</select>
+		</td>
+		<th rowspan="3">결재 <div style="margin-top:7px"><button type="button" class="btn btn-onlyicon"  data-toggle="tooltip" title="결재/참조자 설정" onclick="ReportInput.openSign()"><i class="fa fa-pencil fa-1"></i></button></div></th>
+		<th><span id="approval_1"></span></th><!-- 결재자1 -->
+		<th><span id="approval_2"></span></th><!-- 결재자2 -->
+		<th><span id="approval_3"></span></th><!-- 결재자3 -->
+		<th><span id="approval_4"></span></th><!-- 결재자4 -->
+		<th><span id="approval_5"></span></th><!-- 결재자5 -->
+	</tr>
+	<tr>
+		<th>문서번호</th>
+		<td><input type="text" name="report_number" readonly class="full transparent" value="{report.report_number}" /></td>
+		<th>작성일자</th>
+		<td><div class="minheight">{=date('Y-m-d')}</div></td>
+		<td rowspan="2" class="center"></td><!-- 결재자1 사인란 -->
+		<td rowspan="2" class="center"></td><!-- 결재자2 사인란 -->
+		<td rowspan="2" class="center"></td><!-- 결재자3 사인란 -->
+		<td rowspan="2" class="center"></td><!-- 결재자4 사인란 -->
+		<td rowspan="2" class="center"></td><!-- 결재자5 사인란 -->
+	</tr>
+	<tr>
+		<th>부서</th>
+		<td><div class="minheight">{writer.team}</div></td>
+		<th>작성자</th>
+		<td>{writer.name} {writer.position}</td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td colspan="3"><input type="text" name="title" id="report_title" value="" class="full validate[required]" data-errormessage="제목을 입력하세요."/></td>
+		<th>참조</th>
+		<td colspan="5" class="left"><span id="reference"></span></td>
+	</tr>
+</table>
+
+<div id="tpl" style="margin-top:10px"></div>
+
+<div style="text-align:right;width:100%;margin:5px 0px 10px;" id="uploaded_info"></div>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:100px" />
+		<col />
+	</colgroup>
+	<tr>
+		<th>보고내용</th>
+		<td><textarea name="contents" class="hmis full" style="height:70px"></textarea></td>
+	</tr>
+	<tr>
+		<th>파일첨부</th>
+		<td>
+			<div class="file_div">
+				<button type="button" class="file_button btn btn-flat-blue"><i class="fa fa-search fa-1"></i> 파일 찾기</button>
+				<input type="file" name="file_attach[]" id="attach" class="file_hidden" value=""/>
+			</div>
+			<div id="file_list" class="file_list">
+				<div id="file_msg" style="color:#A2A2A2"></div>
+			</div>
+		</td>
+	</tr>
+</table>
+	
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme"><i class="fa fa-send"></i> 상신하기</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<style>
+div.MultiFile-label {
+	display:inline-block;
+	margin-right:20px;
+}
+</style>
+<script type="text/javascript">
+var ReportInput = {
+	person:{},
+	init: function(){
+
+		this.createAttach();
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmReportInput").validationEngine('attach',option);
+
+		this.loadReport();
+		$('#report_code').on('change', ReportInput.loadReport);
+	},
+	loadReport: function() {
+		var report_code = $('#report_code').val();
+		$.ajax({
+			url:'/report/config_info',
+			data:{
+				code:report_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				$('#report_name').html(r.data.name);
+				$('#report_title').val("{=date('Y-m-d')} {writer.name} "+r.data.name);
+				
+
+				// var href = "";
+				// $.get(href, function(data) {
+				// 	$('#tpl').html(data);
+				// 	$('[data-toggle="tooltip"]').tooltip();
+				// });
+
+				$('#tpl').load('/report/input_tpl', {tpl:r.data.path_tpl}, function(r){
+					// console.log(r);
+				});
+				
+			}
+		})
+	},
+	createAttach: function() {
+		var me = this;
+		this.msgFile();
+
+		$('#attach_report').MultiFile({ 
+			accept:'xls|xlsx|docx|pptx|txt|png',
+			max:1,
+			list:'#uploaded_info',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				denied:'$ext 형식의 파일은 업로드 할 수 없습니다.',
+			},
+			afterFileSelect: function(ele, value, master) {
+				//$('#viewer').attr('src','https://docs.google.com/gview?url=http://hjleehmis.md21.kr/DATA/work/paper/2-64QWbGSx.xls&embedded=true');
+				var options = { 
+					url:'/report_proc/report_upload',
+					type:'POST',
+					dataType:'json',
+					success : function(r) {
+						$('#viewer').attr('src','https://docs.google.com/gview?url='+r.data.file_url+'&embedded=true').css('display','block');
+						$('#viewer_none').css('display','none');
+					}
+				}
+				$('#FrmReportInput').ajaxSubmit(options);
+				// $('#attach_report').val("");
+			},
+			afterFileRemove: function(element, value, master_element){
+				me.removeAttach();
+			}
+		});
+
+		$('#attach').MultiFile({ 
+			list: '#file_list',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				duplicate:'이미 등록된 파일입니다.'
+			},
+			afterFileAppend: function() {
+				me.msgFile();
+			},
+			afterFileRemove: function() {
+				me.msgFile();
+			}
+		});
+	},
+	msgFile : function() {
+		var count = $('#file_list > div.MultiFile-label');
+		if(count.length<1) {
+			$('#file_msg').html('파일을 첨부해 주세요.');
+		}
+		if(count.length>0) {
+			$('#file_msg').html('');
+		}
+	},
+	removeAttach: function() {
+		$('#viewer').attr('src','about:blank').css('display','none');
+		$('#viewer_none').css('display','');
+	},
+	save: function() {
+		// 결재선지정체크
+		var people_approval = $('input[name="approval"]').val();
+		if(!people_approval) {
+			HmisAlert.alert("결재자를 지정하세요.");
+			return false;
+		}
+
+		//보고문서 업로드 체크
+		if($('input[name="file_report"]').length > 0) {
+			var report_file = $('input[name="file_report"]')[0].files[0];
+			if(!report_file) {
+				HmisAlert.alert("보고할 문서를 업로드하세요.");
+				return false;
+			}	
+		}
+		
+
+		HmisAlert.confirm("보고서를 상신하시겠습니까?", function(r){
+			if(r) {
+				var options = { 
+					url:'/report_proc/report_save',
+					type:'POST',
+					dataType:'json',
+					success : function(r) {
+						HmisAlert.alert(r.msg);
+						if(r.success) {
+							$('#HmisModal_reportinput .modal-close').trigger('click');
+						}
+					}
+				}
+				$('#FrmReportInput').ajaxSubmit(options);
+			}
+		})
+	},
+	openSign: function() {
+		var title = '결재자 지정';
+		var modal = new HmisModal('sign', {width:600, top:100});
+		modal.callback = this.setSign;
+		modal.open(title,'/report/sign', this.person);
+	},
+	setSign: function(data) {
+		if($.isEmptyObject(data)) return false;
+		$('span[id^="approval_"], span#reference').html('');
+		if($.isEmptyObject(data)) return false;
+
+		var approval_id = $(data.approval).map(function(){ return this.user_id}).get();
+		var reference_id = $(data.reference).map(function(){ return this.user_id}).get();
+		var reference_name = $(data.reference).map(function(){ return this.user_name}).get();
+
+		$.each(data.approval, function(i,e) {
+			$('#approval_'+(i+1)).html(e.user_name);
+		});
+
+		$('input[name="approval"]').val(approval_id.join(', '));
+		$('#reference').html(reference_name.join(', '));
+		$('input[name="reference"]').val(reference_id.join(','));
+
+		this.person = data;
+	}
+}
+
+$(function() {
+	ReportInput.init();
+})
+</script>

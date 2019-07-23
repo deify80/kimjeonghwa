@@ -1,0 +1,88 @@
+<script>
+	$(document).ready(function() {
+
+		$("button, input[type=button]").button();
+		
+		$("#check-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) search();
+			}
+		})
+		
+	});
+	
+	
+	
+	function search() {
+
+		if ($("#check-frm :input[name='srch_tel']").val() == "" && $("#check-frm :input[name='srch_messenger']").val() == "") {
+			alert("입력값이 없습니다.");
+			return;
+		}
+
+		$.ajax({
+			type : "POST",
+			url : "/consulting/search_lists",
+			data : $("#check-frm").serialize(),
+			success : function(result_data) {
+				var obj = $.parseJSON(result_data);	
+				var row = "";
+				if (obj.cst_seqno != undefined) row = "<tr><td>"+obj.biz_name+"</td><td>"+obj.path+"</td><td>"+obj.reg_date+"</td><td>"+obj.name+"</td><td>"+obj.tel+"</td><td>"+obj.messenger+"</td><td>"+obj.team_name+"</td><td>"+obj.cst_status+"</td></tr>";
+				else row = "<tr><td colspan='8' align='center'>해당 내역이 존재하지 않습니다.</td></tr>";
+				
+				$( "#result tbody" ).html( row );
+				$( "#result" ).fadeIn();
+			}
+		});
+	}
+	
+</script>
+<div style="width: 95%; margin: auto;">
+	<h3 class="area-title">고객중복체크</h3>
+	<form id="check-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="15%" />
+			<col width="30%" />
+			<col width="15%" />
+			<col width="" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>연락처</th>
+				<!--td><input type="text" name="srch_tel" class="validate[custom[telephone]]" data-prompt-position="bottomLeft"></td-->
+				<td><input type="text" name="srch_tel" ></td>
+				<th>메신저</th>
+				<td><input type="text" name="srch_messenger">
+				<button type="submit">확인</button></td>
+			</tr>
+		</tbody>
+	</table>
+	</form>
+	<div class="ui-widget">
+		<div class="ui-corner-all" style="margin-top: 5px; padding: 0.2em;">
+			<p>
+				<span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span> 연락처와 메신저 중 하나를 입력해주세요.
+			</p>
+		</div>
+	</div>
+	<div id="result" style="display: none;">
+		<h3 class="area-title">결과</h3>
+		<table class="basic-table">
+			<thead>
+				<tr>
+					<th>사업장</th>
+					<th>유입경로</th>
+					<th>접수일자</th>
+					<th>고객명</th>
+					<th>연락처</th>
+					<th>메신저</th>
+					<th>팀</th>
+					<th>상담상태</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+</div>

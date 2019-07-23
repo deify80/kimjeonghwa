@@ -1,0 +1,124 @@
+<script>
+	$(document).ready(function() {
+		set_list();		
+	});
+
+	function set_list() {
+		$("#list").jqGrid(
+				{
+					width : 820,
+					height : 240,
+					url : "/bbs_lists/<?=$bbs_code?>",
+					datatype : "json",
+					colNames : [ "번호", "제목", "등록일", "작성자", "조회수", "bbs_seqno",
+							"type" ],
+					colModel : [ {
+						name : "no",
+						index : "no",
+						width : 20,
+						align : "center",
+						sortable : false
+					}, {
+						name : "title",
+						index : "title",
+						width : 150,
+						align : "left",
+						sortable : false
+					}, {
+						name : "reg_date",
+						index : "reg_date",
+						width : 50,
+						align : "center",
+						sortable : false
+					}, {
+						name : "reg_user_name",
+						index : "reg_user_name",
+						width : 30,
+						align : "center",
+						sortable : false
+					}, {
+						name : "hit",
+						index : "hit",
+						width : 20,
+						align : "center",
+						sortable : false
+					}, {
+						name : "bbs_seqno",
+						width : 0.1,
+						sortable : false
+					}, {
+						name : "type",
+						width : 0.1,
+						sortable : false
+					} ],
+					rowNum : 10,
+					rowList : [ 10, 20, 30 ],
+					pager : "#pager",
+					viewrecords : true,
+					sortorder : "desc",
+					caption : "목록",
+					onSelectRow : function(id) {
+						var data = $('#list').getRowData(id);
+						bbs_view('<?=$bbs_code?>', id);
+					}
+				});
+
+		$("#list").hideCol([ "bbs_seqno", "type" ]);
+		$("#list").jqGrid("navGrid", "#pager", {
+			edit : false,
+			add : false,
+			del : false,
+			search : false
+		});
+		
+	}
+
+	
+	function grid_reload() {
+		var data = $("#srch-frm").serialize();
+		var url = "/bbs_lists/<?=$bbs_code?>?" + data;
+		$("#list").jqGrid("setGridParam", {
+			url : url,
+			page : 1
+		}).trigger("reloadGrid");
+	}
+
+</script>
+
+<div style="width:100%;">
+<?$this->load->view( 'bbs/' . $bbs_config['skin'] . '/header');?>
+
+<h3 class="area-title">
+	<?=$bbs_config['bbs_title']?>
+</h3>
+<form id="srch-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="20%" />
+			<col width="" />
+		</colgroup>
+		<tbody>			
+			<tr>				
+				<th>검색</th>
+				<td>
+					<select name="srch_type">
+					<option value="">-선택-</option>
+					<option value="title">제목</option>
+					<option value="contents">내용</option>
+					<option value="name">작성자</option>
+					</select>	
+					<input type="text" name="srch_keyword">
+					<button id="bt-srch" onclick="grid_reload();">검색</button>
+					<button id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+
+<div class="tool-box" style="margin: 0px; padding-bottom: 5px;">
+	<button onClick="bbs_input('<?=$bbs_code?>');">글쓰기</button>
+</div>
+<table id="list"></table>
+<div id="pager"></div>
+</div>

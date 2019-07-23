@@ -1,0 +1,199 @@
+<style>
+ul.ui-autocomplete {z-index:999999;}
+</style>
+
+<form id="input-frm">
+<input type="hidden" name="seqno" id="seqno" value="<?=$row['seqno']?>">
+<input type="hidden" name="cst_seqno" id="cst_seqno" value="<?=$row['cst_seqno']?>">
+<input type="hidden" name="mode" id="mode" value="<?=$mode?>">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>고객명 / 연락처</th>
+			<td>
+				<input type="text" class="validate[required] required search" name="name" id="name" placeholder="고객명 or 연락처" value="<?=$rs['name_tel']?>" autocomplete="off" style="width:200px" />
+				<!-- <input type="text" class="validate[required]" name="name" id="name" size="30" value="<?=$row['name_tel']?>"> -->
+			</td>
+			<th>발생일자</th>
+			<td>
+				<input type="text" name="complain_date" id="complain_date" value="<?=$row['complain_date']?>" size="15" class="datepicker">
+			</td>							
+		</tr>
+		<tr>
+			<th>구분</th>
+			<td colspan="3">
+				<select name="complain_type" id="complain_type" class="validate[required]">
+					<option value="">선택</option>
+					<? foreach($complain_type as $i=>$val): ?>
+					<option value="<?=$i?>" <?=($row['complain_type']==$i)?'selected':''?> ><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>담당자</th>
+			<td>
+				<? if ($this->session->userdata( 'ss_dept_code' ) == '90') { ?>
+					<?=$this->session->userdata( 'ss_name' )?>
+					<input type="hidden" name="complain_charger_id" id="complain_charger_id" value="<?=$this->session->userdata( 'ss_user_id' )?>">
+				<? } else { ?>
+					<select name="complain_charger_team" onChange="ComplainInput.loadUser(this.value)" class="validate[required]">
+						<option value="">팀선택</option>
+						<? foreach($team_list as $tc=>$tn) {?>
+						<option value="<?=$tc?>" <?=($row['complain_charger_team']==$tc)?'selected':''?>><?=$tn?></option>
+						<? } ?>
+					</select>
+					<select name="complain_charger_id" id="complain_charger_id" class="validate[required]" style="display:none">
+						<option value="">-선택-</option>
+						<? foreach($user_list as $i=>$val) { ?>
+						<option value="<?=$i?>" <?=($row['complain_charger_id']==$i)?'selected':''?>><?=$val?></option>
+						<? } ?>
+					</select>
+				<? } ?>
+			</td>
+			<th>담당의</th>
+			<td>
+			<select name="doctor" id="doctor" class="validate[required]" style="width:100px;">
+			<option value="">-선택-</option>
+			<? foreach($doctor_list as $i=>$val): ?>
+			<option value="<?=$val?>"><?=$val?></option>
+			<? endforeach; ?>
+			</select>
+			</td>
+		</tr>
+		<tr>
+			<th>컴플레인 내용</th>
+			<td colspan="3">
+				<textarea name="complain" class="validate[required] hmis" style="height:100px;"><?=$row['complain']?></textarea>
+			</td>
+		</tr>	
+		<tr>
+			<th>후속대책</th>
+			<td colspan="3">
+				<textarea  name="measure" class="hmis" style="height:100px;"><?=$row['measure']?></textarea>
+			</td>
+		</tr>	
+	</tbody>
+</table>
+
+<div class="area-button">
+	<? if($valid_modify) { ?>
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	<? } ?>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var ComplainInput = {
+	init:function() {
+		HmisCommon.createDatepicker();
+
+		$("#input-frm").validationEngine('attach', {
+			scroll:false,
+			onValidationComplete : function(form, status) {
+				if (status) ComplainInput.save();
+			}
+		});
+
+		
+		// $( "#name" ).autocomplete({
+		//       source: "/consulting/search_customer",
+		//       minLength: 2,
+		//       select: function( event, ui ) {
+		//       	$("#cst_seqno").val(ui.item.id);  			      		
+		//       },
+		//       focus: function( event, ui ) {
+		//       	$("#cst_seqno").val(ui.item.id);  	
+		//       }
+		// });
+
+		$("#name").autocomplete({
+			delay:500,
+			source: "/consulting/search_customer",
+			minLength: 2,
+			select: function( event, ui ) {
+				$("#cst_seqno").val(ui.item.id);  			      		
+			},
+			focus: function( event, ui ) {
+				$("#cst_seqno").val(ui.item.id);  
+				event.preventDefault(); 	
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				e.preventDefault();
+			}
+		});
+
+		
+		
+		if ($("#mode").val() == "MODIFY") {
+			// $("#complain_charger_id").val("<?=$row['complain_charger_id']?>");
+			$("#doctor").val("<?=$row['doctor']?>");
+		}
+
+		this.loadUser($('select[name="complain_charger_team"]').val());
+	},
+	loadUser : function(team_code) {
+		if(!team_code) return false;
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#complain_charger_id');
+
+				if(r.success){
+					sb.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						var selected = (i=='<?=$row[complain_charger_id]?>')?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');	
+				}
+			}
+		});
+	},
+	save: function() {
+		if ($("#cst_seqno").val() == "") {
+			alert("고객이 정상적으로 선택되지 않았습니다.");
+			$("#name").focus();
+			return;
+		}
+		
+		var data = $("#input-frm").serialize();
+		$.ajax({
+			type : "POST",
+			url : "/work_proc/add_complain",
+			data : data,
+			success : function(result_data) {
+
+				$("#list").trigger("reloadGrid");
+				$('.modal-close').trigger('click');
+				alert('저장되었습니다.');
+				// $("#msg-area").html("저장 완료했습니다.");
+				// $("#msg-area").dialog("open");
+				
+			}
+		});
+	}
+} 
+
+$(function(){
+	ComplainInput.init();
+})
+</script>

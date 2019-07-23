@@ -1,0 +1,630 @@
+<form id="FrmIndexSesput" onsubmit="return false">
+<input type="hidden" name="mode" value="<?=$cfg['mode']?>" />
+<input type="hidden" name="inout_no" value="<?=$row[no]?>" /><!-- 입출고Pk -->
+
+<div style="width:500px;float:left;text-align:center;">
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col width="80px">
+			<col>
+			<col width="80px">
+			<col>
+			<col width="80px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>구분</th>
+				<td><?=$row[syear]?>-<?=$row[firsthalf]?></td>
+				<th>평가기간</th>
+				<td colspan="3"><?=$row['sdate']?>~<?=$row['ldate']?></td>
+			</tr>
+			<tr>		
+				<th>성과평가</th>
+				<td><?=$row['is_result']?></td>
+				<th>역량평가</th>
+				<td><?=$row['is_cocy']?></td>
+				<th>다면평가</th>
+				<td><?=$row['is_ifs']?></td>			
+			</tr>		
+		</tbody>
+	</table>	
+
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col width="220px;">
+			<col>
+			<col width="220px;">			
+		</colgroup>
+		<tbody>
+			<tr>
+				<th colspan="3">
+				
+					<select name="biz_info" id="biz_info" style="width:120px" disabled>
+						<option value="">-사업장-</option>
+						<? foreach( $biz_info as $i=>$val){ ?>
+						<option value="<?=$this->session->userdata( 'ss_hst_code' ) ?>" <? if ( $row['biz_info'] == $i ) echo "selected" ; ?>><?=$val?></option>
+						<? } ?>
+					</select>
+					<select name="dept_info" id="dept_info"  style="width:110px">
+						<option value="">-부서명-</option>
+					</select>
+					<select name="team_info" id="team_info"  style="width:100px">
+						<option value="">-팀명-</option>
+					</select>
+						<input type="text"name="search_user" id="search_user" style="width:50px;">
+						<button type="button" class="btn btn-flat-purple btn-onlyicon" onclick="IndexSesput.search_user();"><i class="fa fa-search fa-1" data-role="tooltip" title="검색"></i></button>
+						<button type="button" class="btn btn-onlyicon" onclick="IndexSesput.line_reset();"><i class="fa fa-refresh fa-1 f-green" data-role="tooltip" title="새로고침"></i></button>
+				</th>
+			</tr>			
+			<tr>
+				<td>
+					<select name="user_info" id="user_info" multiple style="width:100%;height:350px;" >							
+					</select>
+				</td>
+				<td>
+					<a href="javascript:;" onclick="IndexSesput.approval_refer('approval_user');"><i class="fa fa-arrow-right"></i><br><br><br>
+					<a href="javascript:;" onclick="IndexSesput.delformate();"><i class="fa fa-arrow-left"></i>
+				</td>
+				<td>
+					<select name="approval_user" id="approval_user" multiple style="width:100%;height:350px;" >				
+					</select>				
+				</td>
+			</tr>			
+			
+		</tbody>
+	</table>
+
+	<div id="showdatevie"></div>
+	<div class="area-button">
+		<button type="submit" class="btn btn-theme btn-lg" onclick="IndexSesput.save('dog')">점수저장</button>
+		<button type="submit" class="btn btn-theme btn-lg" onclick="IndexSesput.save()">저장</button>
+		<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+	</div>
+</div>
+
+<div style="width:600px;float:right;text-align:center;">
+	
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col>		
+		</colgroup>
+		<tbody>
+		
+			<tr>
+				<td style="right">
+					<select name="biz_info_str" id="biz_info_str" style="width:118px;" disabled>
+						<option value="">-사업장-</option>
+						<? foreach( $biz_info as $i=>$val){ ?>
+						<option value="<?=$this->session->userdata( 'ss_hst_code' ) ?>" <? if ( $row['biz_info'] == $i ) echo "selected" ; ?>><?=$val?></option>
+						<? } ?>
+					</select>
+					<select name="dept_info_str" id="dept_info_str"  style="width:110px;">
+						<option value="">-부서명-</option>
+					</select>
+					<select name="team_info_str" id="team_info_str"  style="width:100px;">
+						<option value="">-팀명-</option>
+					</select>
+					<select name="user_name_str" id="user_name_str" style="width:180px"   onchange="IndexSesput.loaddetails('Q');IndexSesput.loaddetails('W');">
+						<option value="">-이름-</option>
+					</select>
+
+					<!--input type="text" name="name"  maxlength="3" style="width:70px;" value="송아리"/>
+					<button class="btn btn-flat-blue" onclick="IndexSesput.loaddetails('Q');IndexSesput.loaddetails('W');"><i class="fa fa-pencil fa-1"></i> 검색</button-->
+				</td>	
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col>
+			<col>
+			<col width="110px">
+			<col width="110px">			
+			<col width="110px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th rowspan="2">평가항목<br> 가중치</th>
+				<th>항목</th>
+				<th>성과평가</th>				
+				<th>역량평가</th>				
+				<th>다면평가</th>				
+				<th>총합</th>								
+			</tr>			
+			<tr>
+				<th>비율</th>
+				<td><input type="text" name="result_percent" id="result_percent" maxlength="3" style="width:70px;"/>%</td>				
+				<td><input type="text" name="competency_percent" id="competency_percent"  maxlength="3" style="width:70px;" />%</td>				
+				<td><input type="text" name="various_percent" id="various_percent" maxlength="3" style="width:70px;" />%</td>				
+				<th>100%</th>								
+			</tr>			
+		</tbody>
+	</table>
+
+	<div class="area-button">
+		<!--button class="btn btn-flat-blue" style="width:195px;" onclick="IndexSesput.tempsss('A');"> 성과평가</button>
+		<button class="btn btn-flat-blue" style="width:195px;" onclick="IndexSesput.tempsss('B');"> 역량평가</button>
+		<button class="btn btn-flat-blue" style="width:195px;" onclick="IndexSesput.tempsss('C');"> 다면평가</button-->		
+		<ul id="bg_detp" class="btn-group btn-group-sm" style="margin-top:10px;" >
+			<li id="dept_all"  class="active"><a href="javascript:;"  onclick="IndexSesput.tempssst(0);" style="width:200px;">성과평가 </a></li>	
+			<li id="dept_all"  ><a href="javascript:;" onclick="IndexSesput.tempssst(1);" style="width:200px;">역량평가</a></li>	
+			<li id="dept_all" ><a href="javascript:;" onclick="IndexSesput.tempssst(2);" style="width:200px;">다면평가</a></li>	
+		</ul>
+	</div>	
+
+
+	<!-- 성과평가  -->
+	<table class="table table-bordered table-form"  id="tbl_table1">
+		<colgroup>
+			<col>
+			<col>
+			<col width="110px">
+			<col width="110px">			
+			<col width="110px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th rowspan="2">평가자 <br> 가중치</th>
+				<th>항목</th>
+				<th>본인평가</th>				
+				<th>팀장평가</th>				
+				<th>최종평가</th>				
+				<th>총합</th>								
+			</tr>		
+			<tr>
+				<th>비율</th>
+				<td><input type="text" name="a_result_percent" id="a_result_percent"  maxlength="3" style="width:70px;"/>%</td>				
+				<td><input type="text" name="a_competency_percent"  id="a_competency_percent" maxlength="3" style="width:70px;" />%</td>				
+				<td><input type="text" name="a_various_percent" id="a_various_percent"  maxlength="3" style="width:70px;" />%</td>				
+				<th>100%</th>								
+			</tr>			
+		</tbody>
+	</table>
+
+	<!-- 성과평가  -->
+
+	<!-- 역량평가  -->
+	<table class="table table-bordered table-form" style="display:none;" id="tbl_table2">
+		<colgroup>
+			<col>
+			<col>
+			<col width="110px">
+			<col width="110px">			
+			<col width="110px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th rowspan="2">평가자 <br> 가중치</th>
+				<th>항목</th>
+				<th>본인평가</th>				
+				<th>팀장평가</th>				
+				<th>최종평가</th>				
+				<th>총합</th>								
+			</tr>			
+			<tr>
+				<th>비율</th>
+				<td><input type="text" name="b_result_percent" id="b_result_percent"  maxlength="3" style="width:70px;"/>%</td>				
+				<td><input type="text" name="b_competency_percent" id="b_competency_percent"  maxlength="3" style="width:70px;" />%</td>				
+				<td><input type="text" name="b_various_percent"  id="b_various_percent" maxlength="3" style="width:70px;" />%</td>				
+				<th>100%</th>								
+			</tr>			
+		</tbody>
+	</table>
+
+	<table class="table table-bordered table-form" style="display:none;" id="tbl_table21">
+		<colgroup>
+			<col width="50px;">
+			<col width="100px;">
+			<col>
+		</colgroup>
+	<thead>
+	<tr>
+		<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+		<th>구분</th>				
+		<th>설명</th>							
+	</tr>			
+	</thead>
+	<tbody id="popup_team_list" style="overflow-x: scroll;  float: left;width:600px;height:300px">
+	</tbody>
+	</table>			
+
+	<textarea id="popup_tmpl_list" style="display:none;" >
+		<tr>
+			<td width="50px;"><input type="checkbox" name="checked[]" value="${no}" ${evaluation_check} ><span class="lbl"></span></td>
+			<td width="100px;">${competency}</td>
+			<td>${contents}</td>
+		</tr>
+	</textarea>
+	<!-- 역량평가  -->
+
+	<!-- 성과평가  -->
+	<table class="table table-bordered table-form" style="display:none;" id="tbl_table3">
+		<colgroup>
+			<col width="50px;">
+			<col width="100px;">
+			<col>
+		</colgroup>
+
+	<thead>
+		<tr>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked2[]')"><span class="lbl"></span></th>
+			<th>구분</th>				
+			<th>설명</th>							
+		</tr>			
+	</thead>
+	<tbody id="popup_team_list2" >
+	</tbody>
+	</table>		
+	<textarea id="popup_tmpl_list2" style="display:none">
+		<tr>
+			<td><input type="checkbox" class="hmis" name="checked2[]" value="${no}" ${no_check} ><span class="lbl"></span></td>
+			<td>${competency}</td>
+			<td>${contents}</td>
+		</tr>
+	</textarea>
+
+	<!-- 성과평가  -->
+
+</div>
+
+</form>
+
+<script type="text/javascript">
+var IndexSesput = {
+	saveMode:'continue',
+	init : function() {
+		this.loaddetails('Q');
+		this.loaddetails('W');
+		
+		HmisCommon.createDatepicker();
+
+//		$("#biz_info").val('H000');
+		IndexSesput.bizinfochanges( 'H000' );
+
+//		$("#biz_info_str").val('H000');
+		IndexSesput.bizinfostrchanges( 'H000' );
+
+		$( "select#user_info" ).dblclick(function() {
+			IndexSesput.approval_refer('approval_user');
+		});
+
+		$('select#biz_info').change(function(){
+			var hst_code = $(this).val();
+			IndexSesput.bizinfochanges( hst_code );
+		});
+
+		$('select#biz_info_str').change(function(){
+			var hst_code = $(this).val();
+			IndexSesput.bizinfostrchanges( hst_code );
+		});
+
+
+		$( "select#dept_info" ).change(function() {
+
+			  var dept_code = $(this).val();
+			  if ( dept_code == '' ) {
+					IndexSesput.bizinfochanges( 'H000' );
+			  }
+			  //$("#team_info").append("<option value='1'>aaaaaaaa</option>");
+			  var url = "/assessment/get_team_json/"+dept_code;			  
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){	         
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 //$("#team_info").append("<option value='"+index+"'>"+entry+"</option>");
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#team_info').html(rows);
+					}
+				});	
+			  
+			  IndexSesput.get_user_info('dept', dept_code);
+		});
+
+		$( "select#dept_info_str" ).change(function() {
+			  var dept_code = $(this).val();
+			  if ( dept_code == '' ) {
+					IndexSesput.bizinfostrchanges( 'H000' );
+			  }
+			  //$("#team_info").append("<option value='1'>aaaaaaaa</option>");
+			  var url = "/assessment/get_team_json/"+dept_code;			  
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){	         
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 //$("#team_info").append("<option value='"+index+"'>"+entry+"</option>");
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#team_info_str').html(rows);
+					}
+				});	
+			  
+			  IndexSesput.get_user_info_str('dept', dept_code);
+		});
+		
+		$( "select#team_info" ).change(function() {
+			var team_code = $(this).val();
+			
+			IndexSesput.get_user_info('team', team_code);
+		});
+
+		$( "select#team_info_str" ).change(function() {
+			var team_code = $(this).val();
+			
+			IndexSesput.get_user_info_str('team', team_code);
+		});
+
+	},
+	bizinfochanges : function ( phst_codep ) {
+
+			var hst_code = phst_codep;
+			var url = "/assessment/get_dept_json/"+hst_code;
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#dept_info').html(rows);
+					}
+				});
+				IndexSesput.get_user_info('hst', hst_code);
+	},
+	bizinfostrchanges : function ( phst_codep ) {
+			var hst_code = phst_codep ;
+			var url = "/assessment/get_dept_json/"+hst_code;
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#dept_info_str').html(rows);
+					}
+				});
+				IndexSesput.get_user_info_str('hst', hst_code);
+	},
+	tempssst: function( tval ) {
+			var tval ;
+			$('#bg_detp li').removeClass("active");
+			$('#bg_detp li').eq(tval).addClass("active");
+			
+			$("#tbl_table1").hide();		
+			$("#tbl_table2").hide();		
+			$("#tbl_table21").hide();		
+			$("#tbl_table3").hide();						
+
+			if ( tval == '0' ) {
+				$("#tbl_table1").show();						
+			} else if ( tval == '1' ) {	
+				$("#tbl_table2").show();		
+				$("#tbl_table21").show();							
+			} else {	
+				$("#tbl_table3").show();		
+			}			
+	},
+	line_reset: function () {
+		$("select#biz_info").val("").attr("selected", "selected");
+		$('select#dept_info').html("<option value=''>-부서명-</option>");
+		$('select#team_info').html("<option value=''>-팀명-</option>");
+		$('select#user_info').html("");
+		$('select#approval_user').html("");
+		this.get_user_info( 'hst', '' );
+	},
+	get_user_info: function ( what, code ) {
+
+		var code_arr;
+		var pseq_no = '<?=$row[no]?>' ;
+		var url = "/assessment/get_user_info_json/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "what="+what+"&code="+code+"&seq_nos="+pseq_no,
+				dataType: "json",
+				success: function(result_data){
+					var rows = "";
+					
+					if (result_data != null && result_data != "") {				    	
+						$.each(result_data, function(index, entry){	
+							index = index.replace('_','');
+							rows += "<option value='"+index+"'>"+entry+"</option>";
+						});
+					}
+				if( what == "save_line" ){
+					if( code ){
+						$('select#approval_user').html(rows);
+					}else{
+						$('select#approval_user').html("");
+					}
+				}
+				else{
+					$('select#user_info').html(rows);
+				}
+			}
+		});
+	},
+	get_user_info_str: function ( what, code ) {
+
+		var code_arr;
+		var pseq_no = '<?=$row[no]?>' ;
+		var url = "/assessment/get_user_info_json/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "what="+what+"&code="+code+"&seq_nos="+pseq_no,
+				dataType: "json",
+				success: function(result_data){
+					var rows = "";
+					var rows = "<option value=''>-선택-</option>";					
+					if (result_data != null && result_data != "") {				    	
+						$.each(result_data, function(index, entry){	
+							index = index.replace('_','');
+							rows += "<option value='"+index+"'>"+entry+"</option>";
+						});
+					}
+
+					$('select#user_name_str').html(rows);
+	
+			}
+		});
+	},
+	approval_refer : function(id) { // 결재, 참조라인 넣기
+		var str = "";
+		var rows = "";		
+		var check = [];
+		var cnt = 0;
+		
+		// 결재라인에 있는지 체크
+		$('select#approval_user').find('option').each(function() {    		
+			check.push($(this).val());
+			cnt++;
+		});		
+		
+		// 참조라인에 있는지 체크
+		$('select#refer_user').find('option').each(function() {    		
+			check.push($(this).val());
+		});
+		
+		// 결재 및 참조라인에 없다면 넣기
+		$( "select#user_info option:selected" ).each(function() {
+			if( $.inArray( $( this ).val(), check ) == -1 ){				
+				
+				if( "approval_user" == id && cnt >= 100 ){					
+					return false;
+				}
+				
+				$("#"+id).append("<option value='"+$( this ).val()+"'>"+$( this ).text()+"</option>");
+					
+				cnt++;
+			}				
+		});
+	},
+	delformate : function( ) {
+		$('#approval_user option:selected').remove();
+	},
+	search_user : function( ) {
+		this.get_user_info( 'search', $('#search_user').val() );
+	},
+	loaddetails: function( ptcode ) {
+
+		var pcode = ptcode ;  		
+		var me = this;
+		var search = $('#FrmIndexSesput').serialize()+"&code="+pcode;
+
+		$.ajax({
+			url:'/assessment/details_list_paging',
+			data:search,			
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				if ( pcode == 'Q')
+				{
+					var tmpl = TrimPath.parseDOMTemplate('popup_tmpl_list');
+					var target = $('#popup_team_list');
+				} else {
+					var tmpl = TrimPath.parseDOMTemplate('popup_tmpl_list2');
+					var target = $('#popup_team_list2');
+				}
+
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);					
+
+					$.each(r.data.listup, function(i,e){
+//						alert ( e.result_percent ) ;
+						$("#result_percent ").val(e.result_percent);
+						$("#competency_percent ").val(e.competency_percent);
+						$("#various_percent ").val(e.various_percent);
+
+						$("#a_result_percent ").val(e.a_result_percent);
+						$("#a_competency_percent ").val(e.a_competency_percent);
+						$("#a_various_percent ").val(e.a_various_percent);
+
+						$("#b_result_percent ").val(e.b_result_percent);
+						$("#b_competency_percent ").val(e.b_competency_percent);
+						$("#b_various_percent ").val(e.b_various_percent);
+					});
+					
+
+				}
+				else {
+					target.append('<tr><td colspan="12">내역이 없습니다.</td></tr>');
+				}
+
+			}
+		})
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+	save: function( pval ) {
+		// if(!confirm('저장하시겠습니까?')) return false;
+		var me = this;
+		var pval ;
+		var check_approval = [];		
+
+		if( $.trim($('#approval_user').text()) == "" ){
+			alert('평가자를 등록해주세요');
+			return;
+		}	
+
+		// 결재라인 값들 가져오기 및 적용
+		$('select#approval_user').find('option').each(function() {    
+			check_approval.push($(this).val());
+    	});
+
+		var formdata = $('#FrmIndexSesput').serialize()+"&approval_name="+check_approval+"&cdog="+pval ;
+		
+		$.ajax({
+			url:'/assessment_proc/index_setting_save',
+			data:formdata, 
+			dataType:'html',
+			type:'POST',
+			success: function(r){
+//				$("#showdatevie").html(r);
+				alert ( "정보를 업데이트 했습니다." ) ;
+//				$('.modal-close').trigger('click');				
+				InoutInList.reload();
+			}
+		})
+	}
+}
+
+$(function() {
+	IndexSesput.init();
+})
+</script>

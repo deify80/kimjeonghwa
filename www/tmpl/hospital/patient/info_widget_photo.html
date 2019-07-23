@@ -1,0 +1,166 @@
+<style>
+ul.photo {
+	margin-top:0px;
+}
+
+.photo>li {
+	float: left;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	margin: 10px;
+
+	width:100px;
+	height:122px;
+}
+
+.photo > li > a > img {
+	width:100px;
+	height:100px;
+	border: 2px solid #616161;
+	border-radius: 2px;
+}
+
+.photo>li>.tools {
+	width: auto;
+	height: 25px;
+	left: 0;
+	right: 0;
+	top: auto;
+	position:absolute;
+	padding-top:4px;
+	bottom: -30px;
+	opacity: .8;
+	background-color: #414141;
+	text-align: center;
+	vertical-align: middle;
+}
+</style>
+
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('photo_{kind}', '{title} 등록', {'kind':'{kind}'})"  style="margin-bottom:10px;"><i class="fa fa-plus fa-1"></i> {title} 등록</button>
+	<button type="button" class="btn btn-flat-purple" onclick="PatientPhoto.compare()"><i class="fa fa-1 fa-th-large"></i> 선택비교</button>
+	<button type="button" class="btn btn-flat-orange" onclick="PatientPhoto.checkClear()"> 선택해제</button>
+{? count(photos)>0 }
+<table class="table table-bordered table-closely" style="">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top">
+				{@ photos[1]}
+				<div style="margin:10px 0 0 10px;clear:both"><span class="label label-normal" title="수술전" data-toggle="tooltip">{.key_}</span></div>
+
+				<ul class="photo photo_before">
+					{@ .value_}
+					<li data-no="{..no}" >
+						<label class="hmis"><input type="checkbox" name="compare[]" value="{..file_path}" class="hmis" /><span class="lbl"></span></label>
+						<a href="{..file_path}" data-rel="colorbox" title="수술전"><img src="{..file_path_thumbnail}"/></a>
+						{? auth.delete}
+						<div class="tools">
+							<a href="javascript:;" onclick="PatientPhoto.remove('{..no}')">
+								<i class="fa fa-times fa11-1" style="font-size:18px;color:#FFA726"></i>
+							</a>
+						</div>
+						{/}
+					</li>
+					{/}
+				</ul>
+				{/}
+			</td>
+			<td style="vertical-align: top">
+				{@ photos[2]}
+				<div style="margin:10px 0 0 10px;clear:both"><span class="label label-error" title="수술후" data-toggle="tooltip">{.key_}</span></div>
+				<ul class="photo photo_after">
+					{@ .value_}
+					<li data-no="{..no}" >
+						<label class="hmis"><input type="checkbox" name="compare[]" value="{..file_path}" class="hmis" /><span class="lbl"></span></label>
+						<a href="{..file_path}" data-rel="colorbox"><img src="{..file_path_thumbnail}" /></a>
+						{? auth.delete}
+						<div class="tools">
+							<a href="javascript:;" onclick="PatientPhoto.remove('{..no}')">
+								<i class="fa fa-times" style="font-size:18px;color:#FFA726"></i>
+							</a>
+						</div>
+						{/}
+					</li>
+					{/}
+				</ul>
+				{/}
+			</td>
+		</tr>
+	</tbody>
+</table>
+{:}
+<div class="well">
+등록된 사진이 없습니다.
+</div>
+{/}
+
+<script type="text/javascript">
+var PatientPhoto = {
+	init: function() {
+		$('ul.photo > li').on("mouseenter.photo", function(e) {
+			$(this).find('.tools').animate({bottom:0}, 200);
+		});
+
+		$('ul.photo > li').on("mouseleave.photo", this.listenerMouseleave);
+
+		PatientInfo.createColorbox('photo_before');
+		PatientInfo.createColorbox('photo_after');
+	},
+	listenerMouseleave: function() {
+		$(this).find('.tools').animate({bottom:-30}, 200);
+	},
+	compare: function() {
+		var checked = HmisCommon.getChecked('compare[]');
+		if (checked.length<1) {
+			HmisAlert.alert('비교할 사진을 선택하세요.');
+			return false;
+		}
+
+
+		var photo = checked.map(function () {return this.value;}).get();
+
+		var modal = new HmisModal('photo_compare', {width:'95%'});
+		modal.open('전후사진비교','/patient/info_widget_photo_compare',{photo:photo});
+
+	},
+	remove: function(no) {
+		$('ul.photo > li[data-no="'+no+'"]').off('mouseleave.photo');
+
+		HmisAlert.confirm('해당 사진을 정말 삭제하시겠습니까?',function(r) {
+			if(r) {
+
+				$.ajax({
+					url:'/patient_proc/remove_patient_photo',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						photo_no:no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							PatientInfo.loadTab('photo_{kind}');
+							PatientInfo.countTab();
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+			else {
+				$('ul.photo > li[data-no="'+no+'"]').on('mouseleave.photo', PatientPhoto.listenerMouseleave);
+				$('ul.photo > li[data-no="'+no+'"]').trigger('mouseleave');
+			}
+		})
+	},
+	checkClear: function() {
+		HmisCommon.uncheckAll('compare[]');
+
+	}
+};
+
+$(function() {
+	PatientPhoto.init();
+})
+</script>

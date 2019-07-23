@@ -1,0 +1,101 @@
+<form id="FrmLogsBatch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>파일 등록</th>
+			<td>
+				<div class="file_div" style="height:25px;float:left">
+					<button type="button" class="btn btn-flat-orange file_button" style="width:100px">파일 찾기</button>
+					<input type="file" name="excel_file" id="attach" class="file_hidden" value="width:100px" />
+				</div>
+				<div class="file_selected"></div>
+			</td>
+		</tr>
+		<tr>
+			<th style="height:38px">등록예상데이터</th>
+			<td>
+				<span id="cnt_data">0</span>건
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="AttendanceLogBatch.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<script type="text/javascript">
+var AttendanceLogBatch = {
+	file_path:'',
+	data_count:'',
+	init: function(){
+		this.createAttach();
+	},
+	createAttach  : function() {
+		var me = this;
+		$('#attach').MultiFile({ 
+			accept:'xls',
+			max:1,
+			STRING:{
+				denied:'$ext 형식의 파일은 업로드 할 수 없습니다.',
+			},
+			afterFileSelect: function(ele, value, master) {
+				var options = { 
+					url:'/attendance_proc/batch_upload',
+					type:'POST',
+					dataType:'json',
+					success : function(r) {
+						$('.file_selected').html(r.data.file_name);
+						$('#cnt_data').html(r.data.data_count);
+						me.data_count = r.data.data_count;
+						me.file_path = r.data.file_full_path;
+					},
+					complete:function() {
+						$('#FrmLogsBatch').reset();
+					}
+				}
+				$('#FrmLogsBatch').ajaxSubmit(options)
+			}
+			
+		});
+	},
+	save : function(){
+		var me = this;
+		if(!me.file_path) {
+			alert('일괄등록할 엑셀파일을 선택하세요.');
+			return false;
+		}
+
+		if(me.data_count<1) {
+			alert('등록가능한 데이터가 없습니다.');
+			return false;
+		}
+		if(!confirm('데이터를 적용하시겠습니까?')) return false;
+
+		$.ajax({
+			url:'/attendance_proc/batch_save',
+			type:'POST',
+			data:{
+				file_path:this.file_path
+			},
+			dataType:'json',
+			success : function(r) {
+				alert(r.msg);
+				$('.modal-close').trigger('click');
+				AttendanceLogs.load(1);
+			}
+		})
+	}	
+}
+
+$(function() {
+	AttendanceLogBatch.init();
+})
+</script>

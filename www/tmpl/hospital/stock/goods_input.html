@@ -1,0 +1,75 @@
+<form id="FrmGoodsInput" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>물품명</th>
+			<td>
+				<input type="text" name="goods_name" value="" style="width:200px" /> 
+				<button class="btn btn-flat-blue"><i class="fa fa-search fa-1"></i> 검색</button>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<!--
+		<tr>
+			<th>사업장</th>
+			<td colspan="3">
+				<label class="hmis"><input type="checkbox" name="" value="" class="hmis" /><span class="lbl"> 사업장1</span></label>
+				<label class="hmis"><input type="checkbox" name="" value="" class="hmis" /><span class="lbl"> 사업장1</span></label>
+				<label class="hmis"><input type="checkbox" name="" value="" class="hmis" /><span class="lbl"> 사업장1</span></label>
+				<label class="hmis"><input type="checkbox" name="" value="" class="hmis" /><span class="lbl"> 사업장1</span></label>
+			</td>
+		</tr>
+		-->
+		<tr>
+			<th>분류 / 항목</th>
+			<td colspan="3">
+				<select name="" id="">
+					<option>::분류선택::</option>
+				</select>
+
+				<select name="" id="">
+					<option>::항목선택::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>현 재고</th>
+			<td><input type="text" name="" value="" /></td>
+			<th>최소 보유량</th>
+			<td><input type="text" name="" value="" /></td>
+		</tr>
+		<tr>
+			<th>단가</th>
+			<td><input type="text" name="" value="" /></td>
+			<th>단위</th>
+			<td><input type="text" name="" value="" /></td>
+		</tr>
+		<tr>
+			<th>메모</th>
+			<td colspan="3">
+				<textarea class="hmis" style="height:100px"></textarea>
+			</td>
+		</tr>
+		
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>

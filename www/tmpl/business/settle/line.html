@@ -1,0 +1,474 @@
+<style>
+table#line-table td {
+	padding: 4px;
+}
+
+ul.ul-btn li {
+	padding:5px 0px;
+}
+
+.ui-dialog-buttonset button, .ui-dialog-titlebar-close {
+	background-color:#444;
+	color:#fff;
+	border:none;
+	border-radius: 2px;
+    height: 21px;
+    line-height: 14px;
+    font-size: 12px;
+    font-family: 'NG';
+    padding: 1px 10px 2px;
+    vertical-align: 1px;
+}
+</style>
+<script>
+	$(document).ready(function() {
+
+		$("#line button, #line input[type=button]").button();
+		$("#line button[type!=submit]").button().click(function(event) {
+			event.preventDefault();
+		});
+
+		// 결재라인 다이얼로그
+		$("#line_save-area").dialog({
+			autoOpen : false,
+			width : 700,
+			height : 120,
+			resizable : false,
+			modal : true,
+			show : {
+				effect : "blind"
+			},
+			buttons : {
+				/*
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+				*/
+			}
+		});
+
+		$("#bt-reset").button("option", "icons", {
+			primary : "ui-icon-arrowrefresh-1-s"
+		});
+
+		$("#bt-save").button("option", "icons", {
+			primary : "ui-icon-circle-check"
+		});
+
+		$('select#biz_info').change(function(){
+			var hst_code = $(this).val();
+			var url = "/business/get_dept_json/"+hst_code;
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#dept_info').html(rows);
+					}
+				});
+
+			  get_user_info('hst', hst_code);
+		});
+
+		$( "select#dept_info" ).change(function() {
+			  var dept_code = $(this).val();
+			  //$("#team_info").append("<option value='1'>aaaaaaaa</option>");
+
+			  var url = "/business/get_team_json/"+dept_code;
+			  $.ajax({
+					type: "POST",
+					url: url,
+					data: "",
+					dataType: "json",
+					success: function(result_data){
+						 var rows = "<option value=''>-선택-</option>";
+						 if (result_data != null && result_data != "") {
+							 $.each(result_data, function(index, entry){
+								 //$("#team_info").append("<option value='"+index+"'>"+entry+"</option>");
+								 rows += "<option value='"+index+"'>"+entry+"</option>";
+							 });
+						 }
+						 $('select#team_info').html(rows);
+					}
+				});
+
+			  get_user_info('dept', dept_code);
+		});
+
+		$( "select#team_info" ).change(function() {
+			var team_code = $(this).val();
+
+			get_user_info('team', team_code);
+		});
+
+		$( "select#save_line" ).change(function() {
+			var save_line = $(this).val();
+			var line_info = save_line.split('|');
+			get_user_info('save_line', line_info[1]);
+		});
+
+		// 결재라인 위치 조정 (업)
+		$('.up-button').click(function(){
+			$('#approval_user option:selected:first-child').prop("selected", false);
+			before = $('#approval_user option:selected:first').prev();
+			$('#approval_user option:selected').detach().insertBefore(before);
+		});
+
+		// 결재라인 위치 조정 (다운)
+		$('.down-button').click(function(){
+			$('#approval_user option:selected:last-child').prop("selected", false);
+			after = $('#approval_user option:selected:last').next();
+			$('#approval_user option:selected').detach().insertAfter(after);
+		});
+
+		// 결재라인 삭제
+		$('.remove-approval-button').click(function(){
+			$('#approval_user option:selected').remove();
+		});
+
+		// 참조라인 삭제
+		$('.remove-refer-button').click(function(){
+			$('#refer_user option:selected').remove();
+		});
+
+
+
+		$("#search_user").keydown(function() {
+			if (event.keyCode == 13) {
+				search_user();
+			}
+		});
+
+
+		//user_info
+		$( "select#user_info" ).dblclick(function() {
+			approval_refer('approval_user');
+		});
+
+	});
+
+	function get_user_info( what, code ){
+		var code_arr;
+		if( what == "save_line" ){
+			code_arr = code.split(':');
+			code = code_arr[0];
+			if( code_arr[1] ){
+				var url = "/business/get_user_info_json/";
+				  $.ajax({
+						type: "POST",
+						url: url,
+						data: "what="+what+"&code="+code_arr[1],
+						dataType: "json",
+						success: function(result_data){
+							var rows = "";
+
+							if (result_data != null && result_data != "") {
+								$.each(result_data, function(index, entry){
+									index = index.replace('_','');
+							   		rows += "<option value='"+index+"'>"+entry+"</option>";
+								});
+							}
+
+							$('select#refer_user').html(rows);
+					}
+				});
+			}else{
+				$('select#refer_user').html("");
+			}
+		}
+
+		var url = "/business/get_user_info_json/";
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "what="+what+"&code="+code,
+				dataType: "json",
+				success: function(result_data){
+					var rows = "";
+
+					if (result_data != null && result_data != "") {
+						$.each(result_data, function(index, entry){
+							index = index.replace('_','');
+					   		rows += "<option value='"+index+"'>"+entry+"</option>";
+						});
+					}
+				if( what == "save_line" ){
+					if( code ){
+						$('select#approval_user').html(rows);
+					}else{
+						$('select#approval_user').html("");
+					}
+				}
+				else{
+					$('select#user_info').html(rows);
+				}
+			}
+		});
+	}
+
+	// 유저 검색
+	function search_user(){
+		get_user_info( 'search', $('#search_user').val() );
+	}
+
+	// 결재, 참조라인 넣기
+	function approval_refer(id){
+		var str = "";
+		var rows = "";
+		var check = [];
+		var cnt = 0;
+
+		// 결재라인에 있는지 체크
+		$('select#approval_user').find('option').each(function() {
+			check.push($(this).val());
+			cnt++;
+		});
+
+		// 참조라인에 있는지 체크
+		$('select#refer_user').find('option').each(function() {
+			check.push($(this).val());
+		});
+
+		// 결재 및 참조라인에 없다면 넣기
+		$( "select#user_info option:selected" ).each(function() {
+			if( $.inArray( $( this ).val(), check ) == -1 ){
+
+				if( "approval_user" == id && cnt >= 5 ){
+					return false;
+				}
+
+				$("#"+id).append("<option value='"+$( this ).val()+"'>"+$( this ).text()+"</option>");
+
+				cnt++;
+			}
+		});
+	}
+
+	// 초기화
+	function line_reset(){
+		$("select#biz_info").val("").attr("selected", "selected");
+		$('select#dept_info').html("<option value=''>-부서명-</option>");
+		$('select#team_info').html("<option value=''>-팀명-</option>");
+		$('select#user_info').html("");
+		//get_user_info( 'hst', '' );
+	}
+
+	/*
+	 * 셀렉트 박스 초기화
+	 * url, code : 선택된 코드값, select_id = 선택할 셀렉트 박스 id값, selected_index = 선택된값 selected 처리값
+	*/
+	function init_selected( url, code, select_id, selected_index ){
+		var url = url+""+code;
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: "",
+			dataType: "json",
+			success: function(result_data){
+
+				if( select_id != "user_info" ){
+					var rows = "<option value=''>-선택-</option>";
+				}
+				if (result_data != null && result_data != "") {
+					$.each(result_data, function(index, entry){
+						if( index == selected_index){
+							rows += "<option value='"+index+"' selected>"+entry+"</option>";
+						}else{
+							rows += "<option value='"+index+"'>"+entry+"</option>";
+						}
+					});
+				}
+				$('select#'+select_id).html(rows);
+			}
+		});
+	}
+
+	// 적용하기
+	function apply(){
+
+		var check_approval = [];
+		var check_refer = [];
+		var str_array;
+		var str_refer = "";
+		//var name_array = [];
+		//var position_array = [];
+		var cnt = 0;
+
+		if( $.trim($('#approval_user').text()) == "" ){
+			alert('결재라인을 선택하여 주세요.');
+			return;
+		}
+
+		for( i = 0 ; i < 5 ; i++ ){
+			$("#position"+i).text('');
+			$("#approval_name"+i).text('');
+		}
+
+		// 결재라인 값들 가져오기 및 적용
+		$('select#approval_user').find('option').each(function() {
+			check_approval.push($(this).val());
+
+			str_array = $(this).text().split('(');
+			$("#approval_name"+cnt).text(str_array[0]);
+			str_array = str_array[1].split('/');
+			$("#position"+cnt).text(str_array[0]);
+			cnt++;
+		});
+
+		// 참조라인  값들 가져오기
+		$('select#refer_user').find('option').each(function() {
+			check_refer.push($(this).val());
+			str_array = $(this).text().split('(');
+			if( str_refer != "" ) str_refer += ", ";
+			str_refer += str_array[0];
+		});
+
+		$("#refer_name").text(str_refer);
+		$("#approval_person").val(check_approval);
+		$("#refer_person").val(check_refer);
+		$("#settle_line-area").dialog("close");
+	}
+
+	// 라인 레이아웃 팝업
+	function save_line(){
+		$( "#line_save-area" ).load( "/business/save_line");
+		$( "#line_save-area" ).dialog("open");
+	}
+
+	//결재라인삭제
+	function line_del() {
+		var line = $('#save_line').val();
+		var opt = $('#save_line').find('option[value="'+line+'"]');
+		if(!line) {
+			alert('삭제할 결재라인을 선택하세요.');
+			return false;
+		}
+
+		var line_info = line.split('|');
+		var line_no = line_info[0];
+
+		if(!confirm("선택된 결재라인을 삭제하시겠습니까?")) return false;
+		$.ajax({
+			url:'/business_proc/save_line_del',
+			data:{
+				line_no:line_no
+			},
+			dataType:'JSON',
+			type:'POST',
+			success: function(r) {
+				alert(r.msg);
+				if(r.success) {
+					$('#save_line').find('option[value="'+line+'"]').remove();
+				}
+			}
+		});
+	}
+
+</script>
+
+<div id="line_save-area" title="결재라인 저장하기"></div>
+
+<div id="line" style="width: 98%;margin: auto;">
+	<!-- form id="line-frm">  -->
+		<!-- h3 class="area-title">직원정보</h3> -->
+
+		<table class="basic-table" id="line-table">
+			<colgroup>
+				<col width="50%" />
+				<col width="15%" />
+				<col width="20%" />
+				<col width="15%" />
+			</colgroup>
+			<tbody>
+				<tr>
+					<td colspan=2>
+						<select name="biz_info" id="biz_info">
+							<option value="">-사업장-</option>
+							<?php
+							foreach( $biz_info as $i=>$val){
+						?>
+							<option value="<?=$this->session->userdata( 'ss_hst_code' ) ?>"><?=$val?></option>
+							<?php } ?>
+						</select>
+						<select name="dept_info" id="dept_info">
+							<option value="">-부서명-</option>
+						</select>
+						<select name="team_info" id="team_info">
+							<option value="">-팀명-</option>
+						</select>
+						<input type="text"name="search_user" id="search_user">
+						<button type="button" class="btn btn-theme" onclick="search_user();">검색</button>
+						<button type="button" class="btn btn-theme" id="bt-reset" onclick="line_reset();">초기화</button>
+					</td>
+					<td colspan=2>
+						<select name="save_line" id="save_line">
+							<option value="">-결재라인보기-</option>
+							<?php
+							foreach( $save_line as $row){
+							?>
+							<option value="<?=$row['no']?>|<?=$row['save_person']?>"><?=$row['save_title'];?></option>
+							<?php } ?>
+						</select>
+						<button type="button" class="btn btn-flat-orange" onclick="line_del()">결재라인삭제</button>
+					</td>
+				</tr>
+				<tr>
+					<td rowspan=4>
+						<select name="user_info" id="user_info" multiple style="width:100%;height:320px;" >
+						</select>
+					</td>
+					<td rowspan=4 style="text-align: center;">
+					<button type="button" class="btn" onclick="approval_refer('approval_user');">결재</button>
+					<br /><br /><br /><br /><br />
+					<button type="button" class="btn" onclick="approval_refer('refer_user');">참조</button>
+					</td>
+					<th>결재</th>
+					<td rowspan=2 style="text-align: center;">
+						<ul class="ul-btn">
+							<li>
+								<button type="button" class="btn up-button"><i class="fa fa-arrow-up"></i> 위로</button>
+							</li>
+							<li>
+								<button type="button" class="btn remove-approval-button">삭제</button>
+							</li>
+							<li>
+								<button type="button" class="btn down-button"><i class="fa fa-arrow-down"></i> 아래로</button>
+							</li>
+						</ul>
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<select name="approval_user" id="approval_user" multiple style="width:100%;height:130px;"></select>
+						</td>
+				</tr>
+				<tr>
+					<th>참조</th>
+					<td rowspan=2 style="text-align: center;">
+						<button type="button" class="btn remove-refer-button">삭제</button>
+					</td>
+				</tr>
+				<tr>
+					<td>
+					<select name="refer_user" id="refer_user" multiple style="width:100%;height:130px;"></select>
+					</td>
+				</tr>
+
+			</tbody>
+
+		</table>
+
+		<div class="tool-box">
+			<button type="button" class="btn btn-flat-blue" onClick="save_line();">결재라인 저장하기</button>
+			<button type="button" class="btn btn-flat-purple" id="bt-save" onClick="apply();">적용하기</button>
+		</div>
+	<!-- /form>  -->
+</div>

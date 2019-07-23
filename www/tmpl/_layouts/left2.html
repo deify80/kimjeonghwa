@@ -1,0 +1,22 @@
+<script>
+	$(document).ready(function() {
+		var src = $("img#main-menu03").attr("src");
+		var replace_src = src.replace(".png", "_on.png");
+		$("img#main-menu03").attr("src", replace_src);
+	});
+</script>
+
+<ul id="menu">
+	<li><a href="#">전자결재</a>
+		<ul>
+			<li><a href="/business/settle">올린결재</a></li>
+			<li><a href="/business/settle/give">받은결재</a></li>
+		</ul></li>
+</ul>
+<div style="padding: 7px; vertical-align: bottom; position: absolute; bottom: 20px; clear: both; cursor: pointer">
+	<ul>
+		<li><a href="#" onClick="javascript:open_bbs('bbs_notice');"><img src="/images/layout/btn_02.jpg"></a></li>
+		<li><a href="http://intra.md21.kr" target="_blank"><img src="/images/layout/btn_05.jpg"></a></li>
+		<li><img src="/images/layout/logo_bottom.png" style="padding-top: 20px;"></li>
+	</ul>
+</div>

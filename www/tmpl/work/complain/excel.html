@@ -1,0 +1,49 @@
+<style type="text/css">
+    td {
+        mso-number-format: "\@";
+    }
+</style>
+<!-- 
+<table border="1" style="font-size: 11px; width:100%;border-collapse: collapse;text-align: center;">
+
+<tr>
+<th colspan="4" rowspan="2" style="border-bottom:solid #fff 0px;"></th>
+<th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+</tr>
+
+<tr>
+<td style="height: 60px;""></td>
+<td style="height: 60px;"></td>
+<td style="height: 60px;"></td>
+</tr>
+
+</table>
+--->
+<table border="1" style="font-size: 11px; border-collapse: collapse;width:100%;">
+	<thead>
+		<tr style="background-color: #cccccc; height: 30px;">
+			<th>발생일자</th>
+			<th>이름</th>
+			<th>연락처</th>
+			<th>상담실장</th>
+			<th>담당의</th>
+			<th>컴플레인 내용</th>
+			<th>후속대책</th>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach($list->rows as $i): ?>
+		<tr>
+			<td><?=$i['cell'][2]?></td>
+			<td><?=$i['cell'][3]?></td>
+			<td><?=$i['cell'][8]?></td>
+			<td><?=$i['cell'][4]?></td>
+			<td><?=$i['cell'][5]?></td>
+			<td><?=$i['cell'][6]?></td>
+			<td><?=$i['cell'][7]?></td>
+		</tr>
+		<? endforeach; ?>		
+	</tbody>
+</table>

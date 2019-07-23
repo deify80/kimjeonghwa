@@ -1,0 +1,164 @@
+<h3 class="area-title">DB 자동분배규칙
+	<div class="button-box">
+	<button class="btn btn-flat-blue" onclick="AssignRule.openAdd()"><i class="fa fa-plus fa-1"></i> 분배규칙 추가</button>
+	<button class="btn btn-flat-orange" onclick="AssignRule.remove()"><i class="fa fa-trash fa-1"></i> 선택삭제</button>
+</div>
+</h3>
+<form id="FrmAttendanceSettings">
+	<table class="table table-bordered table-list table-hover table-striped">
+		<colgroup>
+			<col style="width:60px" />
+			<col style="width:60px" />
+			<col style="width:150px" />
+			<col style="width:150px" />
+			<col />
+			<col style="width:300px" />
+			<col style="width:150px" />
+		</colgroup>
+		<thead>
+			<tr>
+				<th>번호</th>
+				<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+				<th>사업장</th>
+				<th>유입경로</th>
+				<th>분배순서</th>
+				<th>내용</th>
+				<th>적용일시</th>
+			</tr>
+		</thead>
+		<tbody id="rule_list">
+		</tbody>
+	</table>
+</form>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${\seqno}"><span class="lbl"></span></td>
+		<td>${\biz_name}</td>
+		<td><a href="javascript:;" onclick="AssignRule.openModify('${\seqno}');" class="link" >${\path_name}</a></td>
+		<td class="left">{for r in rule} {if r.turn=='Y'} <strong class="f-error">${\r.team}</strong> {\else} <a href=javascript:AssignRule.ruleUpdate(${\seqno},'${\r.team_code}')>${\r.team}</a> {/if} {/for}</td>
+		<td class="left">${\memo}</td>
+		<td>{if date_update=='0000-00-00 00:00'}${\date_insert}{\else}${\date_update}{/if}</td>
+	</tr>
+</textarea>
+
+
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span>
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">규칙추가</b>동일 유입경로의 규칙이 추가 될 경우 이전 규칙은 적용제외됩니다.</li>
+		<li><b class="" style="margin-right:10px">규칙이 존재하지 않는 유입경로</b> 자동분배처리되지 않습니다.</li>
+	</ul>
+
+</div>
+
+
+<script language="javascript" src="/js/template.js"></script>
+
+<script type="text/javascript">
+var AssignRule = {
+	init: function() {
+		this.load();
+	},
+	load: function() {
+		var me = this;
+		$.ajax({
+			url:'/assign/rule_list',
+			data:{
+
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#rule_list');
+				target.empty();
+				console.log(r);
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="7">등록된 자동분배규칙이 없습니다.</td></tr>');
+				}
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	openAdd:function() {
+		var title = 'DB규칙 등록';
+		var modal = new HmisModal('infoadd', {width:600, top:200});
+		modal.callback = this.load;
+		modal.open(title,'/assign/input');
+	},
+	openModify: function(seqno) {
+		var title = 'DB규칙 수정';
+		var modal = new HmisModal('infomodify', {width:600, top:200});
+		modal.callback = this.load;
+		modal.open(title,'/assign/input', {seqno:seqno});
+	},
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 규칙을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var rules = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/assign_proc/remove_info',
+					data:{
+						seqno:rules
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						HmisAlert.alert(r.msg);
+						if(r.success){
+							me.load();
+						}
+					}
+				})
+			}
+		});
+	},
+	ruleUpdate:function(seqno, team_code){
+
+		var me = this;
+		HmisAlert.confirm('DB자동분배규칙을 변경 하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/assign_proc/update_info_order',
+					data:{
+						seqno:seqno,
+						team_code:team_code
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						HmisAlert.alert(r.msg);
+						if(r.success){
+							me.load();
+						}
+					}
+				})
+
+			}
+		});
+
+	}
+};
+
+$(function() {
+	AssignRule.init();
+})
+</script>

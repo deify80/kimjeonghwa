@@ -1,0 +1,229 @@
+<form id="FrmCostInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="depth" value="{cost.depth}" />
+<input type="hidden" name="no" value="{cost.no}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		
+		<tr>
+			<th>상위분류</th>
+			<td>
+				{? cfg.direct}
+					<div class="minheight">
+					{@ cost.route}
+						{? .index_>0} &gt; {/}{.name} 
+						<input type="hidden" name="parents[]" value="{.no}" />
+					{:}
+					최상위 분류입니다.
+					{/}
+					</div>
+				{:}
+				<select name="parents[]" onchange="CostInput.loadCategory(this.value)">
+					<option value="">대분류추가</option>
+					{@ cfg.categories}
+					<option value="{.no}">{.name}</option>
+					{/}
+				</select>
+
+				<select name="parents[]" id="parent_2" style="display:none" onchange="CostInput.setCost(this.value)">
+					<option value="">중분류 추가</option>
+				</select>
+				{/}
+			</td>
+		</tr>
+		
+		<tr>
+			<th>분류명</th>
+			<td>
+				<input type="text" name="name" value="{cost.name}" class="validate[required] required" style="width:300px" data-errormessage-value-missing="분류명을 입력하세요." autocomplet="off" />
+			</td>
+		</tr>
+		<tr data-group="cost" style="{? cost.depth<3}display:none{/}">
+			<th>정상수가</th>
+			<td><input type="text" name="cost[origin]" value="{=number_format(cost.cost_origin)}" class="validate[custom[numberFormat] required] number required"  data-errormessage-value-missing="정상수가를 입력하세요." /> 원 {? mode=='update'}<button type="button" class="btn btn-flat-orange" style="vertical-align:baseline;margin-left:10px" onclick="CostInput.setSettings()"><i class="fa fa-1 fa-check"></i> 설정적용</button>{/}</td>
+		</tr>
+		<tr data-group="cost" style="{? cost.depth<3}display:none{/}">
+			<th>재수술</th>
+			<td>
+				<select data-match="cost" data-input="cost[re]" data-value="{cfg.settings.re}">
+					<option value="direct" {? cfg.settings.re=='direct' || mode=='update' }selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? cfg.settings.re==.value_ && mode=='insert' }selected{/}>{.value_}%</option>
+					{/}
+				</select>
+				<input type="text" name="cost[re]" value="{=number_format(cost.cost_re)}" class="validate[custom[numberFormat] required] number required"  data-errormessage-value-missing="수가를 입력하세요." /> 원
+			</td>
+		</tr>
+		<tr data-group="cost" style="{? cost.depth<3}display:none{/}">
+			<th>해외수가Ⅰ</th>
+			<td>
+				<select data-match="cost" data-input="cost[abroad_1]" data-value="{cfg.settings.abroad_1}">
+					<option value="direct" {? cfg.settings.abroad_1=='direct' || mode=='update' }selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? cfg.settings.abroad_1==.value_  && mode=='insert'}selected{/}>{.value_}%</option>
+					{/}
+				</select>
+				<input type="text" name="cost[abroad_1]" value="{=number_format(cost.cost_abroad_1)}" class="validate[custom[numberFormat] required] number required"  data-errormessage-value-missing="해외수가Ⅰ를 입력하세요." /> 원
+			</td>
+		</tr>
+		<tr data-group="cost" style="{? cost.depth<3}display:none{/}">
+			
+			<th>해외수가Ⅱ</th>
+			<td>
+				<select data-match="cost" data-input="cost[abroad_2]" data-value="{cfg.settings.abroad_2}">
+					<option value="direct" {? cfg.settings.abroad_2=='direct' || mode=='update' }selected{/}>직접입력</option>
+					{@ range(10, 200, 10)}
+					<option value="{.value_}" {? cfg.settings.abroad_2==.value_ && mode=='insert'}selected{/}>{.value_}%</option>
+					{/}
+				</select>
+				<input type="text" name="cost[abroad_2]" value="{=number_format(cost.cost_abroad_2)}"  class="validate[custom[numberFormat] required] number required"  data-errormessage-value-missing="해외수가Ⅱ를 입력하세요." /> 원
+			</td>
+		</tr>
+		
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{? mode == 'update'}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="CostInput.remove()">삭제</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var CostInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmCostInput").validationEngine('attach',option);
+
+		this.createNumber();
+		this.calcCost();
+
+		$('select[data-match="cost"]').on('change', this.calcCost);
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+			if(this.name=='cost[origin]') {
+				me.calcCost();
+			}
+		})
+	},
+	loadCategory: function(parent_no) {
+		if(!parent_no) {
+			$('#parent_2').hide();
+			return false;
+		}
+
+		$.ajax({
+			url:'/treat_proc/json_cost',
+			data:{
+				parent_no:parent_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				$('#parent_2').show();
+				$('#parent_2').find('option:gt(0)').remove();
+				if(r.success) {
+					$.each(r.data, function(i,e) {
+						$('#parent_2').append('<option value="'+e.no+'">'+e.name+'</option>');
+					})
+				}
+			}
+		})
+	},
+	setCost: function(v) {
+		if(v) {
+			$('[data-group="cost"]').show();
+		}
+		else {
+			$('[data-group="cost"]').hide();
+		}
+	},
+	calcCost: function() {
+		var cost = $('input[name="cost[origin]"]').val().toString().replace(/[^0-9]/gi,'');;
+
+		$.each($('select[data-match="cost"]'), function(i,e) {
+			var input = $('input[name="'+$(e).data('input')+'"]');//.val(cost);
+			
+			if(e.value == 'direct') {
+				input.removeAttr('readonly');
+			}
+			else {
+				var cost_new = HmisCommon.numberFormat(Math.ceil(parseInt(cost)*parseInt(e.value)/100));
+				input.val(cost_new);
+				input.attr('readonly', true);
+			}
+		});
+	},
+	setSettings: function() {
+		var me = this;
+		$.each($('select[data-match="cost"]'), function(i,e) {
+			var value = $(e).data('value');
+			$(e).val(value);
+			me.calcCost();
+		});
+	},
+	save: function(){
+		var formdata = $('#FrmCostInput').serialize();
+		$.ajax({
+			url:'/treat_proc/save_cost',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					CostTab.loadTab('table');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	remove: function() {
+		HmisAlert.confirm('하위에 포함된 분류가 함께 삭제되며 복구할 수 없습니다.<br />정말 삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/treat_proc/remove_cost',
+					data:{
+						no:'{cost.no}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function(){
+							if(r.success) {
+								$('.modal-close').trigger('click');
+								CostTab.loadTab('table');
+							}	
+						})
+						
+					}
+				})
+			}
+		})
+	}
+}
+
+$(function(){
+	CostInput.init();
+})
+</script>

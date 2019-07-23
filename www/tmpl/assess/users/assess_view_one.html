@@ -1,0 +1,393 @@
+<!--h3 class="area-title">
+	성과평가
+</h3-->
+<form name="inputFrm" id="inputFrm" method="post" enctype="multipart/form-data" onsubmit="return false;">	
+<input type="hidden" name="inout_no" value="<?=$row[no]?>" />
+<input type="hidden" name="mode" value="update" />
+<input type="hidden" name="old_file_name" id="old_file_name" value="<?=$row['file_name_olg']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col width="120px">
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>		
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td><?=$row['syear']?>-<?=$row['firsthalf']?></td>
+			<th>이름</th>
+			<td><?=$row['name']?></td>
+			<th>직급</th>
+			<td><?=$row['duty_name']?></td>
+			<th>사업장</th>
+			<td><?=$row['biz_list_name']?></td>
+			<th>부서명</th>
+			<td><?=$row['dept_name']?></td>
+			<th>팀명</th>
+			<td><?=$row['team_name']?></td>			
+		</tr>
+	</tbody>
+</table>
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col width="330px">
+		<col width="80px">
+		<col width="100px">
+		<col width="40px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>구분</th>		
+			<th>과제(CSF)</th>
+			<th>가중치</th>
+			<th>달성실적</th>
+			<th>진행률</th>
+			<th>평가</th>
+			<th>--</th>
+		</tr>
+	</thead>
+	<tbody id="team_acc_list2">
+	</tbody>
+	<tbody id="team_acc_total">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination2"></div>
+<div id="sdfdsfsfd22"></div>
+<textarea id="tmpl_acc_list2" style="display:none">
+	<tr>
+		<td>
+			<select name="codeval[]" style="height:22px;" >
+				<option value="">선택
+				<option value="전략과제"  {if codeval=="전략과제" } selected {/if} >전략과제
+				<option value="핵심과업"  {if codeval=="핵심과업" } selected {/if} >핵심과업
+			</select>			
+			<input type="hidden" name="no[]" style="width:90%;" value="${no}">
+		</td>	
+
+		<td><input type="text" name="problem[]" style="width:90%;" value="${problem}"></td>
+		<td><input type="text" name="pweight[]" style="width:70%;" value="${pweight}">%</td>
+		<td><input type="text" name="performance[]" style="width:90%;" value="${performance}"></td>
+		<td>
+			<select name="progress[]" style="height:22px;" >
+				<option value="">전체
+				<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+				<option value="<?=$k?>" {if progress=='<?=$k?>' } selected {/if} ><?=$k?>
+				<? endforeach;?>
+			</select>%			
+		</td>
+		<td>
+			<!--select name="assessment[]" style="height:22px;" >
+				<option value="">전체
+				<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+				<option value="<?=$k?>" {if assessment=='<?=$k?>' } selected {/if} ><?=$val?>
+				<? endforeach;?>
+			</select-->			
+			${assessment}
+			<input type="hidden" name="assessment[]" value="${assessment}" />
+		</td>
+		<td>		
+			<input type="hidden" name="a_greetings_princ[]" value="${a_greetings_princ}" />
+			<!--button type="button" class="btn btn-onlyicon"  onclick="InoutListOne.save('update');"><i class="fa fa-pencil fa-1 f-blue" data-role="tooltip" title="수정"></i></button-->
+			<button class="btn btn-onlyicon" onclick="InoutListOne.delete_all(${no});"><i class="fa fa-trash fa-1" data-role="tooltip" title="삭제"></i></button>
+		</td>
+	</tr>
+</textarea>
+<textarea id="tmpl_acc_total" style="display:none">
+	<tr>
+		<td colspan="2">합계</td>
+		<td >{if a_wdight_total=='100'} ${a_wdight_total}% {elseif}<font color="red"> ${a_wdight_total}% </font>{/if}  / 100%</td>
+		<td >평점</td>
+		<td >${a_progress_total}%</td>
+		<td >${a_assessment_total}</td>
+		<td></td>
+	</tr>
+</textarea>
+
+<div id="showdatevie"></div>
+<!-- 등록  -->
+<br>
+<table class="basic-table" style="table-layout:fixed">
+	<colgroup>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+				<tr>
+					<th>첨부파일</th>
+					<td colspan="7">
+						<div class="file_div">
+							<button type="button" class="file_button btn btn-theme"><i class="fa fa-upload fa-1"></i> 파일 찾기</button>
+							<input type="file" name="settle_file[]" id="attach" class="file_hidden" value=""/>
+						</div>
+						<div id="file_list" class="file_list">
+							<div id="file_msg" style="color:#A2A2A2"></div>
+							<div id="team_acc_total3"></div>
+						</div>
+					</td>
+				</tr>
+	</tbody>
+</table>
+</form>
+
+<div id="tmpl_acc_tota3" style="display:none;" >
+	<div class="MultiFile-label" id="file_${no}">
+		<a class="MultiFile-remove" onclick="InoutListOne.removeFile(${no})" ><i class="fa fa-remove" style="color:#FF4040"></i></a>
+		<span class="MultiFile-title">${ori_name}</span>
+	</div>
+</div>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="InoutListOne.save('update')">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<form id="FrmGoodsSearch_insert" onsubmit="return false">
+<input type="hidden" name="mode" value="insert" />
+<input type="hidden" name="inout_no" value="<?=$row[no]?>" />
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="80px">
+		<col width="330px">
+		<col width="80px">
+		<!--col width="100px"-->
+		<col width="80px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>구분</th>		
+			<th>과제(CSF)</th>
+			<th>가중치</th>
+			<th>달성실적</th>
+			<th>진행률</th>
+			<!--th>평가</th-->
+			<th>-</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<select name="codeval" id="codeval" style="height:22px;" >
+					<option value="">전체
+					<option value="전략과제">전략과제
+					<option value="핵심과업">핵심과업
+				</select>				
+			</td>
+			<td><input type="text" name="problem" id="problem" style="width:90%;"></td>
+			<td><input type="text" name="pweight" id="pweight" style="width:90%;" maxlength="3"></td>
+			<td><input type="text" name="performance" id="performance" style="width:90%;"></td>
+			<td>
+				<select name="progress" id="progress"  style="height:22px;">
+					<option value="">전체
+					<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+					<option value="<?=$k?>"><?=$k?>
+					<? endforeach;?>
+				</select>%			
+			</td>
+			<!--td>
+				<select name="assessment" id="assessment" style="height:22px;">
+					<option value="">전체
+					<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+					<option value="<?=$k?>"><?=$val?>
+					<? endforeach;?>
+				</select>		
+			</td-->
+			<td><button class="btn btn-flat-blue" onclick="InoutListOne.save()"><i class="fa fa-plus"></i> 추가 </button></td>
+		</tr>
+	</tbody>
+</table>
+
+</form>
+
+
+
+<script type="text/javascript">
+var InoutListOne = {
+	file_path:'',
+	data_count:'',
+	saveMode:'continue',
+	init: function() {
+		this.load();
+		this.createFile();
+		HmisCommon.createDatepicker();
+	},
+	createFile : function() {
+		var me = this;
+		this.msgFile();
+
+		$('#attach').MultiFile({ 
+			list: '#team_acc_total3',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				duplicate:'이미 등록된 파일입니다.'
+			},
+			afterFileAppend: function() {
+				me.msgFile();
+			},
+			afterFileRemove: function() {
+				me.msgFile();
+			}
+		});
+
+	},
+	msgFile : function() {
+		var count = $('#file_list > div.MultiFile-label');
+		if(count.length<1) {
+			$('#file_msg').html('파일을 첨부해 주세요.');
+		}
+		if(count.length>0) {
+			$('#file_msg').html('');
+		}
+	},
+	removeFile : function(file_no) {
+		$('#inputFrm').append('<input type="hidden" name="settle_file_remove[]" value="'+file_no+'" />');
+		$('#file_'+file_no).remove();
+		this.msgFile();
+	},
+	reset: function() {
+		$('#inputFrm')[0].reset();
+		this.load();
+	},
+	reset2: function() {
+		$('#FrmGoodsSearch_insert')[0].reset();
+		this.load();
+	},
+	load: function() {
+		var me = this;
+		var search = $('#inputFrm').serialize() ; 
+
+		$.ajax({
+			url:'/assessment/select_assess_result_view',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_acc_list2');
+				var target = $('#team_acc_list2');
+
+				var tmpl2 = TrimPath.parseDOMTemplate('tmpl_acc_total');
+				var target2 = $('#team_acc_total');
+
+				var tmpl3 = TrimPath.parseDOMTemplate('tmpl_acc_tota3');
+				var target3 = $('#team_acc_total3');
+
+				target.empty();
+				target2.empty();
+				target3.empty();
+
+				if(r.success) {
+					
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var html2 = '';
+					$.each(r.data.loop, function(i,e){
+						html2 += tmpl2.process(e);
+					});
+
+					target2.append(html2);		
+
+					var html3 = '';
+					$.each(r.data.settle_file, function(i,e){
+						html3 += tmpl3.process(e);
+					});
+
+					target3.append(html3);	
+				}
+				else {
+					target.append('<tr><td colspan="8">내역이 없습니다.</td></tr>');
+				}
+				$('[data-role="tooltip"]').tooltip();
+			}
+		})
+	},
+	save: function( modes ) {
+
+		var options = { 
+			url:'/assessment_proc/assess_view_one_save',
+			type:'POST',
+			dataType:'html',
+			success : function(r) {
+//				alert(r.msg);
+				alert ( '정보를 업데이트 했습니다.' ) ;
+
+//				InoutListOne.load();
+				InoutList.reload();
+				InoutList.reset();
+//				InoutListOne.reset();
+//				InoutListOne.reset2();
+
+				if ( modes == 'update' )
+				{
+					$('.modal-close').trigger('click');
+				} else {
+					InoutListOne.load();
+					InoutListOne.reset();
+					InoutListOne.reset2();
+				}
+
+				if ($.browser.msie) {
+					// ie 일때 input[type=file] init.
+					$("#attach").replaceWith( $("#filename").clone(true) );
+				} else {
+					// other browser 일때 input[type=file] init.
+					$("#attach").val("");
+				}
+			}
+		}
+
+		if ( modes == 'update' )
+		{
+			$('#inputFrm').ajaxSubmit(options)
+		} else {
+			$('#FrmGoodsSearch_insert').ajaxSubmit(options)
+		}
+
+
+	},
+	delete_all: function( pseqno  ) {
+		var pseqno ;
+
+		var ans = confirm("삭제를 진행하시겠습니까?");
+		if (ans == false) {
+			return ;
+		}		        			       
+						
+		$.ajax({
+			type: "POST",
+	        data: { seqno: pseqno },	 
+			url: "/assessment_proc/assess_view_one_delete",
+			success: function(result_data){							
+				InoutListOne.load();
+				InoutList.reload();
+			}
+		});		
+	}
+
+}
+
+$(function() {
+	InoutListOne.init();
+})
+
+</script> 

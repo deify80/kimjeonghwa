@@ -1,0 +1,89 @@
+<form id="FrmStatsTeamSearch">
+<table class="table table-bordered table-form" style="margin-top:15px">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>검색일자</th>
+			<td>
+				<input type="text" name="date_s" id="sdate_s"  class="datepicker lg" value="{cfg.date.today}" data-default='{cfg.date.cur_month}' /> ~ <input type="text" name="date_e" id="sdate_e"  class="datepicker lg" value="{cfg.date.today}"data-default='{cfg.date.cur_month_end}'  />
+
+				<ul class="btn-group btn-group-xs">
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="StatsTeamIndex.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+
+<!-- 탭:S -->
+<div style="margin-top:20px;">
+	<ul class="nav nav-tabs" role="tablist" >
+		{@ cfg.tab}
+		<li role="presentation"><a href="#content" data-tabindex="{.key_}" role="tab" data-toggle="tab">{.value_}</a></li>
+		{/}
+	</ul>
+
+	<!-- Tab panes -->
+	<div id="tab_contents" class="tab-content" style="padding:20px;border:solid 1px #DDDDDD;border-top:none;border-radius: 0px 0px 2px 2px">
+
+	</div>
+</div>
+<!-- 탭:E -->
+
+
+<link rel="stylesheet" href="/css/bootstrap.tab.css?<?=time()?>" />
+<script type="text/javascript" src="/js/bootstrap.tab.js"></script>
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var StatsTeamIndex = {
+	index:1,
+	init: function() {
+		this.initTab();
+		this.createDatepicker();
+	},
+	initTab: function() {
+		$('[data-toggle="tab"]').click(function() {
+
+			var me = $(this);
+			var href = '/stats/pay_'+me.data('tabindex');
+			StatsTeamIndex.index = me.data('tabindex');
+			// console.log(href);
+			var formdata = $('#FrmStatsTeamSearch').serialize();
+			$.post(href, formdata, function(data) {
+				$('#tab_contents').html(data);
+				$('[data-toggle="tooltip"]').tooltip();
+			});
+		});
+
+		$('[data-toggle="tab"]').first().trigger('click');
+	},
+	loadTab: function() {
+		$('[data-toggle="tab"][data-tabindex="'+this.index+'"]').trigger('click');
+	},
+	createDatepicker : function(){
+		var me = this;
+		$(".datepicker").datepicker(datepicker_option);
+		$(".datepicker").on('change', function() {
+			me.loadTab();
+		})
+	},
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.loadTab();
+	}
+}
+
+$(function(){
+	StatsTeamIndex.init();
+})
+</script>

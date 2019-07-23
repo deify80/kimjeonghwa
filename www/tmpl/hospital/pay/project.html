@@ -1,0 +1,294 @@
+<h3 class="area-title">수술별 수납기록 검색<span class="helper">(수술일 기준)</span></h3>
+<form id="FrmPayProjectSearch" onsubmit="PayProject.load(1); return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		{? auth.paid_all}
+		<tr>
+			<th>수술날짜</th>
+			<td colspan="3">
+				<input type="text" class="datepicker lg" name="date_s" id="sdate_s" value="{=date('Y-m-d')}"> ~ <input type="text" class="datepicker lg" name="date_e" value="{=date('Y-m-d')}" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="PayProject.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="PayProject.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="PayProject.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="PayProject.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="PayProject.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="PayProject.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+		{/}
+		<tr>
+			<th>검색어</th>
+			<td>
+				<input type="text" name="word" class="full" placeholder="환자명 or 휴대폰번호" >
+			</td>
+			<th>수납구분</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="tax_type" value="all" checked>전체</label>
+					<label class="btn"><input type="radio" name="tax_type" value="tax" />과세진료</label>
+					<label class="btn"><input type="radio" name="tax_type" value="free" />비과세진료</label>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			
+			<th>수납상태</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="pay_status" value="all" checked />전체</label>
+					<label class="btn"><input type="radio" name="pay_status" value="paid" />완납</label>
+					<label class="btn"><input type="radio" name="pay_status" value="unpaid" />미수</label>
+				</div>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="scsb_team" onchange="HmisCommon.loadUser(this.value, '', 'scsb')">
+					<option value="">::팀::</option>
+					{@ cfg.team}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="scsb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" ><i class="fa fa-search"></i> 검색</button>
+	<button type="button" class="btn btn-lg btn-gray" onclick="PayProject.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+<div class="row" style="margin-top:10px">
+	<div class="main-box infographic-box colored" style="background-color: #29B6F6">
+		<div class="headline"> <i class="fa fa-krw"></i> 총매출액</div>
+		<span class="value" id="amount_total"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #C3C3C3;" >
+		<div class="headline"> <i class="fa fa-money"></i>  기본매출</div>
+		<span class="value" id="amount_basic"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #C3C3C3;">
+		<div class="headline"> <i class="fa fa-plus"></i> 추가매출</div>
+		<span class="value" id="amount_addition"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#80CBC4">
+		<div class="headline"> <i class="fa fa-long-arrow-down"></i> 할인액</div>
+		<span class="value" id="discount_amount"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#FFA000">
+		<div class="headline"> <i class="fa fa-check"></i> 총수납액</div>
+		<span class="value" id="paid_total"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#FFA000">
+		<div class="headline"> <i class="fa fa-ellipsis-h"></i> 미수금</div>
+		<span class="value" id="amount_unpaid"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#FF7043">
+		<div class="headline"> <i class="fa fa-undo"></i> 환불액</div>
+		<span class="value" id="amount_refund"></span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#9575CD">
+		<div class="headline"> <i class="fa fa-calculator"></i> 재료비</div>
+		<span class="value" id="amount_material"></span>
+	</div>
+</div>
+
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px" /><!-- 번호 -->
+		<col style="width:100px" /><!-- 날짜 -->
+		<col style="width:80px" /><!-- 진료구분 -->
+		<col style="width:80px" /><!-- 과세구분 -->
+		<col style="width:130px" /><!-- 환자명 -->
+		<col style="width:120px" /><!-- 연락처 -->
+		<col style="width:220px" /><!-- 진료부위/항목 -->
+
+	</colgroup>
+	<thead>
+		<tr>
+			<th rowspan="2">번호</th>
+			<th rowspan="2">수술날짜</th>
+			<th rowspan="2">진료구분</th>
+			<th rowspan="2">과세구분1</th>
+
+			<th rowspan="2">환자명</th>
+			<th rowspan="2">연락처</th>
+			<th rowspan="2">진료부위/항목</th>
+			<th rowspan="2">총매출</th>
+			<th rowspan="2">정상수가</th>
+
+			<th rowspan="2">수가대비(차액)</th>
+			<!-- <th rowspan="2">총매출</th> -->
+			<th colspan="4">수납</th>
+			<!-- <th rowspan="2">미수금</th> -->
+			<!-- <th rowspan="2">재료비</th> -->
+			<th rowspan="2">미수금</th>
+			<th rowspan="2">환불액</th>
+			<th rowspan="2">재료비</th>
+		</tr>
+		<tr>
+			<th>총수납액</th>
+			<th>현금</th>
+			<th>카드</th>
+			<th>계좌이체</th>
+		</tr>
+	</thead>
+	<tbody id="paid_list">
+	</tbody>
+</table>
+
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>${\date_project}</td>
+		<td><span class="label label-xs {if type=='수술'} label-error {elseif type=='진료'} label-purple {\else} label-orange {/if}">${\type}</span></td>
+		<td>{if tax_type=='tax'}과세{\else}비과세{/if}</td>
+		<td><a href="javascript:;" onclick="PayProject.go('${\patient_no}','${\no}')" class="link">${\name}</a> {if sex == 'F'} <i class="fa fa-1 fa-female f-pink"></i> {\else} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td>${\mobile}</td>
+		<td>{if type=='진료'}-{\else}${\treat_nav}{/if}</td>
+		<td><span title="기본매출액:${HmisCommon.numberFormat(amount_basic)}원<br />추가매출액:${HmisCommon.numberFormat(amount_addition)}원" data-toggle="tooltip">${HmisCommon.numberFormat(amount_total)}</span></td>
+		<td>{if type=='진료'}-{\else}<span data-toggle="tooltip" title="${\op_type_txt}">${HmisCommon.numberFormat(cost)}</span>{/if}</td>
+		<td>{if type=='진료'}-{\else}<span data-toggle="tooltip" title="차액 : ${\contrast}${HmisCommon.numberFormat(Math.abs(discount_amount))}원" class="{if contrast=='-'}f-error{\else}f-blue{/if}">${\contrast_rate}%</span>{/if}</td><!-- 할인금액 -->
+		<td class="f-blue">
+			${HmisCommon.numberFormat(paid_total)}
+		</td>
+		<td>${HmisCommon.numberFormat(paid_cash)}</td>
+		<td>${HmisCommon.numberFormat(paid_card)}</td>
+		<td>${HmisCommon.numberFormat(paid_bank)}</td>
+		<td class="f-error">${HmisCommon.numberFormat(amount_unpaid)}</td>
+		<td>${HmisCommon.numberFormat(amount_refund)}</td>
+		<td>${HmisCommon.numberFormat(amount_material)}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="PayProject.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="PayProject.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="PayProject.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="PayProject.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="PayProject.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var PayProject = {
+	page:1,
+	limit:10,
+	init: function() {
+		this.load(1);
+		$('input[name="tax_type"], input[name="pay_status"]').on('change', function() {
+			PayProject.load(1);
+		});
+
+		HmisCommon.createDatepicker();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load(1);
+	},
+	reload: function() {
+		PayProject.load(PayProject.page);
+	},
+	go: function(patient_no, project_no){
+		var href = "/patient/info/"+patient_no;
+		document.location.href=href;
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmPayProjectSearch').serialize();
+
+		$.ajax({
+			url:'/pay/project_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#paid_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					$.each(r.data.sum, function(i,e){
+						$('#'+i).html(HmisCommon.numberFormat(e));
+					})
+				}
+				else {
+					target.append('<tr><td colspan="17">검색된 수납내역이 없습니다.</td></tr>');
+					$.each($('span[id^="amount_"]'), function(i,e){
+						$(this).text('0');
+					})
+				}
+
+
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+
+				$('[data-toggle="tooltip"]').tooltip({html:true});
+			}
+		})
+	},
+	reset: function(){
+		HmisCommon.formReset('FrmPayProjectSearch');
+		this.load();
+	},
+	detail: function(patient_no, no){
+		var title = '수납내역';
+		// var modal = new HmisModal('payinput', {width:1000, top:200});
+		// modal.callback = this.reload;
+		// modal.open(title,'/patient/info_widget_pay',{patient_no:patient_no, project_no:no});
+	}
+}
+
+$(function() {
+	PayProject.init();
+})
+</script>

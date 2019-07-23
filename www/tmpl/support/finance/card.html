@@ -1,0 +1,209 @@
+<h3 class="area-title">카드 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>카드종류</th>
+			<td>
+				<select name="card_kind_code"  data-role="search">
+					<option value="">::카드종류선택::</option>
+					{@ cfg.cardkind}
+					<option value="{.key_}" {? rs.cardkind_code==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>카드사</th>
+			<td>
+				<select name="bank_code"  data-role="search">
+					<option value="">::카드사선택::</option>
+					{@ cfg.card}
+					<option value="{.key_}" {? rs.bank_code==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>사업장</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.biz_id}active{/}"><input type="radio" name="biz_id" value="" {? !search.biz_id}checked{/} data-role="search" />전체</label>
+					{@ cfg.biz}
+					<label class="btn {? search.biz_id==.kye_}active{/}"><input type="radio" name="biz_id" value="{.key_}" data-role="search" />{.value_}</label>
+					{/}	
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>검색</th>
+			<td colspan="5"><input type="text" name="word" class="full" placeholder="카드명"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="CardList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="CardList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	카드 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 카드수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 카드수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="CardList.openInput()"><i class="fa fa-pencil fa-1"></i> 카드등록</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<!-- <col width="40px"> --><!-- 선택 -->
+		<col width="120px"><!-- 사업장 -->
+		<col style="width:170px" /><!-- 카드명 -->
+		<col style="width:80px" /><!-- 카드사 -->
+		<col style="width:100px" /><!-- 유효기간 -->
+		<col style="width:150px"/><!-- 카드번호 -->
+		<col style="width:120px" /><!-- 카드종류 -->
+		<col style="width:120px" /><!-- 결제일 -->
+		<col /><!-- 결제계좌번호 -->
+		<col style="width:120px" /><!-- 등록일 -->
+		<col width="80px"><!-- 사용여부 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<!-- <th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th> -->
+			<th>사업장</th>
+			<th>카드명</th>
+			<th>카드사</th>
+			<th>유효기간</th>
+			<th>카드번호</th>
+			<th>카드종류</th>
+			<th>결제일</th>
+			<th>결제계좌번호</th>
+			<th>등록일</th>
+			<th>사용여부</th>
+		</tr>
+	</thead>
+	<tbody id="card_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<!-- <td><input type="checkbox" class="hmis" name="checked[]" value="${card_seqno}"><span class="lbl"></span></td> -->
+		<td>${\biz_name}</td>
+		<td><a href="javascript:;" class="link" onclick="CardList.openInput('${\account_seqno}')">${\account_name}</a></td>
+		<td>${\card_company_name}</td>
+		<td>${\card_expire_date}</td>
+		<td>${\card_number}</td>
+		<td>${\card_kind_name}</td>
+		<td>${\card_payment_date} 일</td>
+		<td>${\card_account_name}</td>
+		<td>${\date_insert}</td>
+		<td>{if use_flag == 'Y'}<span class="label label-xs label-theme">사용</span>{\else}<span class="label label-xs">사용안함</span>{/if}</td>
+
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="CardList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="CardList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="CardList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="CardList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="CardList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var CardList = {
+	page:1,
+	init: function() {
+		this.load(1);
+
+		$('[data-role="search"]').on('change.search',function() {
+			CardList.load(1);
+		});
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	openInput: function(account_seqno) {
+		var title = (account_seqno)?'카드 정보 수정':'신규 카드 등록';
+		var modal = new HmisModal('card_input', {width:800, top:200});
+		modal.callback = function() {
+			CardList.load(1);
+		};
+		modal.open(title,'/finance/card_input',{account_seqno:account_seqno});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		$.ajax({
+			url:'/finance/card_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#card_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="11">검색된 계좌정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	}
+}
+
+$(function() {
+	CardList.init();
+})
+</script>

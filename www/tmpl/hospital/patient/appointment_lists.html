@@ -1,0 +1,396 @@
+<h3 class="area-title">환자 검색</h3>
+<form id="FrmAppointmentSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>예약일</th>
+			<td colspan="3">
+				<input type="text" class="datepicker lg" name="appointment_date_s" id="sdate_s" value="{=date('Y-m-d')}"> ~ <input type="text" class="datepicker lg" name="appointment_date_e" value="{=date('Y-m-d')}" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="AppointmentLists.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="AppointmentLists.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="AppointmentLists.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="AppointmentLists.setDate('{cfg.date.yesterday}','{=cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="AppointmentLists.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="AppointmentLists.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+
+
+			<th>진료부위</th>
+			<td>
+				<span id="treat_nav">전체</span>
+				<input type="hidden" id="treat_cost_no" name="treat_cost_no" value="">
+				<button type="button" onclick="HmisCommon.treat('AppointmentLists.search','','search')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<button type="button" onclick="AppointmentLists.resetTreat()" id="btn_treat_reset" class="btn btn-flat-lightgray btn-onlyicon hide"><i class="fa fa-times fa-1"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<th>담당팀</th>
+			<td>
+				<select name="manager_team_code" id="scsb_team" onchange="AppointmentLists.loadUser(this.value)">
+					<option value="">::팀::</option>
+					{@ cfg.team}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+
+				<select name="manager_id" id="scsb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+			<th>예약상태</th>
+			<td>
+				<select name="status_code" id="sb_item">
+					<option value="">::전체상태::</option>
+					{@ cfg.appointment_status}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>예약유형</th>
+			<td>
+				<select name="type_code">
+					<option value="">::전체유형::</option>
+					{@ cfg.appointment_type}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>검색</th>
+			<td colspan="5">
+				<input type="text" name="word" class="full" placeholder="환자명 or 휴대폰번호 or 차트번호" >
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="AppointmentLists.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="AppointmentLists.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	예약 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 예약수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 예약수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button type="button" class="btn btn-lightgray" onclick="AppointmentLists.sms()"><i class="fa fa-envelope-o fa-1" style="color:#FF9800;"></i> 문자발송</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="120px"><!-- 차트번호 -->
+		<col width="100px"><!-- 이름 -->
+		<col width="150px"><!-- 연락처 -->
+		<col width="100px"><!-- 예약일자 -->
+		<col width="100px"><!-- 예약시간 -->
+		<col style="width:100px"><!-- 예약상태 -->
+		<col width="120px"><!-- 예약유형 -->
+		<col width="100px"><!-- 담당실장 -->
+		<col width="100px"><!-- 담당의사 -->
+		<col><!-- 진료부위 -->
+		<col><!-- 메모 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th><i class="fa fa-1 fa-link" style="color:#FF7070" data-toggle="tooltip" title="" data-original-title="환자연동"></i></th>
+			<th>차트번호</th>
+			<th>이름</th>
+			<th>연락처</th>
+			<th>예약일자</th>
+			<th>예약시간</th>
+			<th>예약상태</th>
+			<th>예약유형</th>
+			<th>담당실장</th>
+			<th>담당의사</th>
+			<th>진료부위</th>
+			<th>메모</th>
+		</th>
+	</thead>
+	<tbody id="appointment_inner">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<!-- 문자발송폼:S -->
+<form id="FrmSms" method="post" action="/sms/popup" target="sms_popup"></form>
+<!-- 문자발송폼:E -->
+
+<style>
+{@ status}
+.status-{.code} {
+	background-color:{.etc.bg};
+	border-color:{.etc.bg};
+	color:{.etc.font};
+}
+{/}
+</style>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td data-link="no"><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${\no}" ><span class="lbl"></span></label></td>
+		<td>
+			<a href="javascript:;" onclick="AppointmentLists.open('${\patient_no}')"><i class="fa fa-1 fa-link" style="color:#FF7070"></i></a>
+		</td>
+		<td>${\chart_no}</td>
+		<td><a href="javascript:;" onclick="AppointmentLists.view('${\no}')" class="link">${\name}</a></td>
+		<td>${\mobile}</td>
+		<td>${\appointment_date}</td>
+		<td>${\appointment_time}</td>
+		<td><span class="label label-xs status-${\status_code}">${\status_text}</span></td>
+		<td>${\type_text}</td>
+		<td>${\manager_name}</td>
+		<td>${\doctor_name}</td>
+		<td style="text-align:left">${\treat_info}</td>
+		<td style="text-align:left">${\comment}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="AppointmentLists.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="AppointmentLists.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="AppointmentLists.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="AppointmentLists.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="AppointmentLists.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript" src="/js/Hmis.treat.js?<?=time()?>"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var AppointmentLists = {
+	page:1,
+	init : function() {
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+	},
+	open: function(patient_no) {
+		var href = '/patient/info/'+patient_no;
+		window.open(href,'','width=1800,height=1000');
+	},
+	view: function(no) {
+		var widget_id = 'appointment';
+
+		var width = 1100;
+		var url = '/patient/info_widget_appointment_input';
+		var modal = new HmisModal('modal_'+widget_id, {width:width});
+		modal.callback = function(rs) {
+			AppointmentLists.load();
+		}
+
+		var param = {no:no};
+
+		modal.open('예약정보 수정', url, param);
+	},
+	reload: function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmAppointmentSearch').serialize();
+
+		$.ajax({
+			url:'/patient/appointment_inner',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#appointment_inner');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="14">검색된 예약정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-rel="tooltip"]').tooltip();
+			}
+		})
+	},
+
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 환자를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var patients = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/patient_proc/remove_patient',
+					data:{
+						patient_no:patients
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							me.reload();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})
+			}
+
+		});
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	search: function(d) {
+		if(d) {
+			$('#treat_nav').html(d.nav.join(' &gt '));
+			$('#treat_cost_no').val(d.no);
+			$('#btn_treat_reset').removeClass('hide');
+		}
+
+		AppointmentLists.setPage(1);
+		AppointmentLists.load();
+	},
+	reset: function(){
+		$('#scsb_treat_item').css('display','none');
+		$('#scsb_user').css('display','none');
+		HmisCommon.formReset('FrmAppointmentSearch');
+		this.resetTreat();
+		this.load();
+	},
+	resetTreat: function() {
+		$('#treat_nav').html('전체');
+		$('#treat_cost_no').val('');
+		$('#btn_treat_reset').addClass('hide');
+		this.search();
+
+	},
+	loadUser: function(team_code){
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	loadTreatItem: function(region_code) {
+
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	sms: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('문자발송 대상DB를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		$('#FrmSms').empty();
+		var target = $('#FrmSms');
+		$.each(checked, function(i,e) {
+			target.append('<input type="hidden" name="sms['+i+']" value="'+$(e).val()+'" />');
+		});
+
+		target.append('<input type="hidden" name="sms_resource" value="appointment" />');
+
+		open_sms();
+		$('#FrmSms').submit();
+	}
+}
+
+$(function(){
+	AppointmentLists.init();
+})
+</script>

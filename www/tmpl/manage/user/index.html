@@ -1,0 +1,685 @@
+<h3 class="area-title">직원 검색</h3>
+<form id="FrmUserSearch" onsubmit="return false">
+<input type="hidden" name="page" value="{page}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>부서/팀</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn {? search.dept_code =='all'}active{/}"><input type="radio" name="dept_code" value="all"  data-role="search" {? search.dept_code =='all'}checked{/} /><span>전체</span></label>
+					{@ cfg.dept}
+					<label class="btn {? search.dept_code ==.key_}active{/}"><input type="radio" name="dept_code" value="{.key_}"  data-role="search" {? search.dept_code ==.key_}checked{/} /><span>{.value_}</span></label>
+					{/}
+				</div>
+				<span class="split"> | </span>
+				<div class="btn-group hmis orange" data-toggle="buttons" id="team_code_wrap">
+					<label class="btn {? search.team_code =='all'}active{/}"><input type="radio" name="team_code" value="all"  data-role="search" {? search.team_code =='all'}checked{/}  /><span>전체</span></label>
+				</div>
+			</td>
+			<th>사업장</th>
+			<td>
+				<select name="biz_id" data-role="search">
+					<option value="">::사업장선택::</option>
+					{@ cfg.biz}
+					<option value="{.key_}" {? search.biz_id==.key_}selected{/}>{.value_}</option>	
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>직책</th>
+			<td>
+				<select name="duty_code" data-role="search">
+					<option value="">::직책선택::</option>
+					{@ cfg.duty}
+					<option value="{.key_}" {? search.duty_code==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>직급</th>
+			<td>
+				<select name="position_code" data-role="search">
+					<option value="">::직급선택::</option>
+					{@ cfg.position}					
+					<option value="{.key_}" {? search.position_code==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>상태</th>
+			<td>
+				<div class="btn-group hmis gray" data-toggle="buttons" data-default="1">
+					<label class="btn {? search.status=='all'}active{/}"><input type="radio" name="status" value="all"  data-role="search" {? search.status=='all'}checked{/} /><span>전체</span></label>
+					<label class="btn {? search.status=='1'}active{/}"><input type="radio" name="status" value="1" checked data-role="search" {? search.status=='1'}checked{/} /><span>근무</span></label>
+					<label class="btn {? search.status=='2'}active{/}"><input type="radio" name="status" value="2" data-role="search" {? search.status=='2'}checked{/} /><span>휴직</span></label>
+					<label class="btn {? search.status=='3'}active{/}"><input type="radio" name="status" value="3" data-role="search" {? search.status=='3'}checked{/} /><span>퇴직</span></label>
+				</div>
+			</td>
+		</tr>
+		<tr>	
+			<th>검색어</th>
+			<td colspan="5"><input type="text" name="search_word" class="full" value="{search.search_word}" placeholder="직원명 or 사번 or 아이디"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="UserList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="UserList.reset()">처음으로</button>
+</div>
+</form>
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	직원 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 직원수 <span id="cnt_search" class="f-bold  f-error">0</span>명 <span class="split">|</span> 총 직원수 <span id="cnt_total"class="f-bold">0</span>명</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="UserList.openInput()"><i class="fa fa-user-plus fa-1"></i> 새직원등록</button>
+		<button class="btn btn-flat-orange" onclick="UserList.retire()"><i class="fa fa-user-times fa-1"></i> 퇴사처리</button>
+		<!-- <span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="UserList.openMove()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button> -->
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="100px"><!-- 아이디 -->
+		<col width="100px"><!-- 아이디 -->
+		<col width="100px"><!-- 이름 -->
+		<col style="width:120px" /><!-- 부서 -->
+		<col style="width:120px" /><!-- 팀 -->
+		<col style="width:80px" /><!-- 직급 -->
+		<col style="width:80px" /><!-- 직책 -->
+		<col style="width:120px" /><!-- 연락처 -->
+		<col /><!-- 이메일 -->
+		<col style="width:60px" /><!-- 상태 -->
+		<col style="width:90px" /><!-- 입사일 -->
+		<col style="width:120px" /><!-- 근속기간 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>사번</th>
+			<th>아이디</th>
+			<th>이름</th>
+			<th>부서</th>
+			<th>팀</th>
+			<th>직급</th>
+			<th>직책</th>
+			<th>연락처</th>
+			<th>이메일</th>
+			<th>상태</th>
+			<th>입사일</th>
+			<th>근속기간</th>
+		</tr>
+	</thead>
+	<tbody id="user_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${\no}"><span class="lbl"></span></td>
+		<td>${\user_code}</td>
+		<td><a href="/manage/user_info/${\no}" class="link">${\user_id}</a></td>
+		<td>${\name}</td>
+		<td>${\dept_name}</td>
+		<td>${\team_name}</td>
+		<td>${\position_name}</td>
+		<td>${\duty_name}</td>
+		<td>${HmisCommon.isStrNull(mobile)}</td>
+		<td>${HmisCommon.isStrNull(email)}</td>
+		<td>{if status==1} <span class="label label-xs label-normal">근무</span> {elseif status==2}  <span class="label label-xs normal label-theme">휴직</span> {\else}  <span class="label label-xs">퇴사</span> {/if}</td>
+		<td>{if join_date=='0000-00-00'} <span class="f-null">미입력</span> {\else} ${\join_date} {/if}</td>
+		<td>
+			{if status!=1}
+				<span class="f-null">-</span> 
+			{elseif join_date=='0000-00-00'}
+				<span class="f-null">미입력</span> 
+			{\else}
+				{if service.years} ${\service.years}년 {/if}
+				{if service.months} ${\service.months}개월 {/if}
+				{if service.days} ${\service.days}일 {/if}
+			{/if}
+		</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="UserList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="UserList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="UserList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="UserList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="UserList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var UserList = {
+	page:1,
+	init: function() {
+	
+		UserList.loadTeam('{search.dept_code}');
+
+		$('[data-role="search"]').change(function() {
+			UserList.setPage(1);
+			UserList.load();
+		});
+
+		$('input[name="dept_code"]').change(function() {
+			UserList.loadTeam($(this).val());
+		});	
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmUserSearch');
+		this.load(1);
+	},
+	retire: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('퇴사처리할 직원을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('선택한 직원('+checked.length+'명)을 퇴사처리하시겠습니까?', function(r) {
+			if(r) {
+				var users = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/manage_proc/retire_user',
+					data:{
+						user_no:users
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						HmisAlert.alert(r.msg);
+						if(r.success){
+							me.reload();
+						}
+					}
+				})	
+			}
+			
+		});
+	},
+	openInput: function(goods_no) {
+		var modal = new HmisModal('user_input', {width:800, top:200});
+		modal.open('새 직원 등록','/manage/user_input');
+	},
+	view: function() {
+
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+
+		var p = page || this.page;
+		this.setPage(p);
+
+		var me = this;
+		var search = $('#FrmUserSearch').serialize();
+		
+		$.ajax({
+			url:'/manage/user_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#user_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="14">검색된 직원정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	loadTeam : function(dept_code) {
+
+		var sb_team = $('#team_code_wrap');
+		sb_team.find('label:gt(0)').remove();
+		
+		// if(dept_code=='all') {
+		// 	return false;
+		// }
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				
+				if(r.success){
+					var team_code = '{search.team_code}';
+
+					$.each(r.data, function(i,e){
+						var checked = (team_code==i)?'checked':'';
+						var active = (team_code==i)?'active':'';
+						var label = '<label class="btn '+active+'" data-team="'+i+'"><input type="radio" name="team_code" value="'+i+'"  onchange="UserList.load(1)"  '+checked+'/><span>'+e+'</span></label>'
+						sb_team.append(label);
+					});
+
+					if(team_code == 'all' || sb_team.find('label.active').length<1) {
+						sb_team.find('label:eq(0)').trigger('click');
+					}
+					else {
+						sb_team.find('label[data-team="'+team_code+'"]').trigger('click');
+					}
+					//sb_team.css('display','');
+				}
+				else {
+					//sb_team.val('').css('display','none');	
+				}
+			},
+			complete: function(){
+				UserList.load($('input[name="page"]').val());
+			}
+		});
+	}
+}
+
+$(function() {
+	UserList.init();
+})
+</script>
+
+
+<!-- 
+<script>
+	$(document).ready(function() {
+
+		
+		$("#menu a").eq(2).addClass("selected");
+		
+		$("#srch_status").val(1);
+		set_list();
+
+		open_calendar("#srch_start_date");
+		open_calendar("#srch_end_date");
+
+		$( ".radio" ).buttonset();
+
+		$("#bt-off").button("option", "icons", {
+			primary : "ui-icon-closethick"
+		});
+
+		$("#bt-new").button("option", "icons", {
+			primary : "ui-icon-circle-plus"
+		});
+
+		$("#bt-reset").button("option", "icons", {
+			primary : "ui-icon-arrowrefresh-1-s"
+		});
+
+		$('[data-role="reload"]').change(function() {
+			grid_reload();
+		});
+		
+
+		$('#input-area').dialog({
+			autoOpen : false,
+			width : 900,
+			height : 400,
+			resizable : false,
+			modal : true,
+			show : {
+				effect : "blind"
+			},
+			buttons : {
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+		
+
+		$( "input:radio" ).change(function() {
+			grid_reload();
+		});
+
+
+	});
+
+	function set_list() {
+		$("#list").jqGrid(
+				{
+					width : 'auto',
+					height : 500,
+					url : "/manage/user_lists",
+					datatype : "json",
+					colNames : [ "번호", "등록일자", "ID", "이름", "부서명", "팀명",
+							"직급", "직책", "전화", "휴대폰", "이메일", "상태", "비고"],
+					colModel : [ {
+						name : "no",
+						index : "no",
+						width : 50,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "reg_date",
+						index : "reg_date",
+						width : 60,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "user_id",
+						index : "user_id",
+						width : 90,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "name",
+						index : "name",
+						width : 60,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "dept_name",
+						index : "dept_name",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "team_name",
+						index : "team_name",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "position_name",
+						index : "position_name",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "duty_name",
+						index : "duty_name",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "tel",
+						index : "tel",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "mobile",
+						index : "mobile",
+						width : 80,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "email",
+						index : "email",
+						width : 120,
+						align : "center", 
+						sortable: false
+					}, {
+						name : "status",
+						index : "status",
+						width : 50,
+						align : "center", 
+						sortable: false
+					},
+					{name:'act',index:'act', width:25,align : "center"}],
+					rowNum : 20,
+					rowList : [ 10, 20, 30 ],
+					pager : "#pager",
+					viewrecords : true,
+					sortorder : "desc",
+					caption : "목록",
+					multiselect : true,
+					gridComplete: function(){
+						var ids = $("#list").jqGrid('getDataIDs');
+						for(var i=0;i < ids.length;i++){
+							var id = ids[i];
+							var ret = $("#list").jqGrid('getRowData',id);
+							be = "<span class='ui-icon ui-icon-zoomin' onclick=\"open_input('"+ret.user_id+"') \"></span>";
+							$("#list").jqGrid('setRowData',ids[i],{act:be});
+						}	
+					},
+					afterInsertRow : function(id, data) {
+						if (data.status == "보류") {
+							$("#jqg_list_" + id).attr("disabled", "disabled");
+						}
+						$("#jqg_list_" + id).val(data.user_id);
+						$("#jqg_list_" + id).attr("name", "chk[]");
+					},
+					onSelectRow : function(id) {
+						//document.location = "/consulting/view";
+					},		
+					beforeSelectRow : function(id) {
+						if ($("#jqg_list_" + id).attr("disabled")) {
+							return false;
+						}
+						return true;
+					},
+					onSelectAll : function(id, status) {
+						if (status) {
+							for (var i = 0; i < id.length; i++) {
+								if ($("#jqg_list_" + id[i]).attr("disabled")) {
+									$("#jqg_list_" + id[i]).removeAttr("checked");
+									$("tr#" + id[i]).removeClass( "ui-state-highlight" )
+								}
+							}
+						}
+					}
+				});
+		$("#list").jqGrid("navGrid", "#pager", {
+			edit : false,
+			add : false,
+			del : false,
+			search : false
+		});
+	}
+
+	function grid_reload() {
+		var data = $("#srch-frm").serialize();
+		var url = "/manage/user_lists?" + data;
+
+		$("#list").jqGrid("setGridParam", {
+			url : url,
+			page : 1
+		}).trigger("reloadGrid");
+	}
+
+	function open_input(user_id) {
+		var data = "";
+		var url = "/manage/user_input/"+user_id;
+
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+
+				$("#input-area").html(result_data);
+				$("#input-area").dialog("open");
+
+			}
+		});
+	}
+	
+	
+	
+	function set_off() {
+		
+		if (is_checked("list-frm") == 0) {
+			alert("항목을 한개 이상 선택해주세요.");
+			return;
+		}
+		
+		var data = $("#list-frm").serialize();
+		var url = "/manage_proc/user_off";
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				
+				$("#msg-area").html("보류처리 완료했습니다.");
+				$("#msg-area").dialog("open");
+				
+				$("#list").trigger("reloadGrid");
+			}
+		});
+		
+		
+	}
+</script>
+
+
+<h3 class="area-title">검색
+<div class="button-box">
+	<button id="bt-new" onClick="open_input('');">신규등록</button>
+</div>
+</h3>
+
+<form id="srch-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="10%" />
+			<col width="14%" />
+			<col width="10%" />
+			<col width="14%" />
+			<col width="10%" />
+			<col width="14%" />
+			<col width="10%" />
+			<col width="" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>부서명</th>
+				<td colspan="7">
+					<div class="radio">
+					<input type="radio" id="radio0" name="srch_dept_code" checked="checked" value=""><label for="radio0">전체</label>
+					<? foreach($dept_list as $i=>$val): ?>
+					<input type="radio" id="radio<?=$i?>" name="srch_dept_code" value="<?=$i?>" ><label for="radio<?=$i?>"><?=$val?></label>
+					<? endforeach; ?>
+					</div> 
+				</td>
+			</tr>
+
+			<tr>
+				<th>사업장</th>
+				<td><select name="srch_biz_id" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($biz_list as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+				</select></td>
+
+				<th>팀</th>
+				<td><select name="srch_team_code" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($team_list as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+				</select></td>
+				<th>직급</th>
+				<td><select name="srch_position_code" data-role="reload">
+						<option value="">-선택-</option>
+						<? foreach($this->config->item('position_code') as $i=>$val): ?>
+						<option value="<?=$i?>">
+							<?=$val?>
+						</option>
+						<? endforeach; ?>
+				</select></td>
+				<th>직책</th>
+				<td><select name="srch_duty_code" data-role="reload">
+						<option value="">-선택-</option>
+						<? foreach($this->config->item('duty_code') as $i=>$val): ?>
+						<option value="<?=$i?>">
+							<?=$val?>
+						</option>
+						<? endforeach; ?>
+				</select></td>
+			</tr>
+
+			<tr>
+
+				<th>상태</th>
+				<td colspan="2">
+				<select name="srch_status" id="srch_status" style="width:100px;" data-role="reload">
+					<option value="99">-전체-</option>
+					<? foreach($this->config->item('user_status') as $i=>$val): ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+				</td>
+				<th>직원명</th>
+				<td><input type="text" name="srch_name"></td>
+				<td colspan="4">&nbsp
+
+
+
+				<button id="bt-srch" onclick="grid_reload();">검색</button>
+				<button id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button></td>	
+			</tr>
+		</tbody>
+	</table>
+</form>
+<form id="list-frm">
+<div class="tool-box">
+	<button id="bt-off" onClick="set_off();">퇴사</button>
+</div>
+<table id="list"></table>
+<div id="pager"></div>
+</form>
+
+<div id="input-area" title="직원정보"></div> -->

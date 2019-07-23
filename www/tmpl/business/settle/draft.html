@@ -1,0 +1,141 @@
+
+
+<script>
+	$(document).ready(function() {
+		$("button, input[type=button]").button();
+		set_list2();
+	});
+	
+	function set_list2() {
+		var data = $("#draft-frm").serialize();
+		var url = "/business/settle_lists?" + data;
+
+		$("#list2")	.jqGrid({
+							width : 910,
+							height : 270,
+							url : url,
+							datatype : "json",
+							/*colNames : [ "번호", "품의번호", "구분", "작성일자", "작성자","제목","settle_no"],*/
+
+							colNames : [ "번호", "품의번호", "구분", "작성일자", "작성자",	"제목", "결재진행", "상태", "최종결재자", "최종일자", "status","status1","settle_no"],
+							colModel : [ {
+								name : "no",
+								index : "no",
+								width : 50,
+								align : "center"
+							}, {
+								name : "settle_number",
+								index : "settle_number",
+								width : 100,
+								align : "center", 
+								sortable: false
+							}, {
+								name : "settle_type",
+								index : "settle_type",
+								width : 70,
+								align : "center", 
+								sortable: false
+							}, {
+								name : "reg_date",
+								index : "reg_date",
+								width : 40,
+								align : "center", 
+								sortable: false
+							}, {
+								name : "name",
+								index : "name",
+								width : 40,
+								align : "center", 
+								sortable: false
+							}, {
+								name : "title",
+								index : "title",
+								width : 0,
+								align : "center", 
+								sortable: false
+							},
+							{name:'결재진행',index:'결재진행', hidden:true},
+							{name:'상태',index:'결재진행', hidden:true},
+							{name:'최종결재자',index:'결재진행', hidden:true},
+							{name:'최종일자',index:'결재진행', hidden:true},
+							{name:'status',index:'결재진행', hidden:true},			
+							{name:'status1',index:'결재진행', hidden:true},					// 20170126 kruddo - 데이터 갯수 맞지 않아 하나 추가
+							{name:'settle_no',index:'settle_no', hidden:true}
+							],
+							rowNum : 10,
+							rowList : [ 10, 20, 30 ],
+							pager : "#pager",
+							sortname : "no",
+							viewrecords : true,
+							sortorder : "desc",
+							caption : "목록",
+							onSelectRow :  function(id) {								
+								var rowData = jQuery("#list2").getRowData(id);								
+								var draft_no = $("#draft_no").val();
+								var draft_array = draft_no.split(',');
+								
+								if( $.inArray( rowData['settle_no'], draft_array ) == -1 ){
+									if( draft_no ){
+										$("#draft_no").val(draft_no+","+rowData['settle_no']);	
+									}
+									else{
+										$("#draft_no").val(rowData['settle_no']);
+									}
+									
+									$("#draft_refer_str").append("<span id='draft_cancel_id"+rowData['settle_no']+"'> ["+rowData['settle_number']+"-"+rowData['settle_type']+"]"+rowData['title']+" <span class='badge' id='draft_cancel' onClick='draft_cancel("+rowData['settle_no']+");' style='cursor:pointer;' >x</span></span>");
+						    	}
+								
+								/*
+								$("#draft_no").val(rowData['no']);
+								$('#draft_refer_str').text("["+rowData['settle_number']+"-"+rowData['settle_type']+"]"+rowData['title']);
+								$('#draft_cancel').show();
+								*/
+								$("#settle_line-area").dialog("close");		
+							},
+							afterInsertRow : function(id, data) {
+							}
+						});
+		
+		$("#list2").jqGrid("navGrid", "#pager", {
+			edit : false,
+			add : false,
+			del : false,
+			search : false
+		});
+		
+	}
+	
+	function draft_reset(){		
+		//$('#draft_mode').val('');
+		$('#draft-frm > input[name=mode]').val('');
+		grid_reload();
+	}
+	
+	function draft_give(){
+		//$('#draft_mode').val('give');
+		$('#draft-frm > input[name=mode]').val('give');
+		grid_reload();
+	}
+	
+	function grid_reload() {
+		var data = $("#draft-frm").serialize();
+		var url = "/business/settle_lists?" + data;
+		$("#list2").jqGrid("setGridParam", {
+			url : url,
+			page : 1
+		}).trigger("reloadGrid");
+	}	
+	
+</script>
+<div style="margin: auto;">
+<form id="draft-frm">
+<input type="hidden" name="draft_mode" id="draft_mode" value="<?=$draft_mode;?>">
+<input type="hidden" name="mode" value="<?=$mode;?>">
+<div style="clear:both;margin-bottom: 5px;"><input type='button' value='올린결재' onclick="draft_reset();">
+<input type='button' value='받은결재' onclick="draft_give();">
+</div>
+<table id="list2"></table>
+<div id="pager"></div>
+</form>
+</div>
+ 

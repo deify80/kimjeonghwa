@@ -1,0 +1,325 @@
+<div style="position:relative">
+{? mode == 'insert' && referer!='teamdb'}
+<form id="FrmAppointmentInputSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="{rs.group_code}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px" />
+		<col />
+
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>환자 검색 <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="기존 환자리스트에서 검색합니다."></i> </th>
+			<td>
+				<div>
+					<input type="search" name="patient_name" id="search_appointment_patient" style="width:350px" autocomplete="off" placeholder="환자명 or 연락처 "/>
+					<button type="button" id="btn_search" class="btn btn-flat-blue"><i class="fa fa-search fa-1"></i> 검색</button>
+					<button type="button" class="btn btn-gray"  onclick="AppointmentInput.reset()"><i class="fa fa-refresh fa-1"></i>처음으로</button>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<div class="dashed" style="margin:10px 0px"></div>
+{/}
+
+<form id="FrmAppointmentInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{patient.no}" /> <!-- 환자PK -->
+<input type="hidden" name="appointment_no" value="{rs.no}" /> <!-- 예약PK -->
+
+<!-- 환자정보:S -->
+<h3 class="area-title">환자정보
+	{? mode == 'update'}
+	<button type="button" class="btn btn-xs btn-theme"  onclick="window.open('/patient/info/{rs.patient_no}')" style="height:17px;padding:0px 2px">환자정보바로가기</button>
+	{/}
+	<div class="button-box">
+		Chart No. <span id="chart_no" class="f-error">{? patient.chart_no}{patient.chart_no}{:}신규환자{/} </span>
+	</div>
+</h3>
+
+<!-- 환자정보:S -->
+{inc.patient}
+<!-- 환자정보:E -->
+
+<!-- 예약정보:S -->
+<h3 class="area-title">예약정보</h3>
+{inc.appointment}
+<!-- 예약정보:E -->
+
+<div class="area-button">
+	{? auth.manage || mode =='insert'}
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+</div>
+
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var AppointmentInput = {
+	referer:'{referer}',
+	init: function() {
+		$('input[data-mask="jumin"]').mask('999999-9999999');
+		$('input[data-mask="mobile"]').mask('019-****-9999');
+		$('input[data-mask="date"]').mask('9999-99-99');
+
+		HmisCommon.createDatepicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			display:'alert',
+			validationEventTrigger:'submit',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmAppointmentInput").validationEngine('attach',option);
+
+		HmisCommon.loadUser("{patient.manager_team_code}","{patient.manager_id}");
+		HmisCommon.loadUser("{rs.manager_team_code}","{rs.manager_id}", 'appointment');
+
+		//중복체크
+		// $('input[data-errormessage-pattern-mismatch]').on('blur.duplicate', function(){
+		// 	me.checkDuplicate(this.name);
+		// });
+
+
+		//환자검색
+		this.createAutocomplete();
+		this.buildTreat();
+	},
+
+	save: function() {
+		var me = this;
+
+		//중복데이터 체크
+		if( $('input[name="messenger"]').length > 0 && $('#messenger').val() != $('input[name="messenger"]').val()) {
+			HmisAlert.alert("메신저 중복체크가 필요합니다.1");
+			return false;
+		}
+
+		var formdata = $('#FrmAppointmentInput').serializeArray();
+
+		var treat = $('#treat_list > span').map(function(){ return $(this).attr('id'); }).get();
+		if(treat.length > 0) {
+			formdata.push({name:'appointment[treat]', value:treat});
+		}
+
+		$.ajax({
+			url:'/treat_proc/save_appointment',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				if(r.success) {
+					HmisAlert.alert(r.msg, function(){
+						$('.modal-close').trigger('click');
+						if(me.referer=='teamdb') {
+							document.location.reload();
+						}
+						else ScheduleList.loadSchedule();
+					});
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		});
+	},
+
+	selectPatient: function(data) {
+		console.log(data);
+		$.each(data, function(i,e) {
+			switch(i) {
+				case 'no':
+					$('[name="patient_no"]').val(e);
+				break;
+				case 'agree_privacy':
+				case 'agree_email':
+				case 'agree_sms':
+				case 'is_x':
+					if(e == 'Y') {
+						$('[name="'+i+'"]').prop('checked',true);
+					}
+				break;
+				case 'chart_no':
+					$('#chart_no').html(e);
+				break;
+				case 'sex':
+					$('[name="sex"][value="'+e+'"]').prop("checked",true);
+				break;
+				case 'manager_team_code':
+					$('[name="manager_team_code"] > option[value="'+e+'"], [name="appointment[manager_team_code]"] > option[value="'+e+'"]').prop("selected",true);
+					$('[name="manager_team_code"] > option[value!="'+e+'"], [name="appointment[manager_team_code]"] > option[value!="'+e+'"]').prop("disabled",true);
+					HmisCommon.loadUser(e, data.manager_id, 'patient_form');
+					HmisCommon.loadUser(e, data.manager_id, 'appointment');
+				break;
+				case 'treat_region_code' :
+					$('[name="treat_region_code"] option[value="'+e+'"]').prop("selected",true);
+					HmisTreat.loadTreatItem(e, data.treat_item_code, 'patient_form');
+					// HmisCommon.loadUser(e, data.manager_id, 'appointment');
+				break;
+				default:
+					$('[name="'+i+'"]').val(e);
+					$('#'+i).val(e);
+					if(i!='comment') $('[name="appointment['+i+']"]').val(e);
+				break;
+			}
+		})
+	},
+	//회원검색
+	createAutocomplete: function(){
+		var me = this;
+		var el = $('#search_appointment_patient');
+		el.autocomplete({
+			minLength: 1,
+			disabled: true,
+			select: function(event, ui) {
+				if(ui.item.rs != null) {
+					me.selectPatient(ui.item.rs);
+				}
+
+				$(this).val('');
+				return false;
+
+			},
+			source:function(request, response) {
+				$.ajax({
+					url: "/patient/patient_list",
+					data:{
+						search_word:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.name+' - '+v.search,
+									value: v.name,
+									rs:v
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 환자가 없습니다.',
+								value:'',
+								no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				me.searchPatient();
+				// if(el.val().length<2) {
+				// 	HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+				// 	return false;
+				// }
+				// el.autocomplete('enable');
+				// el.autocomplete("search",el.val());
+			}
+			else {
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+
+
+		$('#btn_search').on('click',me.searchPatient)
+	},
+	searchPatient: function() {
+		var el = $('#search_appointment_patient');
+		if(el.val().length<2) {
+			HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+			return false;
+		}
+		el.autocomplete('enable');
+		el.autocomplete("search",el.val());
+	},
+	//진료항목추가
+	addTreat: function() {
+		var id = $('#sb_treat_region').val()+'_'+$('#sb_treat_item').val();
+		var text = $('#sb_treat_region option:selected').text()+' > '+$('#sb_treat_item option:selected').text();
+		var target = $('#treat_list');
+
+		if(target.find('span#'+id).length>0) {
+			HmisAlert.alert('동일한 진료항목이 이미 선택되었습니다.');
+			return false;
+		}
+
+		var tbl = $('<span class="label label-default" style="margin-top:0px;margin-bottom:0px" id="'+id+'">'+text+' <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px"></i></label>');
+		tbl.find('i').on('click.treat', function() {AppointmentInput.removeTreat(id);});
+		target.append(tbl);
+		this.buildTreat();
+	},
+	//진료항목제거
+	removeTreat: function(id) {
+		$('#treat_list > span#'+id).remove();
+		this.buildTreat();
+	},
+	buildTreat: function() {
+		if($('#treat_list > span').length>0) {
+			$('#treat_null').css('display','none');
+		}
+		else {
+			$('#treat_null').css('display','');
+		}
+	},
+	loadTreatItem: function(region_code, item_code) {
+		var region_code = region_code || $('#sb_treat_region').val();
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (i==item_code)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	reset: function() {
+		HmisAlert.confirm('입력하신 데이터를 초기화하시겠습니까?',function(r) {
+			if(r) {
+				HmisCommon.formReset('FrmAppointmentInput');
+				$('#chart_no').html('신규환자');
+				$('#FrmAppointmentInput').validationEngine('hide');
+
+				$('[name="manager_team_code"] > option, [name="appointment[manager_team_code]"] > option').prop("disabled",false);
+				$('[name="manager_team_code"], [name="appointment[manager_team_code]"]').trigger('change');
+
+			}
+		})
+	}
+}
+
+$(function(){
+	AppointmentInput.init();
+})
+</script>

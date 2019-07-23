@@ -1,0 +1,75 @@
+<div style="position:relative;padding:5px 10px;width:500px;background-color:#263238;color:#FFF;border-radius:2px;overflow-y:hidden;" id="notice_list">
+	<a href="javascript:;" onclick="NoticeInline.input()"><span  class="f-theme" style="padding-right:10px"><i class="fa fa-rss fa-1"></i> <b>공지사항</b></span> </a>
+	<? if(count($notice)>1) {?>
+	<i class="fa fa-1 fa-chevron-down f-theme link" style="position:absolute;right:10px" onclick="NoticeInline.toggleNotice(this)"></i>
+	<? } ?>
+	<div style="margin-top:0px;margin-left:72px;" >
+		<div id="rolling" style="position: absolute; top: 3px;">
+			<ul style="line-height:19px;">
+				<? foreach($notice as $row) {?>
+				<li><?=$row['contents']?></li>
+				<? } ?>
+			</ul>
+		</div>
+	</div>
+</div>
+
+
+<script type="text/javascript">
+var timer;
+var NoticeInline = {
+	interval:3000,
+	init: function(){
+		this.rollingStop();
+		if($('#rolling > ul > li').length > 1) {
+			this.rollingStart();
+		}
+	},
+	input: function(){
+		var modal = new HmisModal('noticeinput', {width:800, top:200});
+		modal.callback = Schedule.loadNotice;
+		modal.open('공지사항 관리','/treat/notice_input');
+	},
+	toggleNotice: function(e) {
+		var el = $('#notice_list');
+		var collapse = (el.height()<30)?true:false;
+		if(collapse) {
+			el.css('height',$('#rolling > ul').height()+7);
+			$(e).removeClass('fa-chevron-down').addClass('fa-chevron-up');
+			this.rollingStop();
+		}
+		else {
+			el.css('height',25);
+			$(e).addClass('fa-chevron-down').removeClass('fa-chevron-up');
+			this.rollingStart();
+		}
+	},
+	rollingStart: function(){
+		timer = setInterval(this.rollingMove, this.interval);	
+	},
+	rollingMove: function(){
+		$("#rolling").animate({
+			top:"-=18"
+		},{
+			duration:500,
+			complete: function() {
+				var li = $('#rolling ul').find('li').first();
+				var li_bottom = $('#rolling ul').find('li').last();
+				li_bottom.after(li);
+				$("#rolling").css('top','3px');
+			}
+		});
+	},
+	rollingStop: function(){
+		clearInterval(timer);
+	}
+}
+
+$(function(){
+	NoticeInline.init();
+})
+
+
+	
+
+</script>

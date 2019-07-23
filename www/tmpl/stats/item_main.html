@@ -1,0 +1,99 @@
+<style>
+.ui-button .ui-button-text {
+	display: block;
+	line-height: normal;
+	font-weight: bold;
+}
+</style>
+<script>
+var ItemMain = {
+	setDate: function(start, end) {
+		$("#srch_start_date").val(start);	
+		$("#srch_end_date").val(end);
+		display_list();
+	}
+}
+	$(document).ready(function() {
+	
+		display_list();
+		open_calendar("#srch_start_date");
+		open_calendar("#srch_end_date");
+		
+		$('[data-role="reload"]').on('change',function() {
+			display_list();
+		});
+	});
+	
+	function set_date(start, end) {
+		$("#srch_start_date").val(start);	
+		$("#srch_end_date").val(end);
+		display_list();
+	}
+	
+	
+	
+	function output_excel(){ 
+		var data = $("#srch-frm").serialize();	
+		var url = "/stats/excel_lists/team_lists/?"+data;
+		
+	    $("#srch-frm").attr("action", url);
+	    $("#srch-frm").attr("target", "excel-frm");
+	    $("#srch-frm").attr("method", "GET");        
+	    $("#srch-frm").submit();        
+	}
+</script>
+<h3 class="area-title">검색</h3>
+<form id="srch-frm">
+	<input type="hidden" name="list-url" id="list-url" value="/stats/item_lists">
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col width="120px" />
+			<col />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>분배일자</th>
+				<td>
+					<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker" value="<?=date('Y-m-01')?>"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker" value="<?=date('Y-m-d')?>">
+
+					<ul class="btn-group btn-group-xs">
+						<li onclick="ItemMain.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+						<li onclick="ItemMain.setDate('<?=$cfg['date']['weekday_db']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+						<li onclick="ItemMain.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+						<li onclick="ItemMain.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"><a href="javascript:;">어제</a></li>
+						<li onclick="ItemMain.setDate('<?=$cfg['date']['pre_week_start_db']?>','<?=$cfg['date']['pre_week_end_db']?>');"><a href="javascript:;">지난주</a></li>
+						<li onclick="ItemMain.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"><a href="javascript:;">지난달</a></li>
+					</ul>
+
+				</td>
+			</tr>
+			<tr>
+				<th>유입경로</th>
+				<td>
+					<select name="srch_path" style="width: 120px;" data-role="reload">
+						<option value="">-전체-</option>
+						<? foreach($path_list as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+					</select>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div class="area-button">
+		<button type="button" class="btn btn-lg btn-theme" onclick="display_list()"><i class="fa fa-search"></i> 검색</button>
+		<button type="button" class="btn btn-lg btn-gray" onclick="$('#srch-frm')[0].reset();display_list();">처음으로</button>
+	</div>
+
+</form>
+<h3 class="area-title">
+	목록
+	<span class="split">|</span> <span class="f-small f-notice" style="font-family:NG;">각 팀의 상담항목별 DB분배 갯수 및 비율</span>
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="output_excel();"><i class="fa fa-file-excel-o"></i> EXCEL</button>
+	</div>
+</h3>
+<div id="list-area" style="padding: 0; margin: 0;">
+</div>
+<iframe id="excel-frm" name="excel-frm" style="width: 0; height: 0; border: 0;"></iframe>

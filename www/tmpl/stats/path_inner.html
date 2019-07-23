@@ -1,0 +1,120 @@
+<!-- 20170222 kruddo : 유입경로별 분배현황 수정 -->
+<table class="table table-bordered table-form table-center table-hover">
+	<colgroup>
+		<col width="150px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th rowspan="2">유입경로</th>
+			<th colspan="9">상담관리</th>
+			<th colspan="4">CRM</th>
+		</tr>
+		<tr>
+			<th>총DB</th>
+			<th>분배DB</th>
+			<th>중복DB</th>
+			<th>내원예약</th>
+			<th>내원상담</th>
+			<th>수술예약</th>
+			<th>수술완료</th>
+			<th class="f-notice">DB매출액(원)</th>
+			<th class="f-notice">DB수납액(원)</th>
+			<th>OP명수</th>
+			<th>시술명수</th>
+			<th>OP매출액(원)</th>
+			<th>OP총액(원)</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ lists}
+		<tr>
+			<td>{.name}</td>
+			<td>{=number_format(.cnt.total)}</td>
+			<td>{=number_format(.cnt[1])}</td>
+			<td>{=number_format(.cnt[8])}</td>
+			<td>{=number_format(.status[51])}</td>
+			<td>{=number_format(.status[52])}</td>
+			<td>{=number_format(.status[98])}</td>
+			<td>{=number_format(.status[99])}</td>
+			<td>{=number_format(.price.sales)}원</td>
+			<td>{=number_format(.price.paid)}원</td>
+
+			<td>{=number_format(.op.opcount)}명</td>
+			<td>{=number_format(.op.skincount)}명</td>
+			<td>{=number_format(.op.amount_basic)}원</td>
+			<td>{=number_format(.op.amount_paid)}원</td>
+		</tr>
+		{/}
+		<tr class="dark">
+			<th>합계</td>
+			<th>{=if_empty_number(total.total)}</th>
+			<th>{=if_empty_number(total.cnt[1])}</th>
+			<th>{=if_empty_number(total.cnt[8])}</th>
+			<th>{=if_empty_number(total.status[51])}</th>
+			<th>{=if_empty_number(total.status[52])}</th>
+			<th>{=if_empty_number(total.status[98])}</th>
+			<th>{=if_empty_number(total.status[99])}</th>
+			<th class="f-notice">{=if_empty_number(total.price.sales)}원</th>
+			<th class="f-notice">{=if_empty_number(total.price.paid)}원</th>
+
+			<th>{=if_empty_number(total.op.opcount)}명</th>
+			<th>{=if_empty_number(total.op.skincount)}명</th>
+			<th>{=if_empty_number(total.op.amount_basic)}원</th>
+			<th>{=if_empty_number(total.op.amount_paid)}원</th>
+		</tr>
+	</tbody>
+</table>
+
+
+
+
+<!-- 
+<table class="table table-bordered table-form table-center table-hover">
+	<colgroup>
+		<col width="150px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>유입경로</th>
+			<th>총DB</th>
+			<th>분배DB</th>
+			<th>중복DB</th>
+			<th>내원예약</th>
+			<th>내원상담</th>
+			<th>수술예약</th>
+			<th>수술완료</th>
+			<th class="f-notice">매출액(원)</th>
+			<th class="f-notice">수납액(원)</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ lists}
+		<tr>
+			<td>{.name}</td>
+			<td>{=number_format(.cnt.total)}</td>
+			<td>{=number_format(.cnt[1])}</td>
+			<td>{=number_format(.cnt[8])}</td>
+			<td>{=number_format(.status[51])}</td>
+			<td>{=number_format(.status[52])}</td>
+			<td>{=number_format(.status[98])}</td>
+			<td>{=number_format(.status[99])}</td>
+			<td>{=number_format(.price.sales)}원</td>
+			<td>{=number_format(.price.paid)}원</td>
+		</tr>
+		{/}
+		<tr class="dark">
+			<td>합계</td>
+			<td>{=if_empty_number(total.total)}</td>
+			<td>{=if_empty_number(total.cnt[1])}</td>
+			<td>{=if_empty_number(total.cnt[8])}</td>
+			<td>{=if_empty_number(total.status[51])}</td>
+			<td>{=if_empty_number(total.status[52])}</td>
+			<td>{=if_empty_number(total.status[98])}</td>
+			<td>{=if_empty_number(total.status[99])}</td>
+			<td class="f-notice">{=if_empty_number(total.price.sales)}</td>
+			<td class="f-notice">{=if_empty_number(total.price.paid)}</td>
+		</tr>
+	</tbody>
+</table> 
+-->
+<!-- 20170222 kruddo : 유입경로별 분배현황 수정 -->

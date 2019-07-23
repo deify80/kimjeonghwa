@@ -1,0 +1,222 @@
+<style>
+.colorpicker {position:absolute;top:4px}
+.colorpicker input {width:0px;border:none;height:20px;background-color:transparent;}
+</style>
+<form id="FrmSettingsStatus" onsubmit="return false;">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr id="input_insert">
+			<th>예약상태 등록</th>
+			<td>
+				<div>
+					<input type="text" id="status_name" style="width:150px" autocomplete="off"   data-errormessage-value-missing="예약유형명을 입력하세요." class="validate[required]" /> 
+					<button type="submit" class="btn btn-flat-blue btn-onlyicon" ><i class="fa fa-plus fa-1"></i></button>
+				</div>
+			</td>
+		</tr>
+		<tr id="input_update" style="display:none">
+			<th><span id="status_name_label" style="color:#4CAF50;"></span> 수정</th>
+			<td>
+				<div>
+					<input type="text" id="status_name_modify" style="width:150px" autocomplete="off" data-errormessage-value-missing="예약유형명을 입력하세요." class="validate[required]" /> 
+					<button type="button" class="btn btn-onlyicon" onclick="SettingsStatus.modifyStatus()"><i class="fa fa-edit fa-1" style="color:#4CAF50"></i></button>
+					<button type="button" class="btn btn-onlyicon" onclick="SettingsStatus.cencelSet()"><i class="fa fa-undo fa-1 f-gray"></i></button>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="dashed" style="margin:10px 0px"></div>
+
+<div id="sort_status">
+	<? foreach($status as $s) {?>
+	<div class="label-default" style="margin-right:0px" data-name="<?=$s['title']?>" data-code="<?=$s['code']?>" data-etc-bg="<?=$s['etc']['bg']?>" data-etc-font="<?=$s['etc']['font']?>">
+		<i class="fa fa-sort fa-1 f-green"></i><span><?=$s['title']?></span>
+		<!-- 폰트색상:S -->
+		<div class="colorpicker" style="right:75px;">
+			<input type="text" value="<?=$s['etc']['font']?>" data-rel="colorpicker" data-etc='font' />
+		</div>
+		<!-- 폰트색상:E -->
+		<!-- 배경색상:S -->
+		<div class="colorpicker" style="right:50px;">
+			<input type="text" value="<?=$s['etc']['bg']?>" data-rel="colorpicker" data-etc='bg' />
+		</div>
+		<!-- 배경색상:E -->
+		<i class="fa fa-edit fa-1 link" style="position:absolute;right:25px;color:#4CAF50;" onclick="SettingsStatus.modifySet(this);" data-toggle="tooltip" title="수정"></i>
+		<i class="fa fa-times link f-error" style="position:absolute;right:7px;" onclick="SettingsStatus.removeStatus(this);" data-toggle="tooltip" title="삭제"></i>
+	</div>
+	<? } ?>
+</div>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="SettingsStatus.save();">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<!-- 템플릿:S -->
+<textarea id="tmpl_status" style="display:none">
+	<div class="label-default" style="margin-right:0px" data-name="${name}" data-code="${code}" data-etc-bg="${etc.bg}" data-etc-font="${etc.font}">
+		<i class="fa fa-sort fa-1 f-green"></i><span>${name}</span>
+		
+		<div class="colorpicker" style="right:75px;">
+			<input type="text" value="${etc.font}" data-rel="colorpicker" data-etc='font' />
+		</div>
+		
+		<div class="colorpicker" style="right:50px;">
+			<input type="text" value="${etc.bg}" data-rel="colorpicker" data-etc='bg' />
+		</div>
+		
+		<i class="fa fa-edit fa-1 link" style="position:absolute;right:25px;color:#4CAF50;" onclick="SettingsStatus.modifySet(this);" data-toggle="tooltip" title="수정"></i>
+		<i class="fa fa-times link f-error" style="position:absolute;right:7px;" onclick="SettingsStatus.removeStatus(this);" data-toggle="tooltip" title="삭제"></i>
+	</div>
+</textarea>
+<!-- 템플릿:E -->
+
+<link rel="stylesheet" href="/lib/js/colorpicker/evol.colorpicker.min.css?<?=time()?>" />
+<script language="javascript" src="/lib/js/colorpicker/evol.colorpicker.min.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var SettingsStatus = {
+	target:{},
+	colorpicker:{
+		showOn:'button',
+		history: false
+	},
+	init: function(){
+		$('#sort_status').sortable({
+			axis:'y',
+			containment:'parent'
+		});
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.addStatus();
+			}
+		});
+
+		$("#FrmSettingsStatus").validationEngine('attach',option);
+
+		this.buildStatus();
+		this.createColorpicker();
+	},
+	createColorpicker: function() {
+		var colorpicker = $('input[data-rel~="colorpicker"]');
+		colorpicker.colorpicker({
+			showOn:'button',
+			history: false
+		});
+
+		colorpicker.off('change.color');
+		colorpicker.on('change.color', function(e,color) {
+			var etc = $(this).data('etc');
+			$(this).parents('.label-default').data('etc-'+etc, color);
+		});
+
+	},
+	addStatus: function() {
+		var status_name = $('#status_name').val();
+		if(!status_name) {
+			HmisAlert.alert('등록할 예약상태를 입력하세요.');
+			return false;
+		}
+
+		var tmpl = TrimPath.parseDOMTemplate("tmpl_status");
+		var tmpl_parse  = tmpl.process({
+			code:'new',
+			name:status_name,
+			etc: {
+				'bg':'#8BC34A',
+				'font':'#000'
+			}
+		});
+				
+
+		// tmpl_parse.find('input').colorpicker(this.colorpicker);
+
+		$('#sort_status').append(tmpl_parse);
+		$('#status_name').val('');
+		this.buildStatus();
+		this.createColorpicker();
+
+	},
+	removeStatus: function(e) {
+		$(e).parent('div.label-default').remove();
+		this.buildStatus();
+	},
+	modifyStatus: function(){
+		var type_name = $('#status_name_modify').val();
+
+		if(!type_name) {
+			HmisAlert.alert('변경할 예약유형을 입력하세요.');
+			return false;
+		}
+
+		if(!this.target) return false;
+
+		this.target.find('span').html(type_name);
+		this.target.data('name',type_name);
+		this.cencelSet();
+	},
+	modifySet: function(e){
+		this.target = $(e).parent('div.label-default');
+		var data = this.target.data();
+		$('#input_insert').css('display','none');
+		$('#input_update').css('display','');
+		$('#status_name_label').html(data.name);
+		$('#status_name_modify').val(data.name);
+	},
+	cencelSet: function(){
+		$('#input_insert').css('display','');
+		$('#input_update').css('display','none');
+		$('#mode').val('insert');
+	},
+	buildStatus : function() {
+		var cnt = $('#sort_status').find('div.label-default').length;
+		if(cnt < 1 ){
+			$('#sort_status').html('<div class="null" style="text-align:center;padding-bottom:14px">등록된 예약상태가 없습니다.');
+		}
+		else {
+			$('#sort_status').find('div.null').remove();
+		}
+	},
+	save: function() {
+		var sort = [];
+		$.each($('#sort_status > div'), function(i,e) {
+			sort.push({name:$(e).data('name'), 'code':$(e).data('code'), 'etc':{'font':$(e).data('etc-font'),'bg':$(e).data('etc-bg')}});
+		});
+		HmisAlert.confirm('저장하시겠습니까?', function(r) {
+			if(!r) return false;
+			$.ajax({
+				url:'/treat_proc/save_settings',
+				data:{
+					'group_code':'07',
+					'sort':sort
+				},
+				dataType:'json',
+
+				type:'POST',
+				success: function(r) {
+					if(r.success) {
+						$('.modal-close').trigger('click');	
+						Schedule.load();
+					}
+					else {
+						HmisAlert.alert(r.msg);
+					}
+				}
+			});
+		})
+	}
+}
+
+$(function(){
+	SettingsStatus.init();
+})
+</script>

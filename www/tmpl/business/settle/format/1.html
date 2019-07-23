@@ -1,0 +1,142 @@
+<!-- 지출결의서 포맷 -->
+<? 
+	if($cfg['expense_type'] == 1 || $cfg['expense_type'] == 3)	$expense_title = '현금 지출분';
+	if($cfg['expense_type'] == 2 || $cfg['expense_type'] == 4)	$expense_title = '카드 지출분';
+?>
+
+
+<table id="format_1" class="basic-table tbl-center" style="margin-top:5px;margin-bottom:0px">
+	<colgroup>
+		<col width="10%" />
+		<col width="10%" />
+		<col width="10%" />
+		<col width="17%" />
+		<col width="10%" />
+		<col width="20%" />
+	</colgroup>
+	<thead>
+		<tr>
+			<th colspan="6"><?=$expense_title?></th>
+		</tr>
+	</thead>
+	<tbody >
+		<tr>
+			<th>지출일</th>
+			<th>거래처</th>
+			<th>내역</th>
+			<th>적용기간</th>
+			<th>금액</th>
+			<th>비고</th>
+		</tr>
+		<? 
+		$total = 0;
+		foreach($settle_expense as $idx=>$data) {
+			$total+=$data['expense_price'];
+		?>
+		<tr id="tr_<?=$cfg['expense_type']?>_<?=$idx?>">
+			
+			<td><input type='hidden' style='width:20px;' name='expense_type[]' value="<?=$cfg['expense_type']?>">
+				<input type='text' class='datepicker' name='expense_date[]' value="<?=substr($data['expense_date'],0,10)?>"></td>			<!-- 지출일 -->
+			<td><input type="text" style='width:95%;' name="expense_company[]" value="<?=$data['expense_company']?>"></td>														<!-- 거래처 -->
+			<td><input type='text' style='width:95%;' name='expense_history[]' value='<?=$data['expense_history']?>'></td>		<!-- 내역 -->
+			<td><input type='text' class='datepicker' name='expense_period_start[]' value='<?=substr($data['expense_period_start'],0,10)?>'> ~ 
+				<input type='text' class='datepicker' name='expense_period_end[]' value='<?=substr($data['expense_period_end'],0,10)?>'></td>	<!-- 적용기간 -->
+			<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id="expense_price_<?=$cfg['expense_type']?>_<?=$idx?>" data-group="<?=$cfg['expense_type']?>" value='<?=number_format($data['expense_price'])?>'></td>
+			<td>
+				<input type='text' style='width:80%;' name='expense_etc[]'  value='<?=$data['expense_etc']?>'>
+				<? if($idx > 0) {?>
+				<span class='badge lg red' onClick="SettleFormat.remove('tr_<?=$cfg['expense_type']?>_<?=$idx?>')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+				<? } else {?>
+				<span class='badge lg green' onClick="SettleFormat.add(<?=$cfg['expense_type']?>);" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-plus"></i></span>
+				<? } ?>
+			</td>
+		</tr>	
+		<? } ?>
+		<tr id="tr_total_<?=$cfg['expense_type']?>">
+			<th colspan="4">합계</th>
+			<th><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_price_<?=$cfg['expense_type']?>" value="<?=number_format($total)?>"></th>
+			<th></th>
+		</tr>
+	</tbody>
+</table>
+
+<!-- 추가템플릿:S -->
+<textarea id="tmpl_format_<?=$cfg['expense_type']?>" style="display:none;">
+	<tr id="<?=$cfg['expense_type']?>_${id}">
+		<td><input type='hidden' style='width:20px;' name='expense_type[]' value="<?=$cfg['expense_type']?>">
+			<input type='text' name='expense_date[]' class='datepicker'></td>
+		<td><input type="text" style='width:95%;' name="expense_company[]" id="expense_company[]" value=""></td>
+		<td><input type='text' style='width:95%;' name='expense_history[]' id='expense_history[]' value=''></td>
+		<td><input type='text' class='datepicker' name='expense_period_start[]'> ~ 
+			<input type='text' class='datepicker' name='expense_period_end[]'>
+		</td>
+		<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id="expense_price_<?=$cfg['expense_type']?>_${idx}" value='0' data-group="<?=$cfg['expense_type']?>"></td>
+		<td>
+			<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''>
+			<span class='badge lg red' onClick="SettleFormat.remove('<?=$cfg['expense_type']?>_${id}')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+		</td>
+	</tr>
+</textarea>
+<!-- 추가템플릿:E -->
+
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var SettleFormat = {
+	max:1,
+	settle_no:'<?=$settle_no?>',
+	init:function() {
+		this.createDatePicker();
+		this.createNumber();
+		if(!this.settle_no) {
+			$("#title").val("");
+			//CKEDITOR.instances['content'].setData("다음의 내용으로 금액을 영수(청구) 하오니 검토 후 재가바랍니다.<br/>< 다 음 >");
+		}
+		
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );			
+			//me.calculateTotal();
+			me.calculateTotal(e.data('group'));	
+		})
+		
+	},
+	createDatePicker : function(){
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	add : function(expense_type) {
+		var data = {
+			'id':'tr_'+this.max,
+			'idx':this.max
+		}
+
+		var result = TrimPath.processDOMTemplate("tmpl_format_"+expense_type, data);
+		$('#tr_total_'+expense_type).before(result);
+		this.createDatePicker();
+		this.createNumber();
+		this.max++;
+	},
+	remove :function(id) {
+		$('#'+id).remove();
+		this.calculateTotal();
+	},
+	calculateTotal : function(group) {
+		var total_price = 0;
+		
+		$("input:enabled[id^=expense_price_"+group+"]" ).each(function() {
+			if( this.value ){
+				total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+			}
+		});
+			    
+		$( "input:enabled[id=total_price_"+group+"]" ).val(total_price.number_format(0));
+	}
+};
+
+$(function(){
+	SettleFormat.init();	
+});
+
+</script>

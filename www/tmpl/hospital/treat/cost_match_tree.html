@@ -1,0 +1,75 @@
+<input type="text" id="search_cost" class="search full" placeholder="수가표검색" />
+<div class="well" id="cost_tree" style="height:400px;margin-top:5px"></div>
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span> 더블클릭하시면 선택됩니다.
+</div>
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<link rel="stylesheet" type="text/css" href="/lib/js/dhtmlxTree/dhtmlxtree.css"/>
+<script src="/lib/js/dhtmlxTree/dhtmlxtree.js"></script>
+<script type="text/javascript">
+var CostMatchTree = {
+	init: function(){
+		this.createTree();
+		$('#search_cost').on('keyup', function() {
+			CostMatchTree.searchTree();
+		})
+	},
+	createTree: function() {
+		var tree;
+		
+		tree = new dhtmlXTreeObject("cost_tree","100%","100%",0);
+		tree.setImagePath("/lib/js/dhtmlxTree/imgs/dhxtree_skyblue/");
+		tree.setDataMode("json");
+		// tree.enableTreeImages(false);
+		tree.load("/treat/cost_tree","json");
+		tree.attachEvent('onDblClick', function(selectedId){
+			var item_type = tree.getUserData(selectedId,'depth');
+			if(item_type=='3') {
+				var data = {user_name:tree.getItemText(selectedId), key:selectedId};
+				$.ajax({
+					url:'/treat_proc/match_cost',
+					data:{
+						code:'{code}',
+						cost_no:selectedId
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							CostTab.loadTab('match');
+							$('.modal-close').trigger('click');
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+		})
+		tree.attachEvent('onClick', function(selectedId) {
+			var item_type = tree.getUserData(selectedId,'type');
+			if(item_type!='user') {
+				if(tree.getOpenState(selectedId)>0) {
+					tree.closeItem(selectedId);
+				}
+				else {
+					tree.openItem(selectedId);
+				}
+			}
+		})
+		this.tree = tree;
+	},
+	searchTree: function(){
+		var search = $('#search_cost').val();
+		this.tree.findItem(search,0,1)
+	}
+}
+
+$(function(){
+	CostMatchTree.init();
+})
+</script>

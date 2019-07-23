@@ -1,0 +1,12 @@
+<div class="area-pagination" id="pagination">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="{paging.href.first.href}"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="{paging.href.prev.href}"><i class="fa fa-angle-left"></i></a></li>
+		{@ paging.block}
+		<li class="{? .equal}active{/}"><a href="javascript:;" onclick="{.href}">{.num}</a></li>
+		{/}
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		<li><a href="javascript:;" onclick="{paging.href.next.href}"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="{paging.href.last.href}"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</div>

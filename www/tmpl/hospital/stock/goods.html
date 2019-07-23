@@ -1,0 +1,220 @@
+<h3 class="area-title">물품 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>등록일자</th>
+			<td colspan="3">
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value="<?=date('Y-m-d')?>"> ~ <input type="text" class="datepicker" name="date_e" value="<?=date('Y-m-d')?>" id="sdate_e"> 
+				<div class="btn-group hmis" data-toggle="buttons">
+					<label class="btn"><input type="radio" checked onchange="GoodsList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"> 오늘</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"> 이번주</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"> 이번달</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"> 어제</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['pre_week_start']?>','<?=$cfg['date']['pre_week_end']?>');"> 지난주</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"> 지난달</label>
+				</div>	
+			</td>
+		</tr>
+		<tr>
+			<th>항목</th>
+			<td>
+				<select name="dept_code" onchange="GoodsList.loadTeam(this.value)">
+					<option value="">::항목선택::</option>
+				</select>
+				<select name="dept_code" onchange="GoodsList.loadTeam(this.value)">
+					<option value="">::분류선택::</option>
+				</select>
+			</td>
+		
+			<th>품목명</th>
+			<td><input type="text" name="goods_name" style="width:100%"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="GoodsList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="GoodsList.reset()">처음으로</button>
+</div>
+</form>
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	물품 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 물품수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 물품수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="GoodsList.openInput()"><i class="fa fa-pencil fa-1"></i> 신규등록</button>
+		<span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="GoodsList.openMove()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="100px"><!-- 등록일자 -->
+		<col width="100px"><!-- 항목 -->
+		<col width="100px"><!-- 분류 -->
+		<col ><!-- 품목명 -->
+		<col width="80px"><!-- 단위 -->
+		<col width="120px"><!-- 단가 -->
+		<col width="80px"><!-- 현황 -->
+		<col width="80px"><!-- 수량 -->
+		<col width="80px"><!-- 현재고 -->
+		<col width="80px"><!-- 최소보유수량 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>등록일자</th>
+			<th>항목</th>
+			<th>분류</th>
+			<th>품목명</th>
+			<th>단위</th>
+			<th>단가</th>
+			<th>현황</th>
+			<th>수량</th>
+			<th>현재고</th>
+			<th>최소보유수량</th>
+		</th>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${team_code}"><span class="lbl"></span></td>
+		<td>${dept_name}</td>
+		<td>${team_code}</td>
+		<td><a href="javascript:;" onclick="GoodsList.openInput('${team_code}')" class="link">${team_name}</a></td>
+		<td>${count_user} 명</td>
+		<td><a href="javascript:;" onclick="GoodsList.setStatus('${team_code}','${status}');"><i class="fa fa-check fa-1 {if status!='1'} f-null {/if}"></i></a></td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="GoodsList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="GoodsList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="GoodsList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var GoodsList = {
+	page:1,
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	openInput: function(goods_no) {
+		var title = (goods_no)?'물품 정보 수정':'새 물품 등록';
+		var modal = new HmisModal('goods_input', {width:700, top:200});
+		modal.open(title,'/stock/goods_input',{goods_no:goods_no});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		
+		$.ajax({
+			url:'/stock/goods_list',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="12">검색된 물품정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+			}
+		})
+	},
+	loadTeam : function(dept_code) {
+		var sb_team = $('#sb_team');
+
+		if(!dept_code) {
+			sb_team.val('').css('display','none');	
+			return false;
+		}
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				
+				if(r.success){
+					sb_team.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');					
+				}
+				else {
+					sb_team.val('').css('display','none');	
+				}
+			}
+		});
+	}
+}
+
+$(function() {
+	GoodsList.init();
+})
+</script>

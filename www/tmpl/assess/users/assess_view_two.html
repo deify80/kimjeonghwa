@@ -1,0 +1,191 @@
+
+<!--h3 class="area-title">
+	역량평가
+</h3-->
+<form id="FrmGoodsSearch_popup2" onsubmit="return false">
+<input type="hidden" name="inout_no" value="<?=$row[no]?>" />
+<input type="hidden" name="ser_code" value="W" />		
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col width="120px">
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>		
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td><?=$row['syear']?>-<?=$row['firsthalf']?></td>
+			<th>이름</th>
+			<td><?=$row['name']?></td>
+			<th>직급</th>
+			<td><?=$row['duty_name']?></td>
+			<th>사업장</th>
+			<td><?=$row['biz_list_name']?></td>
+			<th>부서명</th>
+			<td><?=$row['dept_name']?></td>
+			<th>팀명</th>
+			<td><?=$row['team_name']?></td>			
+		</tr>
+	</tbody>
+</table>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="100px">
+		<col >
+		<col width="100px">
+		<col width="100px">
+	</colgroup>
+	<thead>
+		<tr>	
+			<th>구분</th>
+			<th>설명</th>
+			<th>본인</th>
+			<th>평가</th>
+	</thead>
+	<tbody id="team_acc_list2">
+	</tbody>
+	<tbody id="team_acc_total">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination2"></div>
+<div id="sdfdsfsfd22"></div>
+<textarea id="tmpl_acc_list2" style="display:none">
+	<tr>
+		<td>${competency}</td>
+		<td style="text-align:left">${contents}</td>
+		<td>
+			<select style="height:22px;" onchange="InoutList2.princupdate(${no},this.value,'tp1');">
+				<option value="">전체
+				<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+				<option value="<?=$k?>" {if b_user_princ=='<?=$k?>' } selected {/if}><?=$val?>
+			    <? endforeach;?>
+			</select>					
+		</td>
+		<td>
+			<!--select  style="height:22px;" onchange="InoutList2.princupdate(${no},this.value,'tp2');">
+				<option value="">전체
+				<? foreach($this->config->item('codeprinc') as $k=>$val): ?>
+				<option value="<?=$k?>" {if b_team_princ=='<?=$k?>' } selected {/if}><?=$val?>
+			    <? endforeach;?>
+			</select-->
+			${b_team_princ}
+			<input type="hidden" name="b_team_princ[]" value="${b_team_princ}" />
+		</td>
+
+	</tr>
+</textarea>
+<textarea id="tmpl_acc_total" style="display:none">
+	<tr>
+		<td colspan="2">평점</td>
+		<td >${user_total}</td>
+		<td >${team_princ_total}</td>
+	</tr>
+</textarea>
+
+
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<div id="sdfsfd232131"></div>
+<script type="text/javascript">
+var InoutList2 = {
+	init: function() {
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	/*
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load();
+	},
+	reload : function() {
+		this.load();
+	},
+	*/
+	load: function() {
+		
+		var me = this;
+		var search = $('#FrmGoodsSearch_popup2').serialize() ; 
+		
+		$.ajax({
+			url:'/assessment/select_assess_view',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_acc_list2');
+				var target = $('#team_acc_list2');
+
+				var tmpl2 = TrimPath.parseDOMTemplate('tmpl_acc_total');
+				var target2 = $('#team_acc_total');
+
+				target.empty();
+				target2.empty();
+
+				if(r.success) {
+					
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);					
+
+					var html2 = '';
+					$.each(r.data.loop, function(i,e){
+						html2 += tmpl2.process(e);
+					});
+
+					target2.append(html2);		
+
+				}
+				else {
+					target.append('<tr><td colspan="5">내역이 없습니다.</td></tr>');
+				}
+
+				$('#cnt_total2').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search2').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-role="tooltip"]').tooltip();
+			}
+		})
+	},
+	princupdate: function(pno , princ , pcate) {
+
+		var pno ; 
+		var princ ;
+		var pcate ;
+			
+		$.ajax({
+			url:'/assessment_proc/pronc_update',
+	        data: { vno: pno ,  vprinc: princ , vcate: pcate },	 
+			dataType:'html',
+			type:'POST',
+			success: function(r) {
+//				$("#sdfsfd232131").html(r);	
+				InoutList2.load() ;
+				InoutList.reload();
+			}
+		});
+	}
+}
+
+$(function() {
+	InoutList2.init();
+})
+</script> 

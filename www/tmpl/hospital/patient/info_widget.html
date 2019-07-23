@@ -1,0 +1,135 @@
+<div id="widget_sort">
+	<? foreach($widget_list as $widget_id => $widget) {?>
+	<div class="widget" id="widget_<?=$widget_id?>" data-id="<?=$widget_id?>" style="display:<?=($widget['status']=='hide')?'none;':''?>"> 
+		<div class="widget-header">
+			<form id="FrmWidget<?=$widget_id?>">
+
+			<?=$widget['name']?> 
+
+			<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.modalWidget('<?=$widget_id?>', '<?=$widget['name']?> 등록', {patient_no:'<?=$basic['no']?>'})" style="margin-left:5px"><i class="fa fa-plus fa-1 f-blue"></i></button>
+			
+			<? foreach($widget['search'] as $field=>$search) { ?>
+			<div class="btn-group hmis blue" data-toggle="buttons">
+				<? 
+				$idx=1;
+				foreach($search as $key=>$label) { 
+				?>
+				<label class="btn <?=($idx==1)?'active':''?>"><input type="radio" name="<?=$field?>" value="<?=$key?>" onchange="PatientInfo.load('<?=$widget_id?>', 1)"  <?=($idx==1)?'checked':''?>><?=$label?></label>
+				<? $idx++; } ?>
+			</div>
+			<? } ?>
+			</form>
+			<div class="tools">
+				<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.load('<?=$widget_id?>')"><i class="fa fa-refresh fa-1 f-green"></i></button>
+				<button type="button" class="btn btn-onlyicon" onclick="PatientInfoWidget.slideWidget('<?=$widget_id?>', this)"><i class="fa fa-chevron-<?=($widget['status']=='collapse')?'down':'up'?> fa-1"></i></button>
+				<button type="button" class="btn btn-onlyicon" onclick="PatientInfoWidget.hideWidget('<?=$widget_id?>')"><i class="fa fa-times fa-1 f-error"></i></button>
+			</div>
+
+		</div>
+		<div class="widget-body" style="display:<?=($widget['status']=='collapse')?'none;':''?>">
+			
+		</div>
+	</div>
+	<script type="text/javascript">
+	PatientInfo.load('<?=$widget_id?>');
+	</script>
+	<? } ?>
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></td>
+		<td>${chart_no}</td>
+		<td><a href="/patient/info/${no}" class="link">${name}</a></td>
+		<td>${birth}</td>
+		<td>{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {else} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td>${mobile}</td>
+		<td></td>
+		<td></td>
+		<td>${doctor_name}</td>
+		<td>${manager_name}</td>
+		<td></td>
+		<td>${date_insert}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="GoodsList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="GoodsList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="GoodsList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript">
+var PatientInfoWidget = {
+	init: function() {
+		this.sortWidget();
+	},
+	sortWidget: function() {
+		$("#widget_sort").sortable({
+			items:' > div.widget',
+			handle:'.widget-header',
+			cursor:'move',
+			helper:"clone",
+			axis:'y',
+			containment: "parent",
+			update: function(e, ui) {
+				var sort = $(this).sortable('toArray', {attribute:'data-id'});
+				$.ajax({
+					url:'/patient_proc/save_widget',
+					data:{
+						sort:sort.join(',')
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(!r.success){
+							alert(r.msg);
+						}
+					}
+				})
+			}
+		});
+	},
+	slideWidget: function(widget_id, btn) {
+		var me = this;
+		$('#widget_'+widget_id).find('.widget-body').slideToggle(100, function (i, e) {
+			var status=$(this).is(":hidden");
+			$(btn).find('i').toggleClass('fa-chevron-up');
+			$(btn).find('i').toggleClass('fa-chevron-down');
+
+			var status = ($(this).is(":hidden"))?'collapse':'expand';
+			me.saveStatus(widget_id, status);
+		});
+	},
+	hideWidget: function(widget_id) {
+		$('#widget_'+widget_id).css('display','none');
+		this.saveStatus(widget_id, 'hide');
+	},
+	saveStatus: function(widget, status) {
+		$.ajax({
+			url:'/patient_proc/save_widget_row',
+			data:{
+				widget:widget,
+				status:status
+			},
+			dataType:'json',
+			type:'POST',
+			success:function(r) {
+
+			}
+		})
+	}
+}
+
+$(function() {
+	PatientInfoWidget.init();
+})
+</script>

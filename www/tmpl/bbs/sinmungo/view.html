@@ -1,0 +1,85 @@
+<script>
+	$(document).ready(function() {
+		
+		$("#comment-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) comment_save();
+			}
+		})
+		
+	});	
+	
+	
+	
+	function comment_save() {
+		
+		var url = "/bbs_proc/comment_insert/<?=$bbs_code?>";
+		var data = $("#comment-frm").serialize();
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				var obj = $.parseJSON(result_data);
+				if (obj.is_success == "1") {
+					$("<li><b>"+obj.reg_date+"</b> "+obj.comment+"</li>").appendTo("#comment_list");
+					$("#comment").val("");
+				}
+			}
+		});
+	}	
+</script>	
+<div style="width:98%;">
+<h3 class="area-title"><?=$bbs_config['bbs_title']?></h3>
+<div class="tool-box" style="margin: 0px;padding-bottom: 5px;">
+<button onClick="document.location='/bbs/<?=$bbs_code?>'">목록</button>
+</div>
+<table class="basic-table">
+<colgroup>
+<col width="20%">
+<col width="">
+</colgroup>
+	<tr>
+		<th>구분</th>
+		<td><?=$type_list[$row['type']]?></td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td>
+			<?=$row['title']?>
+		</td>
+	</tr>
+	<tr>
+		<th>내용</th>
+		<td>
+			<div style="margin: 3px 0 3px 0;">	
+			<?=nl2br($row['contents'])?>
+			</div>
+		</td>
+	</tr>
+</table>
+<form id="comment-frm">
+<input type="hidden" name="bbs_code" value="<?=$bbs_code?>">
+<input type="hidden" name="bbs_seqno" value="<?=$row['bbs_seqno']?>">
+<table class="basic-table">
+<colgroup>
+<col width="20%">
+<col width="">
+</colgroup>
+	<tr>
+		<th>댓글</th>
+		<td>
+		<p style="padding-top: 5px;">
+		<input type="text" size="80" name="comment" id="comment" class="validate[required]" placeholder="댓글작성"><button type="submit">등록</button>
+		</p>
+		<ul style="margin: 5px;" id="comment_list">
+		<? foreach($comment_list as $i): ?>
+		<li><b><?=$i->reg_date?></b> <?=$i->comment?></li>
+		<? endforeach; ?>
+		</ul>
+		</td>
+	</tr>
+</table>
+</form>
+</div>
+

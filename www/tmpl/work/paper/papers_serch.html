@@ -1,0 +1,12 @@
+<script>
+$(document).ready(function() {
+	$( ".radio" ).buttonset();
+});	
+</script>
+
+<div class="radio">
+	<input type="radio" id="paper_radiox" name="srch_paper_type" checked="checked" value=""><label for="paper_radiox">전체</label>
+	<? foreach($paper_type as $i=>$val): ?>
+	<input type="radio" id="paper_radio<?=$i?>" name="srch_paper_type" value="<?=$i?>"><label for="paper_radio<?=$i?>"><?=$val?></label>
+	<? endforeach; ?>
+</div>  	

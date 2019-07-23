@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+</head>
+<body>
+	<table border="1" style="font-size: 11px; border-collapse: collapse;width:100%;">
+		<thead>
+			<tr style="background-color: #cccccc; height: 30px;">
+				<th>유형</th>
+				<th>입/출고일</th>
+				<th>분류</th>
+				<th>항목</th>
+				<th>품목명</th>
+				<th>단위</th>
+				<th>단가</th>
+				<th>수량</th>
+				<th>요청자</th>
+				<th>담당자</th>
+			</tr>
+		</thead>
+		<tbody>
+			{@ list}
+			<tr>
+				<td>{.kind_txt}</td>
+				<td>{.date_inout}</td>
+				<td>{.classify_name}</td>
+				<td>{.item_name}</td>
+				<td>{.goods_name}</td>
+				<td>{.unit}</td>
+				<td>{=number_format(.unit_price)}</td>
+				<td>{.qty}</td>
+				<td>{.requester_id}</td>
+				<td>{.writer_name}</td>
+			</tr>
+			{:}
+			<tr>
+				<td colspan="10" style="text-align:center">출력할 입출고내역이 없습니다.</td>
+			</tr>
+			{/}
+		</tbody>
+	</table>
+</body>
+</html>

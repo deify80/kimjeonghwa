@@ -1,0 +1,104 @@
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('doctor', 'Dr\'s Order 등록')" ><i class="fa fa-plus fa-1"></i> Dr's Order 등록</button>
+
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col width="50px">
+		<col width="50px">
+		<col width="120px">
+		<col width="100px">
+		<col width="300px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_doctor[]')"><span class="lbl"></span></th>
+			<th>진료일자</th>
+			<th>담당의사</th>
+			<th>진료부위</th>
+			<th>진료내용</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td><input type="checkbox" class="hmis" name="checked_doctor[]" value="{.no}"><span class="lbl"></span></td>
+			<td><a href="javascript:;" onclick="WidgetDoctor.modify('{.no}')" class="link">{.date_doctor}</a></td>
+			<td>{.doctor_name}</td>
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" title="{.treat_info}">{.treat_info}</span></td>
+			<td class="left">{.comment}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="6" class="center">등록된 Dr's Order가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div style="margin-top:7px;position:relative">
+	{? auth.delete}
+	<button class="btn btn-flat-orange" onclick="WidgetDoctor.remove()">삭제</button>
+	{/}
+	<div style="position:absolute;right:0px;bottom:0px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('doctor','{paging.first}')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('doctor','{paging.prev}')"><i class="fa fa-angle-left"></i></a></li>
+				{@ paging.block}
+				<li class="{? .equal}active{/}"><a href="javascript:;" onclick="PatientInfo.loadTab('doctor','{.num}')">{.num}</a></li>
+				{/}
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('doctor','{paging.next}')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('doctor','{paging.last}')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var WidgetDoctor = {
+	init: function() {
+	},
+	modify: function(no) {
+		PatientInfo.modalWidget('doctor', 'Dr\'s Order 수정', {no:no});
+	},
+	remove: function(){
+		var checked = HmisCommon.getChecked('checked_doctor[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 항목을 선택하세요.');
+			return false;
+		}
+		
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var doctor_no = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/patient_proc/remove_doctor',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						doctor_no:doctor_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							PatientInfo.loadTab('doctor');
+							PatientInfo.countTab();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})	
+			}			
+		});
+	}
+};
+
+$(function(){
+	WidgetDoctor.init();
+})
+</script>

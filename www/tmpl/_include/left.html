@@ -1,0 +1,68 @@
+<ul id="menu">
+	{@ layout.menu.left.children}
+	<li>
+		<a href="#">{.name}</a>
+		<ul>
+			{@ .children}
+			<li class="d3"><a href="javascript:;" onclick="LeftMenu.href('{..href}')" class="{? ..me}selected{/}">{..name}<span></span></a></li>
+			{/}
+		</ul>
+	</li>
+	{/}
+</ul>
+
+<style>
+ul.left-func li {
+	margin-bottom:3px;
+}
+
+ul.left-func li button{
+	width:130px;
+	height:40px;
+	text-align:left;
+}
+
+ul.left-func li button span, ul.left-func li button i{
+	font-size:14px;
+}
+
+ ul.left-func li button i {
+ 	margin-right:5px;
+ }
+</style>
+<script type="text/javascript">
+var LeftMenu = {
+	href:function(href) {
+		$.ajax({
+			url:'/common/refresh',
+			complete: function() {
+				document.location.href=href;
+			}
+		})
+	}
+}
+</script>
+
+{? layout.auth.banner}
+<div style="padding: 10px; vertical-align: bottom; position: fixed; bottom: 20px; clear: both; cursor: pointer">
+	<ul class="left-func">
+		{? c.MK_1 == '1'}
+		<li>
+			<button class="btn btn-flat-orange" onclick="open_helper();"><i class="fa fa-quote-left"></i> <span>도움말</span></button>
+		</li>
+		{/}
+
+		{? layout.auth.sms_limit}
+		<li>
+			<button class="btn btn-theme" style="background-color:#8bc34a;" onclick="open_sms('')"><i class="fa fa-envelope"></i> <span>문자보내기</span></button>
+		</li>
+		{/}
+		<li>
+			<button class="btn btn-theme" onclick="open_bbs('bbs_notice');"><i class="fa fa-list"></i> <span>게시판</span></button>
+		</li>
+		<!--li>
+			<button class="btn btn-gray" onclick="window.open('http://intra.md21.kr')"><i class="fa fa-undo"></i> <span>구인트라넷</span></button>
+		</li-->
+	</ul>
+</div>
+{/}

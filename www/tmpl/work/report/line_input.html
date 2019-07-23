@@ -1,0 +1,56 @@
+<form id="FrmLineInput">
+<table class="table table-bordered">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tr>
+		<th>결재선명</th>
+		<td><input type="text" name="line_name" class="full validate[required] required" data-errormessage-value-missing="결재선명을 입력하세요." /></td>
+	</tr>
+</table>
+
+	
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var ReportLineInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			// promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmLineInput").validationEngine('attach',option);
+	},
+	save: function() {
+		var formdata = $('#FrmLineInput').serializeArray();
+		var person = Person.getPerson();
+
+		formdata.push({name:'approval',person.approval});
+		formdata.push({name:'reference',person.reference});
+	
+
+		$.ajax({
+			url:'/report_prop/line_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				console.log(r);
+			}
+		})
+	}
+}
+
+$(function(){
+	ReportLineInput.init();
+})
+</script>

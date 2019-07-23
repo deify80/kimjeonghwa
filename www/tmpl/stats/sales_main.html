@@ -1,0 +1,85 @@
+<h3 class="area-title">검색</h3>
+<form id="FrmSalesSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>기간검색</th>
+			<td colspan="3">
+				<input type="text" name="srch_start_date" id="sdate_s" size="10" class="datepicker" value="<?=date('Y-m-d')?>"> ~ <input type="text" name="srch_end_date" id="sdate_e" size="10" class="datepicker" value="<?=date('Y-m-d')?>">
+
+				<ul class="btn-group btn-group-xs">
+					<li onclick="SalesMain.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<li onclick="SalesMain.setDate('<?=$cfg['date']['weekday_db']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+					<li onclick="SalesMain.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+					<li onclick="SalesMain.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"><a href="javascript:;">어제</a></li>
+					<li onclick="SalesMain.setDate('<?=$cfg['date']['pre_week_start_db']?>','<?=$cfg['date']['pre_week_end_db']?>');"><a href="javascript:;">지난주</a></li>
+					<li onclick="SalesMain.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="SalesMain.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="SalesMain.reset()">처음으로</button>
+</div>
+
+<h3 class="area-title">DB실적
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-purple" onClick="SalesMain.setWeight();"><i class="fa fa-cog fa-1"></i> 가중치 설정</button>
+		<button type="button" class="btn btn-flat-purple" onClick="SalesMain.setTeamCount();"><i class="fa fa-user fa-1"></i> 팀원수 설정</button>
+		<span class="split">|</span>
+		<button type="button" class="btn btn-flat-blue" onClick="SalesMain.excel();"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+	</div>
+</h3>
+
+
+<div id="list-area" style="padding: 0;margin: 0;"></div>
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>
+
+<script type="text/javascript">
+var SalesMain = {
+	init: function(){
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmSalesSearch').serializeArray();
+		$('#list-area').load('/stats/sales_lists', formdata);
+	},
+	excel: function() {
+		var data = $("#FrmSalesSearch").serialize();	
+		var url = "/stats/excel_lists/sales_lists/?"+data;
+		
+        $("#FrmSalesSearch").attr("action", url);
+        $("#FrmSalesSearch").attr("target", "excel-frm");
+        $("#FrmSalesSearch").attr("method", "POST");        
+        $("#FrmSalesSearch").submit();      
+	},
+	setTeamCount: function() {
+		var modal = new HmisModal('batch', {width:400, top:200});
+		modal.open('팀별 인원수 설정','/stats/sales_team');
+	},
+	setWeight: function() {
+		var modal = new HmisModal('batch', {width:350, top:200});
+		modal.open('가중치 설정','/stats/sales_weight');
+	}
+}
+
+$(function() {
+	SalesMain.init();
+});
+	
+</script>

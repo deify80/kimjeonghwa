@@ -1,0 +1,76 @@
+<table class="table table-bordered table-center table-form table-hover" {? output_mode=="EXCEL"}border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" {/}>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			<th rowspan="2">성형외과</th>
+			<th rowspan="2">순위</th>
+			<th rowspan="2">총보유DB</th>
+			<th rowspan="2">분배DB</th>
+			{@ cfg.field}
+			<th>{.name}</th>
+			{/}
+		</tr>
+		<tr>
+			{@ cfg.field}
+			<th><span data-toggle="tooltip">{.weight}%</span></th>
+			{/}
+
+		</tr>
+	</thead>
+	<tbody>
+		{@ team_list}
+		<tr>
+			<th>{.name}</th>
+			<td>{? .rank < 0}-{:}{.rank}{/}</td>
+			<td>{=if_empty_number(.cur_db)}</td>
+			<td>{=if_empty_number(.db)}</td>
+			{@ .sales}
+			<td>{? strpos(..key_, 'rate')}{=if_empty(..value_,'<span class="f-null">0%</span>','%s%%')}{:}{=if_empty_number(..value_)}{/}</td>
+			{/}
+		</tr>
+		{/}
+		<tr>
+			<th>총계</th>
+			<th>-</th>
+			<th>{=if_empty_number(team_total.normal.cur_db)}</th>
+			<th>{=if_empty_number(team_total.normal.db)}</th>
+			{@ total.normal}
+			<th>{? strpos(.key_, 'rate')}{=if_empty(.value_,'<span class="f-null">0%</span>','%s%%')}{:}{=if_empty_number(.value_)}{/}</th>
+			{/}
+		</tr>
+	</tbody>
+</table>
+
+
+
+{? output_mode!="EXCEL"}
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">목표</span> 수술완료목표기준 - 주간 15%, 월간 20% <span class="split">|</span> 내원상담목표기준 - 주간 30%, 월간 35%
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">순위</b>항목 각각의 기여도와 가중치를 적용한 총점 기준으로 순위 계산</li>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">보유DB</b> 팀DB 유효기간 만료 등의 이유로 DB이관된 사항이 적용된 현재 DB갯수</li>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">분배DB</b> 최초 각 팀으로 부여된 DB 수량에서 보상DB 수량를 제외한 DB갯수</li>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">내원</b> 내원상담+수술예정+수술취소+수술완료 상태 DB갯수의 총합</li>
+		<li><b class="" style="margin-right:10px">비율계산</b> 수술율 = 수술완료/분배DB, 내원율= 내원/분배DB, 내원|수술율 = 수술완료/내원</li>
+	</ul>
+
+</div>
+{/}
+
+<script type="text/javascript">
+var SalesList = {
+	init: function() {
+		$('[data-toggle="tooltip"]').tooltip({
+			placement:'left',
+			title:'가중치'
+		})
+	}
+}
+
+$(function(){
+	SalesList.init();
+})
+</script>

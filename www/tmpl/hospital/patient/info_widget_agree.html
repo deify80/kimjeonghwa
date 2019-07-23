@@ -1,0 +1,151 @@
+<style>
+ul.agree {
+	margin-top:5px;
+}
+
+.agree>li {
+	float: left;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	margin: 10px 10px 0px 0px;
+
+	width:100px;
+	height:170px;
+}
+
+.agree > li > a >img {
+	width:100px;
+	height:150px;
+	border: 2px solid #616161;
+	border-radius: 2px;
+}
+
+.agree>li>.tools {
+	width: auto;
+	height: 25px;
+	left: 0;
+	right: 0;
+	top: auto;
+	position:absolute;
+	padding-top:4px;
+	bottom: -30px;
+	opacity: .8;
+	background-color: #414141;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.agree li > div.tag {
+	position: absolute;
+	top:2px;
+	left:2px;
+	opacity: .8;
+	color:#FFFFFF;
+	padding:2px 4px 3px 2px;
+	border-bottom-right-radius: 3px;
+	/*border-top-left-radius: 2px;*/
+}
+
+.tag-1 {background-color:#03A9F4;}
+.tag-2 {background-color:#E84E40;}
+.tag-3 {background-color:#9C27B0;}
+
+</style>
+
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('agree', '동의서 등록')" ><i class="fa fa-plus fa-1"></i> 동의서등록</button>
+<div class="btn-group hmis blue" data-toggle="buttons" style="float:none">
+	{@ cfg.search}
+	<label class="btn  {? search.category==.key_ }active{/}"><input type="radio" name="category" value="{.key_}" onchange="PatientInfo.searchTab({category:'{.key_}'})"  {? .index_<1}checked{/}>{.value_}</label>
+	{/}
+</div>
+
+
+<table class="table table-closely" style="margin:0px">
+	<tbody>
+		<tr>
+			<td>
+				{? count(agree)>0 }
+				<ul class="agree">
+					{@ agree}
+					<li data-no="{.no}">
+						<div class="tag tag-{.category_idx}">{.category}</div>
+						<a href="{.file_path}" data-rel="colorbox" title="{.category} - {.date_insert}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+
+						<div class="tools">
+							<a href="javascript:;" onclick="PatientAgree.modify('{.no}')" style="margin-right:5px">
+								<i class="fa fa-edit fa11-1" style="font-size:18px;color:#FFA726"></i>
+							</a>
+							{? auth.delete}
+							<a href="javascript:;" onclick="PatientAgree.remove('{.no}')">
+								<i class="fa fa-times fa11-1" style="font-size:18px;color:#FF5722"></i>
+							</a>
+							{/}
+						</div>
+
+						<div style="text-align:center;width:100%;height:20px;padding-top:3px;bottom:0px;font-size:11px;position:absolute;z-index:100;background-color:#FFFFFF"><b>{=substr(.date_insert,2,8)}</b></div>
+					</li>
+					{/}
+				</ul>
+				{:}
+				<div class="well" style="margin-top:10px">등록된 동의서가 없습니다.</div>
+				{/}
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+
+<script type="text/javascript">
+var PatientAgree = {
+	init: function() {
+		$('ul.agree > li').on("mouseenter.agree", function(e) {
+			$(this).find('.tools').animate({bottom:20}, 200);
+		});
+
+		$('ul.agree > li').on("mouseleave.agree", this.listenerMouseleave);
+		PatientInfo.createColorbox('agree');
+	},
+
+	listenerMouseleave: function() {
+		$(this).find('.tools').animate({bottom:-30}, 200);
+	},
+	remove: function(no) {
+		$('ul.agree > li[data-no="'+no+'"]').off('mouseleave.agree');
+		HmisAlert.confirm('해당 동의서를 정말 삭제하시겠습니까?',function(r) {
+			if(r) {
+				$.ajax({
+					url:'/patient_proc/remove_patient_agree',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						agree_no:no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							PatientInfo.loadTab('agree');
+							PatientInfo.countTab();
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+			else {
+				$('ul.agree > li[data-no="'+no+'"]').on('mouseleave.agree', PatientAgree.listenerMouseleave);
+				$('ul.agree > li[data-no="'+no+'"]').trigger('mouseleave');
+			}
+
+		})
+	},
+	modify: function(no) {
+		PatientInfo.modalWidget('agree', '동의서 수정', {no:no});
+	}
+};
+
+$(function() {
+	PatientAgree.init();
+})
+</script>

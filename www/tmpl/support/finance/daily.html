@@ -1,0 +1,442 @@
+<? if($_GET['output_mode'] != "EXCEL"): ?>
+<div class="tool-box">
+	<!-- <button type="button" class="btn" onClick="output_excel();">EXCEL</button>
+	<button type="button" class="btn" onClick="Daily.print('print');">인쇄</button> -->
+
+	<button class="btn btn-lg btn-blue" onclick="output_excel()"><i class="fa fa-1 fa-file-excel-o" style="color:#0091EA"></i>엑셀다운로드</button>
+	<button class="btn btn-lg btn-green" onclick="Daily.print('print')"><i class="fa fa-print fa-1"></i>인쇄</button>
+
+</div>
+<? endif; ?>
+
+<div id="print">
+<div id="biz_title"  class="hide">
+	<table id="sign_box" class="table table-center" style="margin-top:5px;margin-bottom:0px">
+		<tr>
+			<td colspan="15">
+			</td>
+			<td style="width:300px">
+				<table class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px" border="1">
+					<tr>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;담 당 자&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;이    사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;대표이사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+					</tr>
+					<tr>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+
+<!-- <table>
+	<tr style="vertical-align:top">
+		<td> -->
+			<table class="table table-bordered table-list table-striped table-hover" <? if($_GET['output_mode'] == "EXCEL"): ?> border="1"<? endif; ?>>
+				<colgroup>
+					<col style="width:40px;" /><!-- 번호 -->
+					<col /><!-- 금융기관 -->
+					<col style="width:150px" /><!-- 거래처명 -->
+					<col style="width:100px" /><!-- 입금 -->
+					<col style="width:100px" /><!-- 출금 -->
+					<col style="width:100px"/><!-- 잔액 -->
+
+				</colgroup>
+				<thead>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th rowspan="2">No</th>
+						<th>금융기관 | 계좌번호 | 계좌명</th>
+						<th>거래처명</th>
+						<th>입금</th>
+						<th>출금</th>
+						<th>잔액</th>
+					</tr>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th>전일잔액</th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th>{=number_format(account.yesterday_balance)}</th>
+					</tr>
+
+					{? count(account.list) == 0}
+						<tr style="height:33px;">
+							<th colspan="6">내역이 없습니다</th>
+						</tr>
+					{:}
+					{@ account.list}
+					<tr style="height:33px;">
+						<td>{.idx}</td>
+						<td>{.account.name} | {.account.number} | {.account.account_name}</td>
+						<td>{.trade_customer}</td>
+						<td>{=number_format(.in_price)}</td>
+						<td>{=number_format(.out_price)}</td>
+						<td>{=number_format(.fs_balance_price)}</td>
+					</tr>
+					{/}
+					{/}
+
+				</thead>
+			</table>
+			<br>
+<!-- 		</td>
+		<td> -->
+			<table class="table table-bordered table-list table-striped table-hover" <? if($_GET['output_mode'] == "EXCEL"): ?> border="1"<? endif; ?>>
+				<colgroup>
+					<col style="width:40px"/><!-- 번호 -->
+					<col /><!-- 금융기관 -->
+					<col style="width:150px" /><!-- 거래처명 -->
+					<col style="width:100px"/><!-- 결제금액 -->
+
+				</colgroup>
+				<thead>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th rowspan="2">No</th>
+						<th>카드사 | 카드번호뒷자리4자리 | 카드명</th>
+						<th>거래처명</th>
+						<th>결제금액</th>
+					</tr>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th>전일잔액</th>
+						<th></th>
+						<th></th>
+					</tr>
+
+					{? count(card.list) == 0}
+						<tr style="height:33px;">
+							<th colspan="4">내역이 없습니다</th>
+						</tr>
+					{:}
+					{@ card.list}
+					<tr style="height:33px;">
+						<td>{.idx}</td>
+						<td>{.account.name} | {.account_card_number} | {.account.account_name}</td>
+						<td>{.trade_customer}</td>
+						<td>{=number_format(.out_price)}</td>
+					</tr>
+					{/}
+					{/}
+
+				</thead>
+			</table>
+			<br>
+<!-- 		</td>
+			</tr>
+			<tr style="vertical-align:top">
+		<td> -->
+			<table class="table table-bordered table-list table-striped table-hover" <? if($_GET['output_mode'] == "EXCEL"): ?> border="1"<? endif; ?>>
+				<colgroup>
+					<col style="width:40px"/><!-- 번호 -->
+					<col /><!-- 금융기관 -->
+					<col style="width:150px" /><!-- 거래처명 -->
+					<col style="width:100px" /><!-- 입금 -->
+					<col style="width:100px" /><!-- 출금 -->
+					<col style="width:100px"/><!-- 잔액 -->
+
+				</colgroup>
+				<thead>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th rowspan="2">No</th>
+						<th>현금 입.출금내역</th>
+						<th>거래처명</th>
+						<th>입금</th>
+						<th>출금</th>
+						<th>잔액</th>
+					</tr>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th>전일잔액</th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th>{=number_format(cash.yesterday_balance)}</th>
+					</tr>
+
+					{? count(cash.list) == 0}
+						<tr style="height:33px;">
+							<th colspan="6">내역이 없습니다</th>
+						</tr>
+					{:}
+					{@ cash.list}
+					<tr style="height:33px;">
+						<td>{.idx}</td>
+						<td>{.account.account_name}</td>
+						<td>{.trade_customer}</td>
+						<td>{=number_format(.in_price)}</td>
+						<td>{=number_format(.out_price)}</td>
+						<td>{=number_format(.fs_balance_price)}</td>
+					</tr>
+					{/}
+					{/}
+
+				</thead>
+			</table>
+			<br>
+<!-- 		</td>
+		<td> -->
+
+			<table class="table table-bordered table-list table-striped table-hover" <? if($_GET['output_mode'] == "EXCEL"): ?> border="1"<? endif; ?>>
+				<colgroup>
+					<col style="width:60px"/><!-- 번호 -->
+					<col /><!-- 금융기관 -->
+					<col style="width:100px" /><!-- 입금 -->
+					<col style="width:100px" /><!-- 출금 -->
+
+				</colgroup>
+				<thead>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th colspan="4">총 자금 합계</th>
+					</tr>
+					<tr style="background-color:#c0c0c0; height:33px;">
+						<th>구분</th>
+						<th>금융기관 | 계좌명</th>
+						<th>입금</th>
+						<th>출금</th>
+					</tr>
+
+					{? count(account.total_list)+count(card.total_list)+count(cash.total_list) == 0}
+						<tr style="height:33px;">
+							<th colspan="4">내역이 없습니다</th>
+						</tr>
+					{:}
+					<? $total_in_price = 0; ?>
+					<? $total_out_price = 0; ?>
+					{@ account.total_list}
+					<tr style="height:33px;">
+						<td>계좌</td>
+						<td>{.account.name} | {.account.account_name}</td>
+						<td>{=number_format(.in_price)}</td>
+						<td>{=number_format(.out_price)}</td>
+						<? $total_in_price += {.in_price}; ?>
+						<? $total_out_price += {.out_price}; ?>
+					</tr>
+					{/}
+					{@ card.total_list}
+					<tr style="height:33px;">
+						<td>카드</td>
+						<td>{.account.name} | {.account.account_name}</td>
+						<td>-<!-- {=number_format(.in_price)} --></td>
+						<td>{=number_format(.out_price)}</td>
+						<? $total_in_price += {.in_price}; ?>
+						<? $total_out_price += {.out_price}; ?>
+					</tr>
+					{/}
+					{@ cash.total_list}
+					<tr style="height:33px;">
+						<td>현금</td>
+						<td>{.account.account_name}</td>
+						<td>{=number_format(.in_price)}</td>
+						<td>{=number_format(.out_price)}</td>
+						<? $total_in_price += {.in_price}; ?>
+						<? $total_out_price += {.out_price}; ?>
+					</tr>
+					{/}
+					<tr style="height:33px;">
+						<th colspan="2">입/출금합계</th>
+						<th><?=number_format($total_in_price);?></th>
+						<th><?=number_format($total_out_price);?></th>
+					</tr>
+					{/}
+					<tr style="height:33px;">
+						<th colspan="2">씨엠엘티디 총 잔액</th>
+						<th colspan="2">{=number_format(account.today_balance)}</th>
+					</tr>
+					<tr style="height:33px;">
+						<th colspan="2">현금 총 잔액</th>
+						<th colspan="2">{=number_format(cash.today_balance)}</th>
+					</tr>
+					<tr style="height:33px;">
+						<th colspan="2">Total(계좌+현금)</th>
+						<th colspan="2">{=number_format(account.today_balance+cash.today_balance)}</th>
+					</tr>
+
+				</thead>
+			</table>
+<!-- 		</td>
+			</tr>
+		</table> -->
+</div>
+
+
+<script>
+	function output_excel() {
+		document.location = "/finance/report_result/daily?srch_year=<?=$_GET['srch_year']?>&srch_month=<?=$_GET['srch_month']?>&srch_day=<?=$_GET['srch_day']?>&output_mode=EXCEL";
+	}
+
+
+
+</script>
+
+<!--//
+<style>
+.tool-box button {
+	border: 1px solid #cdc3b7;
+	background: #ede4d4
+		url(/lib/js/themes/humanity/images/ui-bg_glass_70_ede4d4_1x400.png)
+		50% 50% repeat-x;
+	font-weight: normal;
+	color: #3f3731
+}
+
+.ui-button .ui-button-text {
+	display: block;
+	line-height: normal;
+	font-weight: bold;
+}
+
+.account_total {
+	font-weight: bold;
+	text-decoration: underline;
+	text-align: right;
+	margin-bottom: 10px;
+	margin-top: 10px;
+}
+
+td {
+    mso-number-format: "\@";
+}
+</style>
+<script>
+	function output_excel() {
+		document.location = "/finance/report_result/daily?srch_year=<?=$_GET['srch_year']?>&srch_month=<?=$_GET['srch_month']?>&&srch_day=<?=$_GET['srch_day']?>&output_mode=EXCEL";
+	}
+</script>
+
+<div style="width: 98%; margin: auto;">
+	<? if($_GET['output_mode'] != "EXCEL"): ?>
+	<h3 class="area-title">자금일보</h3>
+	<? endif; ?>
+		<div style="font-weight: bold;"><?=$daily_date?> (<?=$yoil?>) / - 입금 : <?=number_format($sum['K']['in'])?> 출금 : <?=number_format($sum['K']['out'])?>
+		&nbsp;&nbsp;&nbsp;&nbsp;/ USD 입금 : <?=number_format($sum['U']['in'])?> 출금 : <?=number_format($sum['U']['out'])?>
+		&nbsp;&nbsp;&nbsp;&nbsp;/ CNY 입금 : <?=number_format($sum['C']['in'])?> 출금 : <?=number_format($sum['C']['out'])?>
+		</div>
+		
+	<? foreach($account_list as $i): ?>
+	<br>
+	<table class="summary-list-table" <?if($_GET['output_mode']=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;"<?endif;?>>
+		<colgroup>
+			<col width="10%">
+			<col width="">
+			<col width="20%">
+			<col width="5%">			
+			<col width="12%">
+			<col width="12%">
+			<col width="13%">
+		</colgroup>
+		<thead>
+			<tr <?if($_GET['output_mode']=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th rowspan="2">일자</th>
+				<th>계좌명</th>
+				<th rowspan="2">거래처</th>
+				<th rowspan="2">통화</th>				
+				<th rowspan="2">입금</th>
+				<th rowspan="2">출금</th>
+				<th rowspan="2">잔액</th>
+			</tr>
+			<tr <?if($_GET['output_mode']=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th><font color="blue"><?=$i->account_name?></font></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td></td>
+				<td>전일잔액</td>
+				<td>-</td>
+				<td>-</td>				
+				<td>-</td>
+				<td>-</td>
+				<td class="rt-align"><?=number_format($i->pre_balance)?></td>
+			</tr>
+			<? foreach($list[$i->account_seqno] as $j): ?>
+			<tr>
+				<td><?=str_replace( '-' , '/' , substr($daily_date, -5) )?></td>
+				<td><?=$j->info?></td>
+				<td><?=$j->trade_customer?></td>
+				<td >-</td>				
+				<td class="rt-align"><?=number_format($j->in_amount)?></td>
+				<td class="rt-align"><?=number_format($j->out_amount)?></td>
+				<td class="rt-align"><?=number_format($j->total_amount)?></td>
+			</tr>
+			<? endforeach; ?>
+			<tr>
+				<td colspan="3" class="total">합계</td>
+				<td class="total"><?=$i->currencyname?></td>				
+				<td class="total rt-align"><?=number_format($total_list[$i->account_seqno]['in'])?></td>
+				<td class="total rt-align"><?=number_format($total_list[$i->account_seqno]['out'])?></td>
+				<td class="total rt-align"><?=number_format($total_list[$i->account_seqno]['account_balance']+$total_list[$i->account_seqno]['sum_amount'])?></td>
+			</tr>
+		</tbody>
+	</table>	
+
+	<? if($last_account == $i->account_seqno): ?><? if ( $sum['K']['account_balance'] != 0 ) : ?><h3 style="text-align: right;text-decoration: underline;">계좌잔액 : <?=number_format($sum['K']['account_balance'])?></h3><?endif;?><?endif;?>
+	<? if($last_account == $i->account_seqno): ?><? if ( $sum['U']['account_balance'] != 0 ) : ?><h3 style="text-align: right;text-decoration: underline;">USD  : <?=number_format($sum['U']['account_balance'])?></h3><?endif;?><?endif;?>
+	<? if($last_account == $i->account_seqno): ?><? if ( $sum['C']['account_balance'] != 0 ) : ?><h3 style="text-align: right;text-decoration: underline;">CNY  : <?=number_format($sum['C']['account_balance'])?></h3><?endif;?><?endif;?>
+	
+	<? endforeach; ?>
+	<br>
+
+<?
+	 foreach($this->config->item('currency_type') as $k=>$val):
+		$sum[$k]['balance'] = 0 ;		
+		if ( $sum[$k]['account_balance'] != 0 ) : 
+ ?>	
+ 	<h3><?=$val?><h3>	
+	<table class="summary-list-table" <?if($_GET['output_mode']=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;"<?endif;?>>
+		<colgroup>
+			<col width="10%">
+			<col width="">
+			<col width="12%">
+			<col width="12%">
+			<col width="13%">
+		</colgroup>
+		<thead>
+			<tr <?if($_GET['output_mode']=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th class="special">일자</th>
+				<th class="special">계좌명</th>
+				<th class="special">입금</th>
+				<th class="special">출금</th>
+				<th class="special">잔액</th>
+			</tr>
+		</thead>
+		<tbody>
+			<? 
+				foreach($account_list as $i): 
+					if ( $i->currency == $k  ) :
+			?>
+			<tr style="font-weight:normal;">
+				<td><?=str_replace( '-' , '/' , substr($daily_date, -5) )?></td>
+				<td><?=$i->account_name?></td>
+				<td class="rt-align"><?=number_format($total_list[$i->account_seqno][$k]['in'] - $total_list[$i->account_seqno][$k]['inner_in'])?></td>
+				<td class="rt-align"><?=number_format($total_list[$i->account_seqno][$k]['out'] - $total_list[$i->account_seqno][$k]['inner_out'])?></td>
+				<td class="rt-align"><?=number_format($total_list[$i->account_seqno][$k]['account_balance2']+$total_list[$i->account_seqno][$k]['sum_amount'])?></td>
+			</tr>
+			<? 
+				$sum[$k]['balance'] +=  $total_list[$i->account_seqno][$k]['account_balance2']+$total_list[$i->account_seqno][$k]['sum_amount'];
+
+				 endif;
+			 endforeach; 
+			?>
+			<tr>
+				<td colspan="2" class="total">총합계</td>
+				<td class="total rt-align"><?=number_format($sum[$k]['in'])?></td>
+				<td class="total rt-align"><?=number_format($sum[$k]['out'])?></td>
+				<td class="total rt-align"><?=number_format($sum[$k]['balance'])?></td>
+			</tr>
+		</tbody>
+	</table>
+    <?
+ 	 endif;
+     endforeach;?>		
+	
+	<? if($_GET['output_mode'] != "EXCEL"): ?>
+	<div class="tool-box">
+		<button type="button" class="btn" onClick="output_excel();">EXCEL</button>
+	</div>
+	<? endif; ?>
+</div>
+//-->

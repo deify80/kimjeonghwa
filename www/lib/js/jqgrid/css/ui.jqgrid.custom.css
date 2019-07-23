@@ -1,0 +1,38 @@
+@import url('ui.jqgrid.css');
+
+
+
+/*.ui-jqgrid {font-size:12px;}*/
+.ui-jqgrid tr.jqgrow td {font-family: 'NG', 'dotum';padding:6px 3px;font-size:12px;}
+.grid-col {line-height:1.6em;}
+.ui-jqgrid tr.jqgrow td {
+    white-space: normal;
+}
+
+.ui-jqgrid .ui-jqgrid-htable th div {
+	line-height: 2em;
+}
+
+.ui-jqgrid .ui-icon-desc {margin-top:6px;}
+.ui-jqgrid .ui-icon-asc {margin-top:0px;}
+
+
+.ui-button-text-only .ui-button-text {
+	padding:2px 10px;
+}
+
+.ui-jqgrid .editable {
+	font-family: 'NG', 'dotum';
+}
+
+.ui-jqgrid  {margin-top:10px;}
+/*.ui-jqgrid-bdiv {min-height:500px;}*/
+.grid-col-narrow {letter-spacing: -1px;}
+.grid-col-last {border-right-width: 0px !important}
+
+.ui-jqgrid body, .ui-widget, .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button {font-family: 'NG', 'dotum';font-size:12px;}
+.ui-widget select {padding:2px 1px;vertical-align: bottom;}
+
+
+/*상담 데이터 테이블*/
+/*.ui-jqgrid .tbl-consulting  tr.jqgrow td  {font-size:11px;}*/

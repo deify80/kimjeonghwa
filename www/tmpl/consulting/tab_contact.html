@@ -1,0 +1,30 @@
+<table class="table table-bordered table-list table-striped">
+	<colgroup>
+		<col style="width:50px" /><!-- 번호 -->
+		<col style="width:150px" /><!-- 컨택일시 -->
+		<col style="width:100px" /><!-- 팀 -->
+		<col /><!-- 담당자 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>컨택일시</th>
+			<th>팀</th>
+			<th>담당자</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td>{.reg_date}</td>
+			<td>{.team_name}</td>
+			<td>{.name}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="4" class="center">등록된 컨택이력이 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>

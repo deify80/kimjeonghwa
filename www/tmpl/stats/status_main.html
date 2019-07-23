@@ -1,0 +1,128 @@
+<h3 class="area-title">검색</h3>
+<form id="FrmStatusSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>분배일자1</th>
+			<td>
+				<input type="text" name="srch_start_date" id="sdate_s" class="datepicker lg" value="{=date('Y-m-d')}"> ~ <input type="text" name="srch_end_date" id="sdate_e" class="datepicker lg" value="{=date('Y-m-d')}">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="StatusMain.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="StatusMain.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="StatusMain.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="StatusMain.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="StatusMain.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="StatusMain.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+			<th>유입경로</th>
+			<td>
+				<select name="srch_path" style="width:120px;" data-role="reload">
+					<option value="">::전체::</option>
+					{@ cfg.path}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>팀</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="srch_team_code" value="" checked data-role="reload"> 전체
+					</label>
+					{@ cfg.team}
+					<label class="btn">
+						<input type="radio" name="srch_team_code" value="{.key_}" data-role="reload" /> {.value_}
+					</label>
+					{/}
+				</div>
+
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="StatusMain.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="StatusMain.reset()">처음으로</button>
+</div>
+
+
+<h3 class="area-title">DB현황 <span class="split">|</span> <span class="f-small f-notice" style="font-family:NG;">각 팀에 분배된 유입경로별 DB 갯수</span>
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="StatusMain.excel();"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+		{? auth.db_share}
+		<button  type="button" class="btn btn-flat-blue"  onClick="javascript:open_ing();"><i class="fa fa-1 fa-check"></i> DB 분배 현황</button>
+		{/}
+	</div>
+</h3>
+
+<div id="list-area" style="padding: 0;margin: 0;"></div>
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var StatusMain = {
+	init: function() {
+		HmisCommon.createDatepicker();
+		this.load();
+		var me = this;
+		$('[data-role="reload"]').on('change',function() {
+			me.load();
+		});
+
+		setInterval(StatusMain.load, 1000*60*2);
+	},
+	goWork: function(tc) {
+		$.ajax({
+			url:'/common/set_session',
+			data:{
+				team_code:tc,
+				date_s:$('#sdate_s').val(),
+				date_e:$('#sdate_e').val()
+			},
+			type:'POST',
+			complete: function() {
+				window.open('/consulting/work');
+			}
+		})
+	},
+	excel: function() {
+		var data = $("#FrmStatusSearch").serialize();
+		var url = "/stats/excel_lists/status_lists/?"+data;
+
+		$("#FrmStatusSearch").attr("action", url);
+		$("#FrmStatusSearch").attr("target", "excel-frm");
+		$("#FrmStatusSearch").attr("method", "POST");
+		$("#FrmStatusSearch").submit();
+	},
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmStatusSearch').serializeArray();
+		$('#list-area').load('/stats/status_lists', formdata);
+	},
+
+	reset: function() {
+		HmisCommon.formReset('FrmStatusSearch');
+		this.load();
+	}
+}
+
+$(function(){
+	StatusMain.init();
+});
+
+
+</script>

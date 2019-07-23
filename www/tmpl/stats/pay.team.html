@@ -1,0 +1,91 @@
+<form id="FrmPayTeamSearch">
+	<input type="hidden" name="date_s" value="{search.date_s}" />
+	<input type="hidden" name="date_e" value="{search.date_e}" />
+	<input type="hidden" name="manager_id" value="" />
+	<input type="hidden" name="pay_field" value=""/>
+</form>
+
+<style type="text/css">
+.total td{background-color:#F7F7F7;}
+.total td .f-null {color:#000;font-family:'NGB'}
+#div_detail {padding-left:0px;margin-top:20px;}
+.area-title { margin-top:0px; }
+</style>
+
+<div style="width:100%;">
+	<h3 class="area-title">상담실장별매출</h3>
+	<table class="table table-bordered table-center table-form table-hover" >
+		<colgroup>
+			<col width="120px">
+		</colgroup>
+		<thead>
+			<tr>
+				<th>상담실장</th>
+				<th>OP매출액</th>
+				<th>예치금</th>
+				<th>미수금</th>
+				<th>환불액</th>
+			</tr>
+		</thead>
+		<tbody>
+			{@ team}
+			<tr>
+				<th>{.name}</th>
+				<td>
+					{? .sales.basic != 0}
+					<a href="javascript:;" class="link" onclick="PayTeam.loadDetail('{.key_}','basic')">{=number_format(.sales.basic)}</a>
+					{:}
+					<span class="f-null">{=number_format(.sales.basic)}</span>
+					{/}
+				</td>
+				<td>
+					{? .sales.paid != 0}
+					<a href="javascript:;" class="link" onclick="PayTeam.loadDetail('{.key_}','paid')">{=number_format(.sales.paid)}</a>
+					{:}
+					<span class="f-null">{=number_format(.sales.paid)}</span>
+					{/}
+				</td>
+				<td>
+					{? .sales.unpaid != 0}
+					<a href="javascript:;" class="link" onclick="PayTeam.loadDetail('{.key_}','unpaid')">{=number_format(.sales.unpaid)}</a>
+					{:}
+					<span class="f-null">{=number_format(.sales.unpaid)}</span>
+					{/}
+				</td>
+				<td>
+					{? .sales.refund != 0}
+					<a href="javascript:;" class="link" onclick="PayTeam.loadDetail('{.key_}','refund')">{=number_format(.sales.refund)}</a>
+					{:}
+					<span class="f-null">{=number_format(.sales.refund)}</span>
+					{/}
+				</td>
+			</tr>
+			{/}
+			<tr>
+				<th>합계</th>
+				<th>{=number_format(total.basic)}</th>
+				<th>{=number_format(total.paid)}</th>
+				<th>{=number_format(total.unpaid)}</th>
+				<th>{=number_format(total.refund)}</th>
+			</tr>
+		</tbody>
+	</table>
+</div>
+<div id="div_detail">
+	<h3 class="area-title" style="color:#FF8000">매출액을 클릭하면 상세내역을 확인할 수 있습니다</h3>
+</div>
+<div style="clear:both"></div>
+
+<script type="text/javascript">
+var PayTeam = {
+	init: function() {
+	},
+	loadDetail: function(manager_id, pay_field) {
+		$('#FrmPayTeamSearch input[name="manager_id"]').val(manager_id);
+		$('#FrmPayTeamSearch input[name="pay_field"]').val(pay_field);
+		var formdata = $('#FrmPayTeamSearch').serializeArray();
+
+		$('#div_detail').load('/stats/pay_detail', formdata);
+	}
+}
+</script>

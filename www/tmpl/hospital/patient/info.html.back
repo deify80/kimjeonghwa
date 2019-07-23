@@ -1,0 +1,488 @@
+{? !auth.info}
+<div style="background-color:#EBEBEB;padding:50px;width:500px;margin:100px auto">
+	<div style="text-align:center;color:#E84E40;font-size:20px;"><i class="fa fa-comments"></i> 이 환자에 대한  권한이 없습니다.</div>
+</div>
+{:}
+<style>
+div.widget {
+	margin-top:10px;
+}
+
+ul.label-wrap {
+	margin-top:10px;
+}
+ul.label-wrap > li {margin-bottom:5px;}
+</style>
+
+<div class="widget">
+<table class="table" style="margin-top:0px">
+	<tbody>
+		<tr>
+			<td>
+				<input type="search" name="" value="" id="search_patient"  class="search" style="width:300px" placeholder="환자명 or 휴대폰번호 or 차트번호" />
+				<button type="button" class="btn btn-theme" onclick="PatientInfo.search();" ><i class="fa fa-search fa-1"></i> 검색</button>
+				<button type="button" class="btn btn-gray" onclick="document.location.href='/patient/lists'"><i class="fa fa-list fa-1"></i> 목록</button>
+			</td>
+			<td style="text-align:right">
+				<button type="button" class="btn btn-flat-blue" onclick="PatientInfo.modalWidget('basic','환자등록', null)"><i class="fa fa-plus-square-o fa-1"></i> 환자등록</button>
+				<!-- <button type="button" class="btn btn-flat-purple" onclick="PatientInfo.openModal('화면설정','/patient/settings_widget',400)"><i class="fa fa-cog fa-1"></i> 설정</button> -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+</div>
+
+<table class="table">
+	<colgroup>
+		<col width="500px">
+		<col width="10px" >
+		<col>
+	</colgroup>
+	<tr>
+		<td style="padding:0px;vertical-align: top;">
+			<!-- 환자정보:S -->
+			<div class="widget simple"  id="widget_basic" style="height:330px;border:solid 2px #B6C34A">
+			</div>
+			<!-- 환자정보:E -->
+		</td>
+		<td></td>
+		<td style="padding:0px;vertical-align: top;">
+			<!-- 예약기록:S -->
+			<div class="widget bold" id="widget_appointment" style="height:330px;position:relative">
+				<div class="widget-header">
+					<form id="FrmWidgetappointment">
+					예약기록
+					<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.openModal('예약 등록','/patient/info_widget_appointment_input', 1100)" style="margin-left:5px"><i class="fa fa-plus fa-1 f-blue"></i></button>
+
+					<div class="btn-group hmis blue" data-toggle="buttons" >
+						<label class="btn active"><input type="radio" name="status_code" value="all" onchange="PatientInfo.load('appointment', 1, {status_code:'all'})" checked />전체</label>
+						{@ cfg.status}
+						<label class="btn"><input type="radio" name="status_code" value="{.key_}" onchange="PatientInfo.load('appointment', 1, {status_code:'{.key_}'})" />{.value_}</label>
+						{/}
+					</div>
+					</form>
+
+					<div class="tools">
+						<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.load('appointment');"><i class="fa fa-refresh fa-1 f-green" ></i></button>
+					</div>
+				</div>
+				<div class="widget-body">
+
+				</div>
+			</div>
+			<!-- 예약기록:E -->
+		</td>
+	</tr>
+</table>
+
+<!-- 수술목록:S -->
+<div class="widget bold" style="margin:10px 0px;padding:10px;" id="project_list"></div>
+<!-- 수술목록:E -->
+
+<!-- 탭:S -->
+<div class="" id="project_tabs">
+	<!-- Nav tabs -->
+	<ul class="nav nav-tabs" role="tablist" >
+		{? auth.chart_normal}<li role="presentation" class="active"><a href="#content" data-tabindex="chart_normal" role="tab" data-toggle="tab">일반차트 <span class="badge" id="cnt_chart_normal">0</span></a></li>{/}
+		{? auth.chart_checkup}<li role="presentation"><a href="#content" data-tabindex="chart_checkup" role="tab" data-toggle="tab">검사차트 <span class="badge" id="cnt_chart_checkup">0</span></a></li>{/}
+		{? auth.pay}<li role="presentation"><a href="#content" data-tabindex="pay" role="tab" data-toggle="tab">수납내역 <span class="badge" id="cnt_pay">0</span></a></li>{/}
+		{? auth.doctor}<li role="presentation"><a href="#content" data-tabindex="doctor" role="tab" data-toggle="tab">Dr's Order <span class="badge" id="cnt_doctor">0</span></a></li>{/}
+		{? auth.nurse}<li role="presentation"><a href="#content" data-tabindex="nurse"  role="tab" data-toggle="tab">수술간호일지 <span class="badge" id="cnt_nurse">0</span></a></li>{/}
+		{? auth.treat}<li role="presentation"><a href="#content" data-tabindex="treat" role="tab" data-toggle="tab">치료일지 <span class="badge" id="cnt_treat">0</span></a></li>{/}
+		{? auth.treat}<li role="presentation"><a href="#content" data-tabindex="skin" role="tab" data-toggle="tab">피부관리일지 <span class="badge" id="cnt_skin">0</span></a></li>{/}
+		{? auth.consulting}<li role="presentation"><a href="#content" data-tabindex="consulting" role="tab" data-toggle="tab">상담일지 <span class="badge" id="cnt_consulting">0</span></a></li>{/}
+		{? auth.photo}<li role="presentation"><a href="#content" data-tabindex="photo" role="tab" data-toggle="tab">전후사진비교 <span class="badge" id="cnt_photo">0</span></a></li>{/}
+		{? auth.material}<li role="presentation"><a href="#content" data-tabindex="material" role="tab" data-toggle="tab">재료비산정 <span class="badge" id="cnt_material">0</span></a></li>{/}
+		{? auth.agree}<li role="presentation"><a href="#content" data-tabindex="agree" role="tab" data-toggle="tab">동의서 <span class="badge" id="cnt_agree">0</span></a></li>{/}
+	</ul>
+
+	<!-- Tab panes -->
+	<div class="tab-content" style="padding:20px;border:solid 1px #DDDDDD;border-top:none;border-radius: 0px 0px 2px 2px">
+		<div role="tabpanel" class="tab-pane active" id="content"></div>
+	</div>
+</div>
+<!-- 탭:E -->
+<div id="widget_wrap"></div>
+
+<!--{* 프린트용 아이프레임 *}-->
+<iframe id='ifrmPrint' src='#' style="width:0pt; height:0pt; border: none;"></iframe>
+
+<link rel="stylesheet" href="/css/project.css?<?=time()?>" />
+<link rel="stylesheet" href="/css/bootstrap.tab.css?<?=time()?>" />
+<link rel="stylesheet" href="/lib/js/colorbox/colorbox.css?<?=time()?>" />
+<script type="text/javascript" src="/js/bootstrap.tab.js"></script>
+<script src="/lib/js/colorbox/jquery.colorbox-min.js"></script>
+<script type="javascript" src="/js/template.js"></script>
+<script type="javascript" src="/js/bootstrap.button.js"></script>
+<script type="javascript" src="/js/Hmis.treat.js"></script>
+
+<link rel="stylesheet" href="/lib/js/zoom/css/ap-image-zoom.css">
+<script src="/lib/js/zoom/js/hammer.min.js"></script>
+<script src="/js/jquery.mousewheel.min.js"></script>
+<script src="/lib/js/zoom/js/ap-image-zoom.js"></script>
+
+
+<script type="text/javascript">
+var PatientInfo = {
+	widget:{
+		'basic':{
+			url:'/patient/info_widget_basic',
+			input:{
+				url:'/patient/input',
+				width:'1200'
+			}
+		},
+		'appointment':{
+			url:'/patient/info_widget_appointment',
+			input:{
+				url:'/patient/info_widget_appointment_input',
+				width:'1100'
+			}
+		},
+		'consulting':{
+			url:'/patient/info_widget_consulting',
+			input:{
+				url:'/patient/info_widget_consulting_input',
+				width:'800'
+			},
+			limit:5
+		},
+		'treat':{
+			url:'/patient/info_widget_treat',
+			input:{
+				url:'/patient/info_widget_treat_input',
+				width:'800'
+			},
+			limit:5
+		},
+		'skin':{
+			url:'/patient/info_widget_skin',
+			input:{
+				url:'/patient/info_widget_skin_input',
+				width:'800'
+			},
+			limit:5
+		},
+		'nurse':{
+			url:'/patient/info_widget_nurse',
+			input:{
+				url:'/patient/info_widget_nurse_input',
+				width:'800'
+			},
+			limit:5
+		},
+		'doctor':{
+			url:'/patient/info_widget_doctor',
+			input:{
+				url:'/patient/info_widget_doctor_input',
+				width:'800'
+			},
+			limit:5
+		},
+		'pay':{
+			url:'/patient/info_widget_pay',
+			input:{
+				url:'/patient/info_widget_pay_input',
+				width:'1000',
+				callback:function() {
+					PatientInfo.loadTab('pay');
+					PatientInfo.countTab();
+				}
+			}
+		},
+		'chart_normal':{
+			url:'/patient/info_widget_chart',
+			input:{
+				url:'/patient/info_widget_chart_input',
+				width:'600'
+			}
+		},
+		'chart_checkup':{
+			url:'/patient/info_widget_chart',
+			input:{
+				url:'/patient/info_widget_chart_input',
+				width:'600'
+			}
+		},
+		'photo':{
+			url:'/patient/info_widget_photo',
+			input:{
+				url:'/patient/info_widget_photo_input',
+				width:'600'
+			}
+		},
+		'material':{
+			url:'/patient/info_widget_material',
+			input:{
+				url:'/patient/info_widget_material_input',
+				width:'600'
+			},
+			limit:10
+		},
+		'agree':{
+			url:'/patient/info_widget_agree',
+			input:{
+				url:'/patient/info_widget_agree_input',
+				width:'600'
+			}
+		}
+	},
+	patient_no:"{basic.no}",
+	project_no:0,
+	tab_index:'',
+	tab_page:1,
+	tab_search:{},
+	init: function() {
+		this.render();
+		this.createAutocomplete();
+		$('#tablist').tab();
+		// this.loadProject();
+		this.tab_index = $('#project_tabs > ul > li:first > a').data('tabindex');
+	},
+	render: function() {
+		this.loadWidget();
+		this.load('basic');
+		this.load('appointment');
+		this.loadProject();
+	},
+	openModal: function(title, url, width, param) {
+		var param = param || {};
+		var modal = new HmisModal('patient', {width:width, top:200});
+		$.extend(param,{patient_no:this.patient_no});
+		modal.open(title, url, param);
+	},
+	load: function(widget_id, page, param) {
+		var url = this.widget[widget_id].url;
+		var frm = $('#FrmWidget'+widget_id);
+		var page = page || 1;
+		if(widget_id == 'basic') {
+			var target = $('#widget_'+widget_id);
+		}
+		else {
+			var target = $('#widget_'+widget_id).find('.widget-body');
+		}
+
+		var search = frm.serializeArray();
+		var parameter = {patient_no:this.patient_no, page:page, patient_no:this.patient_no};
+		$.extend(parameter, {search:search});
+		target.load(url, parameter, function(){
+			$('[data-toggle="tooltip"]').tooltip({placement:'left'});
+		});
+	},
+	initTab: function() {
+		var me = this;
+		$('[data-toggle="tab"]').unbind('click.tab').bind('click.tab', function() {
+			var e = $(this);
+			me.tab_search = {};
+			me.tab_index = e.data('tabindex');
+			me.loadTab(e.data('tabindex'), 1);
+		});
+	},
+	//탭별 카운팅
+	countTab: function() {
+		$.ajax({
+			url:'/patient/get_count_tab',
+			data:{
+				patient_no:this.patient_no,
+				project_no:this.project_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				$.each(r.data, function(i,e){
+					if(e > 0) $('#cnt_'+i).addClass('red');
+					else $('#cnt_'+i).removeClass('red');
+
+					$('#cnt_'+i).html(e);
+
+				})
+			}
+		})
+	},
+	//탭로드
+	loadTab: function(tab, page, param) {
+		HmisLoading.show('.tab-content');
+		var href = '/patient/info_tab';
+		var page = page || this.tab_page;
+		var limit = PatientInfo.widget[tab].limit || 5;
+		var param = param || {};
+
+		$.extend(param, {tab:tab, page:page, patient_no:this.patient_no, project_no:this.project_no, limit:limit}, {search:this.tab_search});
+		$('#content').load(href, param, function() {
+			PatientInfo.tab_page = page;
+			$('[data-toggle="tooltip"]').tooltip();
+			HmisLoading.hide();
+		});
+	},
+	searchTab: function(param) {
+		$.extend(this.tab_search, param);
+		PatientInfo.loadTab(this.tab_index, 1)
+	},
+	//프로젝트 리스트 로드
+	loadProject: function(project_no){
+		var me = this;
+		$("#project_list").load('/patient/info_project', {patient_no:this.patient_no}, function() {
+			me.initTab();
+
+			if(project_no) {
+				var project = $('#project_list > div[data-project="'+project_no+'"]');
+			}
+			else {
+				var project = $('#project_list > div.selected');
+			}
+
+			me.project_no = project.data('project');
+			me.selectProject(project.find('div.project-box-body'));
+
+			if(project.length<1) $('#project_tabs').css('display','none');
+			else $('#project_tabs').css('display','');
+		});
+
+	},
+	//프로젝트 카드 선택
+	selectProject: function(el) {
+		var e = $(el).parent();
+		this.project_no = e.data('project');
+		$('#project_list').find('.project-box').removeClass('selected');
+		e.addClass('selected');
+		$('[data-toggle="tab"][data-tabindex="'+this.tab_index+'"]').trigger('click');
+
+		//각 탭별 카운트
+		this.countTab();
+	},
+	//위젯 로드
+	loadWidget: function() {
+		// $("#widget_wrap").load('/patient/info_widget', {patient_no:this.patient_no});
+	},
+	modalWidget: function(widget_id, title, param){
+		var width = this.widget[widget_id].input.width;
+		var url = this.widget[widget_id].input.url;
+		var modal = new HmisModal('modal_'+widget_id, {width:width});
+		switch (widget_id) {
+			case 'basic':
+				modal.callback = function(rs) {
+					if(rs.mode == 'insert') {
+						PatientInfo.patient_no = rs.no;
+						PatientInfo.render();
+					}
+					else {
+						PatientInfo.load('basic');
+					}
+				}
+			break;
+			default:
+				modal.callback = this.widget[widget_id].input.callback;
+			break;
+		}
+
+		if(param  !==  null) {
+			var param = param || {};
+			$.extend(param, {patient_no:this.patient_no, project_no:this.project_no});
+		}
+		modal.open(title, url, param);
+	},
+	//차트, 포토 미리보기
+	createColorbox: function(rel) {
+		$('.'+rel+' [data-rel="colorbox"]').colorbox({
+			rel:rel,
+			current:'{\current}/{\total}',
+			previous:'<i class="fa fa-chevron-left fa-1 f-theme"></i>',
+			next:'<i class="fa fa-chevron-right fa-1 f-theme"></i>',
+			close:'<i class="fa fa-times fa-1 f-error"></i>',
+			//maxHeight:'800px',
+			//iframe:false,
+			/*
+			innerWidth:800,
+			innerHeight:600
+			*/
+			onComplete: function() {
+				$('#cboxLoadedContent > img').each(function(i,e) {
+					$(e).apImageZoom({
+						cssWrapperClass: 'custom-wrapper-class',
+						autoCenter: false,
+						minZoom: 0.2, //'contain',
+						maxZoom: false
+					});
+				});
+
+			}
+		});
+
+	},
+	//환자검색
+	createAutocomplete: function(){
+		var me = this;
+		var el = $('#search_patient');
+		el.autocomplete({
+			minLength: 1,
+			disabled: true,
+			select: function(event, ui) {
+				if(ui.item.rs != null) {
+					var patient_no = ui.item.rs.no;
+					if(patient_no > 0) {
+						me.patient_no = patient_no;
+						me.render()
+					}
+				}
+
+				$(this).val('');
+				return false;
+			},
+			source:function(request, response) {
+				$.ajax({
+					url: "/patient/patient_list",
+					data:{
+						search_word:request.term,
+						field:'no, name, mobile, messenger',
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.name+' - '+v.search,
+									value: v.name,
+									rs:v
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 환자가 없습니다.',
+								value:'',
+								no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				if(el.val().length<2) {
+					HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+					return false;
+				}
+				el.autocomplete('enable');
+				el.autocomplete("search",el.val());
+			}
+			else {
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+	},
+	search: function() {
+		var search_el = $("#search_patient");
+		search_el.autocomplete('enable');
+		search_el.autocomplete("search", search_el.val());
+	}
+}
+$(function() {
+	PatientInfo.init();
+})
+</script>
+{/}

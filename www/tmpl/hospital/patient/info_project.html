@@ -1,0 +1,55 @@
+<button type="button" class="btn btn-onlyicon btn-lightgray" style="height:123px;margin-right:10px" onclick="PatientInfo.openModal('등록','/patient/info_project_input', 900)"><i class="fa fa-1 fa-plus"></i></button>
+{@ project}
+<div class="project-box {? .index_<1}selected{/}" data-project="{.no}" >
+	<div style="position:relative" class="project-box-header {? .date_project < C.TODAY}after{:}before{/}">
+		<span class="label label-xs {? .type=='수술'}label-error{: .type=='시술'}label-orange{: .type=='피부'}label-yellow{:}label-purple{/}">{.type}</span>{? .date_project}{.date_project}{:}미정{/}
+		<div style="position:absolute;right:7px;top:7px;">
+			<a href="javascript:;" onclick="PatientInfo.openModal('등록','/patient/info_project_input', 900, {project_no:'{.no}'})"><i class="fa fa-1 fa-pencil" ></i></a>
+			{? auth.project_delete}
+			<a href="javascript:;" onclick="PatientProject.remove('{.no}')"><i class="fa fa-1 fa-trash" style="margin-left:5px"></i></a>
+			{/}
+		</div>
+	</div>
+	<div class="project-box-body" onclick="PatientInfo.selectProject(this);">
+		<dl class="inline">
+			<dt>진료부위{? .treat_count>0}({.treat_count}){/}</dt>
+			<dd style="overflow:hidden;white-space: nowrap"><span title="{=implode(', ',.treat_nav)}" data-toggle="tooltip" data-placement="top" >{.treat_nav[0]}</span></dd>
+			<dt>매출액</dt>
+			<dd>{=number_format(.amount_basic)}원 {? .type!='진료'}({? .discount_rate>=0}<i class="fa fa-long-arrow-down f-error" style="vertical-align:-1px;padding-left:3px"></i>{:}<i class="fa fa-long-arrow-up f-blue" style="vertical-align:-1px;padding-left:3px"></i>{/} {=abs(.discount_rate)}%){/}</dd>
+			<dt>추가매출액</dt>
+			<dd>{=number_format(.amount_addition)}원</dd>
+			<dt>담당의사</dt>
+			<dd>{? .doctor_id}{.doctor_name} 원장{:}<span class="f-null">미입력</span>{/}</dd>
+		</dl>
+	</div>
+	<!-- <div class="project-box-footer">footer</div> -->
+</div>
+{:}
+	<div class="project-box" style="line-height:123px;background-color:#EBEBEB;height:123px;text-align:center;" onclick="PatientInfo.openModal('수술/시술/진료 등록','/patient/info_project_input', 900)"><i class="fa fa-pencil" style="font-size:35px"></i></div>
+{/}
+
+
+<script type="text/javascript">
+var PatientProject = {
+	remove: function(no) {
+		HmisAlert.confirm('삭제시에 관련정보(차트/수납내역/각종일지등)가 함께 삭제됩니다.<br />정말 <span class="f-error">삭제</span>하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/patient_proc/remove_patient_project',
+					data:{
+						patient_no:'{patient_no}',
+						project_no:no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							PatientInfo.loadProject();
+						}
+					}
+				})
+			}
+		})
+	}
+}
+</script>

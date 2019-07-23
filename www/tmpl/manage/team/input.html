@@ -1,0 +1,97 @@
+<form id="FrmTeamInput" onSubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td>
+				<select name="biz_id" class="validate[required] required">
+					{@ cfg.biz}
+					<option value="{.key_}" {? rs.biz_id==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>상위부서</th>
+			<td>
+				<select name="dept_code" class="required">
+					{@ cfg.dept}
+					<option value="{.key_}" {? rs.dept_code==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>팀코드</th>
+			<td>
+				{? mode == 'insert'}
+				<input type="text" name="team_code" value="{rs.team_code}" class="validate[required,custom[integer]] required" />
+				{:}
+				<input type="text" name="team_code" value="{rs.team_code}" class="transparent f-bold" readonly />
+				{/}
+			</td>
+			<th>팀명</th>
+			<td>
+				<input type="text" name="team_name" value="{rs.team_name}" class="validate[required] required" />
+			</td>
+		</tr>
+		<tr>
+
+			<th>사용여부</th>
+			<td colspan="3">
+				<label class="hmis"><input type="radio" name="status" value="1" class="hmis" {? rs.status=='1'}checked{/} /><span class="lbl"> 사용</span></label>
+				<label class="hmis"><input type="radio" name="status" value="0" class="hmis" {? rs.status=='0'}checked{/} /><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var TeamInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition : "centerRight",
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmTeamInput").validationEngine('attach',option);
+	},
+	save: function() {
+		var formdata = $('#FrmTeamInput').serialize();
+		$.ajax({
+			url:'/manage_proc/team_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					TeamList.reload();
+					$('.modal-close').trigger('click');
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+};
+
+$(function(){
+	TeamInput.init();
+})
+</script>

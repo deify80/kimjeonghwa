@@ -1,0 +1,134 @@
+<form id="FrmLogsInput">
+<input type="hidden" name="no" value="<?=$rs['no']?>" />
+<input type="hidden" name="date" value="<?=$rs['date']?>" />
+<input type="hidden" name="standard_night" value="<?=$settings['time_night']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>근무일</th>
+			<td colspan="5"><?=$rs['date']?></td>
+		</tr>
+		<tr>
+			<th>직원명</th>
+			<td>
+				<?=$rs['name']?>
+			</td>
+			<th>부서</th>
+			<td>
+				<?=$rs['dept_name']?>
+			</td>
+			<th>팀</th>
+			<td>
+				<?=$rs['team_name']?>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<table class="table table-bordered table-form" style="margin-top:10px;">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+
+		<tr>
+			<th>출근상태</th>
+			<td>
+				<select name="status" onchange="AttendanceLogsInput.uiStatus()">
+					<? foreach($cfg['status'] as $status_code => $status) {?>
+					<option value="<?=$status_code?>" <?=($rs['status']==$status_code)?'selected':''?> ><?=$status?></option>
+					<? } ?> 
+				</select>
+			</td>
+			<th>출근시각</th>
+			<td>
+				<input type="text" name="time_in" data-mask="time" data-group="work" value="<?=$rs['time_in']?>" style="width:70px" class="center" />
+			</td>
+		</tr>
+		<tr>
+			<th>근태상태</th>
+			<td>
+				<label class="hmis"><input type="checkbox" name="is_late" value="Y" class="hmis" <?=($rs['is_late']=='Y')?'checked':''?> data-group="work" /><span class="lbl"> 지각</span></label>
+				<label class="hmis"><input type="checkbox" name="is_earlyleave" value="Y" class="hmis"  <?=($rs['is_earlyleave']=='Y')?'checked':''?> data-group="work" /><span class="lbl"> 조퇴</span></label>
+				<label class="hmis"><input type="checkbox" name="is_night" value="Y" class="hmis" id="is_night" <?=($rs['is_night']=='Y')?'checked':''?> data-group="work" /><span class="lbl" id="is_night_toolip"> 야간근무</span></label>
+			</td>
+			
+			<th><a id="is_night2" >퇴근시각</a></th>
+			<td>
+				<input type="text" name="time_out" data-mask="time" data-group="work" value="<?=$rs['time_out']?>" style="width:70px" class="center" />
+				<label class="hmis" style="margin-left:10px"><input type="checkbox" name="is_overnight" value="Y" class="hmis" <?=($rs['is_overnight']=='Y')?'checked':''?> data-group="work" ><span class="lbl"> 익일</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>메모</th>
+			<td colspan="3">
+				<textarea style="width:100%;height:50px" class="hmis" name="comment"></textarea>
+			</td>
+		</tr>		
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="AttendanceLogsInput.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var AttendanceLogsInput = {
+	use_night:"<?=$settings['use_night']?>",
+	init: function() {
+		this.uiStatus();
+		$('input[data-mask="time"]').mask('99:99:00');
+		if(this.use_night=='N') {
+			$('#is_night').attr('disabled','true');
+			$('#is_night_toolip').tooltip({
+				placement:'right',
+				title:"<?=$rs[team_name]?>은 야간근무시간을 측정하지 않습니다."
+			});
+			$('#is_night').removeAttr('data-group');
+		}
+	},
+	uiStatus : function(status_code) {
+		var status_code = $('select[name="status"]').val();
+		if($.inArray(status_code, ['30','31','32','33','34','35']) > -1) {
+			$('input[data-group="work"]').attr('disabled',true);
+		}
+		else {
+			$('input[data-group="work"]').removeAttr('disabled');
+
+		}
+
+	},
+	save: function() {
+		if(!confirm('저장하시겠습니까?')) return false;
+		var formdata = $('#FrmLogsInput').serialize();
+		$.ajax({
+			url:'/attendance_proc/update_logs',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				$('.modal-close').trigger('click');
+				AttendanceLogs.reload();
+			}
+		});
+	}
+};
+
+$(function(){
+	AttendanceLogsInput.init();
+});
+</script>

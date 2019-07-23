@@ -1,0 +1,125 @@
+.calendar *, .calendar *::after, .calendar *::before{
+	box-sizing: content-box;
+}
+/*.fc-view-container *, .fc-view-container *::after, .fc-view-container *::before {*/
+
+.calendar table {
+	margin:0px;
+}
+
+.calendar-head table th {
+	box-sizing: border-box;
+	border-right:solid 1px #E6E6E6;
+}
+
+.calendar-head table th:last-child {
+	border-right:none;
+}
+
+.calendar-row {
+	position:relative;
+	border:solid 0px black;
+	min-height:26px;
+}
+
+.calendar-row {
+	border-bottom:solid 1px #E6E6E6;
+	/*box-sizing: border-box;*/
+}
+
+.calendar-row:last-child {
+	border-bottom:none;
+}
+
+.calendar-row table {
+	border-collapse: collapse;
+	margin:0px;
+}
+
+.calendar-row-basic.bg{
+	position:absolute;
+	height:100%;
+}
+
+.calendar-row-basic.bg {
+	z-index:3;
+	/*border-bottom:solid 1px #E6E6E6; */
+}
+
+.calendar-row-basic.bg:last-child {
+	border-bottom:transparent; 
+}
+
+.calendar-row-basic table {
+	/*margin-top:1px;*/
+}
+
+.calendar-row-basic.bg table {
+	/*margin-top:1px;*/
+	height:100%;
+}
+
+
+.calendar-row-basic.bg table td:hover {
+	background-color: #F2F8FA;
+	cursor:pointer;
+	
+}
+
+.calendar-row-basic table > tbody > tr > td {
+	border-right:solid 1px #E6E6E6;
+}
+
+.calendar-row-basic table > tbody > tr > td:last-child {
+	border-right:0px;
+}
+
+.calendar-row-basic table td.minute {
+	border-right:dotted 1px #E6E6E6;
+}
+
+.calendar-row-basic.skeleton {
+	z-index:3;
+	/*border-bottom:solid 1px #E6E6E6; */
+}
+
+.calendar-row-basic.skeleton table td {
+	padding-top:1px;
+	border:0px;
+}
+
+.calendar td.highlight {
+	background: #bce8f1;
+	opacity: .3;
+	filter: alpha(opacity=30); /* for IE */
+}
+
+.calendar-row-basic.skeleton table > tbody > tr > td {
+	height:12px;
+	padding:2px 2px 0px 2px;
+}
+
+div.appointment {
+	/*min-width:60px;*/
+	height:100%;
+	min-height: 30px;
+	cursor:pointer;
+	letter-spacing:-1px;
+	font-size:11px;
+	line-height: 1.5em;
+	/*position:absolute;*/
+	z-index:4;
+	padding:2px 2px;
+	border:solid 1px #558B2F;
+	background-color:#8BC34A;
+	color:#FFFFFF;
+	border-radius: 2px;
+	overflow: hidden;
+	white-space:nowrap;
+	top:0px;
+	/*cursor:move;*/
+}
+
+.timezone {
+	position:relative;
+}

@@ -1,0 +1,31 @@
+@import url('bootstrap.min.css');
+button:focus {outline:none !important;}
+
+
+.modal-backdrop {
+	background:url(/views/assets/images/common/backdrop.png) repeat 0 0;
+	opacity: 0.4;
+	filter: alpha(opacity = 40);
+
+	bottom: 0;
+	display: none;
+	left: 0;
+	position: fixed;
+	right: 0;
+	top: 0;
+}
+
+.panel{
+	border-radius: 2px;
+	box-shadow:none;
+}
+
+.btn {
+	border-radius: 2px;
+}
+
+.pagination>li>a {
+	color:#616161;
+}
+
+.control-label {color:#828282;}

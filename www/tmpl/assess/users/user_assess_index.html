@@ -1,0 +1,190 @@
+<h3 class="area-title">
+	성과관리 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">Total <span id="cnt_search" class="f-bold  f-error">0</span>개 <!--span class="split">|</span> 총 Total <span id="cnt_total"class="f-bold">0</span>개</span--> 
+	<!-- div class="button-box">
+		<button class="btn btn-flat-blue" onclick="InoutList.openInput()"><i class="fa fa-pencil fa-1"></i> 입출고 등록</button>
+	</div-->
+</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+	<input type="hidden" name="pcode" value="user" />
+</form>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px">
+		<col width="80px">
+		<col width="70px">
+		<col >
+		<col width="80px">
+		<col width="105px">
+		<col width="100px">
+		<col width="100px">		
+		<col width="70px">		
+		<col width="60px">		
+		<col width="210px">		
+		<col width="210px">		
+		<col width="90px">	
+		<col width="80px">		
+		<col width="90px">			
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>등록일자</th>
+			<th>구분</th>
+			<th>ID</th>
+			<th>이름</th>
+			<th>사업장</th>
+			<th>부서명</th>
+			<th>팀명</th>
+			<th>직급</th>
+			<th>직책</th>
+			<th>성과평가</th>
+			<th>역량평가</th>
+			<th>다면평가</th>
+			<th>등급<br>(총점)</th>
+			<th>다면평가하기</th>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td>${date}</td>
+		<td>${syear}-${firsthalf}</td>
+		<td>${user_id}</td>				
+		<td>${name}</td>
+		<td>${biz_list_name}</td>
+		<td>${dept_name}</td>
+		<td>${team_name}</td>
+		<td>${position_name}</td>
+		<td>${duty_name}</td>
+		<td> 진행율 : ${progress_sum},평가 : ${result_princ_val}
+			{if is_result=='Y'} 
+				<button type="button" class="btn btn-flat-blue btn-xs" onclick="InoutList.openInputinfo1('${no}')"><i class="fa fa-check"></i> 보기</button>
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}
+		</td>
+		<td>진행율 : ${b_user_princ_sum},평가 : ${competency_princ_val}
+			{if is_cocy=='Y'} 
+				<button type="button" class="btn btn-flat-blue btn-xs" onclick="InoutList.openInputinfo2('${no}')"><i class="fa fa-check"></i> 보기</button>
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}
+		</td>
+		<td>
+			{if greetings_usercheck=='Y'} 
+				<button type="button" class="btn btn-flat-orange btn-xs" >평가중</button>
+			{elseif}
+				평가: ${c_greetings_princ}			
+			{/if}
+		</td>
+		<td>
+			{if is_rating=='Y'} 
+				${total_princ} (${ratingval})
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >평가중</button>				
+			{/if}
+		</td>
+		<td>
+			{if is_ifs=='Y'} 
+				<button type="button" class="btn btn-flat-blue btn-xs"  onclick="InoutList.openInputinfo3('${no}')"><i class="fa fa-check "></i> 보기</button>	
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}		
+		</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="InoutList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="InoutList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="InoutList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+	
+<script type="text/javascript" src="/js/jquery.MultiFile.pack.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var InoutList = {
+	page:1,
+	group_code:"<?=$cfg['group']?>",
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	openInputinfo1: function(inout_no) {
+		var title = (inout_no)?'성과평가':'성과평가';
+		var modal = new HmisModal('inout_input', {width:1024, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'one',pcode:'user'});
+	},
+	openInputinfo2: function(inout_no) {
+		var title = (inout_no)?'역량평가':'역량평가';
+		var modal = new HmisModal('inout_input', {width:1024, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'two',pcode:'user'});
+	},
+	openInputinfo3: function(inout_no) {
+		var title = (inout_no)?'다면평가':'다면평가';
+		var modal = new HmisModal('inout_input', {width:624, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'three',pcode:'user'});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize()+"&page="+p+"&limit=15"; 
+		
+		$.ajax({
+			url:'/assessment/assess_select_list',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+				}
+				else {
+					target.append('<tr><td colspan="13">내역이 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-role="tooltip"]').tooltip();
+			}
+		})
+	}
+}
+
+$(function() {
+	InoutList.init();
+})
+</script>

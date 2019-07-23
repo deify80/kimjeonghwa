@@ -1,0 +1,365 @@
+<h3 class="area-title">근태 검색</h3>
+<form id="FrmAttendanceSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>팀</th>
+			<td colspan="5">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="team_code" value="" checked> 전체
+					</label>
+					<? foreach($cfg['team'] as $i=>$val) { ?>
+					<label class="btn">
+						<input type="radio" name="team_code" value="<?=$i?>" > <?=$val?>
+					</label>
+					<? } ?>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>출근상태</th>
+			<td colspan="5">
+				<? foreach($cfg['status'] as $status_code => $status) {?>
+				<label class="hmis"><input type="checkbox" name="status[]" value="<?=$status_code?>" class="hmis"><span class="lbl"> <?=$status?></span></label>
+				<? } ?>
+				<!-- <div> -->
+					
+				<!-- </div> -->
+			</td>
+			
+		</tr>
+		<tr>
+			
+			<th>근태상태</th>
+			<td>
+				<label class="hmis"><input type="checkbox" name="is_late" value="Y" class="hmis"><span class="lbl"> 지각</span></label>
+				<label class="hmis"><input type="checkbox" name="is_earlyleave" value="Y" class="hmis"><span class="lbl"> 조퇴</span></label>
+				<label class="hmis"><input type="checkbox" name="is_night" value="Y" class="hmis"><span class="lbl"> 야간근무</span></label>
+			</td>
+			<th>검색날짜</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" id="sdate_e"> 
+				<ul class="btn-group btn-group-xs btn-group-striped">
+					<li onclick="HmisCommon.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<!-- <li onclick="HmisCommon.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이주</a></li> -->
+				</ul>
+			</td>
+			<!--
+			<th>검색조건</th>
+			<td>
+				<select name="dept_code" onchange="AttendanceLogs.loadTeam(this.value)">
+					<option value="">::부서선택::</option>
+					<? foreach($cfg['dept'] as $dept_code=>$dept) {?>
+					<option value="<?=$dept_code?>"><?=$dept?></option>
+					<? } ?>
+				</select>
+				<select name="team_code" id="sb_team" style="display:none">
+					<option value="">::팀선택::</option>
+				</select>
+			</td>
+			-->
+		
+			<th>직원명</th>
+			<td><input type="text" name="name"></td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="AttendanceLogs.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="AttendanceLogs.reset()">처음으로</button>
+</div>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	근태 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색결과 <span id="cnt_search" class="f-bold  f-error">0</span>건 <span class="split">|</span> 총 근태기록 <span id="cnt_total"class="f-bold">0</span>건</span>
+	<div class="button-box">
+		<select id="log_status">
+			<option value="">상태선택</option>
+			<? foreach($cfg['status'] as $status_code => $status) {?>
+			<option value="<?=$status_code?>"><?=$status?></option>
+			<? } ?>
+		</select>
+		<button class="btn btn-theme" onclick="AttendanceLogs.changeStatus()"><i class="fa fa-edit fa-1"></i> 상태변경</button>
+		<span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="AttendanceLogs.batchOpen()"><i class="fa fa-tasks  fa-1"></i> 일괄등록</button>
+		<span class="split">|</span>
+		<button class="btn btn-flat-blue" onclick="AttendanceLogs.passiveOpen()"><i class="fa fa-cog fa-1"></i> 미등록 근태처리</button>
+		<span class="split">|</span>
+		<button class="btn btn-flat-orange" onclick="AttendanceLogs.remove()"><i class="fa fa-trash fa-1"></i> 선택삭제</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="120px"><!-- 근무일 -->
+		<col width="120px"><!-- 부서 -->
+		<col width="120px"><!-- 팀 -->
+		<!-- <col width="80px"> --><!-- 직급 -->
+		<col><!-- 이름 -->
+		<col width="120px"><!-- 출근상태 -->
+		<col width="90px"><!-- 출근시각 -->
+		<col width="90px"><!-- 퇴근시각 -->
+		<col width="100px"><!-- 총근무시간 -->
+		<col width="100px"><!-- 오버타임 -->
+		<col width="70px"><!-- 지각 -->
+		<col width="70px"><!-- 조퇴 -->
+		<col width="70px"><!-- 야간근무 -->
+		<!-- <col width="60px"> --><!-- 비고 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>근무일</th>
+			<th>부서</th>
+			<th>팀</th>
+			<!-- <th>직급</th> -->
+			<th>직원명</th>
+			<th>출근상태</th>
+			<th>출근시각</th>
+			<th>퇴근시각</th>
+			<th>총근무시간</th>
+			<th>오버타임</th>
+			<th>지각</th>
+			<th>조퇴</th>
+			<th>야간근무</th>
+			<!-- <th>비고</th> -->
+		</th>
+	</thead>
+	<tbody id="log_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></td>
+		<td><span class="f-days-${w}">${date}(${w_text})</span></td>
+		<td>${dept_name}</td>
+		<td>${team_name}</td>
+		<!-- <td>과장</td> -->
+		<td><a href="javascript:;" onclick="AttendanceLogs.modifyOpen('${no}')" class="link">${name}</a> <!-- <i class="fa fa-tag {if !comment} f-transparent {/if}"></i> --></td>
+		<td><span class="label label-normal label-attendance-${status}">${status_text}</span></td>
+		<td><span class="{if is_late=='Y'} f-error {/if} {if time_out=='00:00'} f-null {/if}">${time_in}</span></td>
+		<td>{if is_overnight=='Y'} <i class="fa fa-moon-o f-warning" ></i> {/if} <span class="{if is_earlyleave=='Y'} f-error {/if} {if time_out == '00:00' } f-null {/if}"> ${time_out} </span> </td>
+		<td>{if hour_working > 0 } ${Math.ceil(hour_working/60)}시간 ${hour_working%60}분 {elseif} <span class="f-null">0</span> {/if}</td>
+		<td>
+			{if hour_working_night > 0 } ${Math.ceil(hour_working_night/60)}시간 ${hour_working_night%60}분 {elseif} <span class="f-null">0</span> {/if}
+		</td>
+		<td><i class="fa fa-check {if is_late!='Y'} f-null {/if}"></i></td>
+		<td><i class="fa fa-check {if is_earlyleave!='Y'} f-null {/if}"></i></td>
+		<td><i class="fa fa-check {if is_night!='Y'} f-null {/if}"></i></td>
+		<!-- <td><a href="javascript:;" onclick="AttendanceLogs.modifyOpen('${no}')" class="theme f-null"><i class="fa fa-tag"></i></a></td> -->
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="AttendanceLogs.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="AttendanceLogs.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="AttendanceLogs.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="AttendanceLogs.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="AttendanceLogs.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/jquery.MultiFile.pack.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var AttendanceLogs = {
+	page:1,
+	init: function() {
+		this.load(1);
+		this.createDatePicker();
+		var me = this;
+		$('input:radio[name="team_code"]').on('change',function() {
+			me.load(1);
+		});
+	},
+	createDatePicker: function() {
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmAttendanceSearch');
+		// $('#FrmAttendanceSearch').reset();
+		this.load(1);
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmAttendanceSearch').serialize();
+		
+		$.ajax({
+			url:'/attendance/logs_list',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#log_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="14">검색된 근태기록이 없습니다.</td></tr>');
+				}
+
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				me.page = page;
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				$('.fa-moon-o').tooltip({
+					title:'익일퇴근'
+				})
+
+			}
+		})
+	},
+	loadTeam : function(dept_code) {
+		var sb_team = $('#sb_team');
+
+		if(!dept_code) {
+			sb_team.val('').css('display','none');	
+			return false;
+		}
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				
+				if(r.success){
+					sb_team.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');					
+				}
+				else {
+					sb_team.val('').css('display','none');	
+				}
+			}
+		});
+	},
+	batchOpen: function() {
+		var modal = new HmisModal('batch', {width:600, top:200});
+		modal.open('근태 일괄등록','/attendance/logs_batch');
+	},
+	passiveOpen: function() {
+		var modal_add = new HmisModal('add', {width:700, top:200});
+		modal_add.open('근태 수동등록','/attendance/logs_passive');
+	},
+	modifyOpen: function(no) {
+		var modal = new HmisModal('modify', {width:700, top:200});
+		modal.open('근태 수정','/attendance/logs_input', {log_no:no});
+	},
+	changeStatus: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			alert('변경할 근태기록을 선택하세요.');
+			return false;
+		}
+
+		var status = $('#log_status').val();
+		if(!status) {
+			alert('변경할 출근상태를 선택하세요.');
+			return false;
+		}
+
+		if(!confirm('상태를 변경하시겠습니까?')) return false;
+
+		var logs_no = checked.map(function () {return this.value;}).get();
+		var me = this;
+		$.ajax({
+			url:'/attendance_proc/change_status',
+			data:{
+				logs_no:logs_no,
+				status_code:status
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success){
+					me.reload();
+				}
+				else {
+
+				}
+				console.log(r);
+			}
+		});
+	},
+	remove :function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			alert('삭제할 근태기록을 선택하세요.');
+			return false;
+		}
+
+		if(!confirm('삭제하시겠습니까?')) return false;
+
+		var logs_no = checked.map(function () {return this.value;}).get();
+		var me = this;
+		$.ajax({
+			url:'/attendance_proc/remove_logs',
+			data:{
+				logs_no:logs_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success){
+					me.reload();
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	AttendanceLogs.init();
+})
+</script>

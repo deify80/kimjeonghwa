@@ -1,0 +1,44 @@
+<script>
+	$(document).ready(function() {
+		var src = $("img#main-menu01").attr("src");
+		var replace_src = src.replace(".png", "_on.png");
+		$("img#main-menu01").attr("src", replace_src);
+	});
+</script>
+<ul id="menu">
+	<li><a href="#">상담센터</a>
+		<ul>
+			<li><a href="/consulting/main">팀DB<span></span></a></li>
+			<li><a href="/consulting/main/share">공동DB<span></span></a></li>
+			<li><a href="/consulting/work">업무이력<span></span></a></li>
+		</ul></li>
+	<? if (in_array($this->session->userdata( 'ss_dept_code' ), array('10', '20', '30'))): ?>
+	<li><a href="#">DB센터</a>
+		<ul>
+			<li><a href="/db/main">DB유입<span></span></a></li>
+			<li><a href="/assign/main">DB규칙<span></span></a></li>
+		</ul>
+	</li>
+	<? endif; ?>	
+	<? if ( in_array($this->session->userdata( 'ss_dept_code' ), array('10')) || in_array($this->session->userdata( 'ss_team_code' ), array('25','32','30')) ): ?>
+	<li><a href="#">DB통계 </a>
+		<ul>
+		<li><a href="/stats/status_main">DB현황<span></span></a></li>
+		<li><a href="/stats/sales_main">DB실적<span></span></a></li>
+		<li><a href="/stats/summary/age">연령대별 통계<span></span></a></li>
+		<li><a href="/stats/summary/category">시술별 상담현황<span></span></a></li>
+		<li><a href="/stats/summary/team">상태별 분배현황<span></span></a></li>
+		<li><a href="/stats/summary/item">상담항목별 분배현황<span></span></a></li>
+		</ul>
+	</li>
+	<? endif; ?>
+</ul>
+<div style="padding: 7px; vertical-align: bottom; position: fixed; bottom: 20px; clear: both; cursor: pointer">
+	<ul>
+		<li style="" ><a href="#" onClick="javascript:open_helper();"><img src="/images/layout/btn_01.jpg" alt="도움말"></a></li>
+		<li><a href="javascript:open_sms('');"><img src="/images/layout/btn_03.jpg"></a></li>
+		<li><a href="#" onClick="javascript:open_bbs('bbs_notice');"><img src="/images/layout/btn_02.jpg"></a></li>
+		<li><a href="http://intra.md21.kr" target="_blank"><img src="/images/layout/btn_05.jpg"></a></li>		
+		<li><img src="/images/layout/logo_bottom.png" style="padding-top: 20px;"></li>
+	</ul>
+</div>

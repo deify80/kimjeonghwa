@@ -1,0 +1,211 @@
+<form id="FrmInoutInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="statement_type" value="{rs.statement_type}" />
+<input type="hidden" name="seqno" value="{rs.seqno}" /><!-- 입출금Pk -->
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td colspan="3">
+				<!-- <div class="minheight">{rs.biz_name}</div> -->
+				<select name="biz_id"  data-role="search">
+					<option value="">::사업장선택::</option>
+					{@ cfg.biz}
+					<option value="{.key_}" {? rs.biz_id==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+
+			</td>
+		</tr>
+		
+		<tr>
+			<th>분류</th>
+			<td colspan="3">
+				<select name="classify_code" onchange="FinanceInoutInput.loadItem(this.value)" class="validate[required] required">
+					<option value="">::분류선택::</option>
+					{@ cfg.category}
+					<option value="{.code}" {? rs.classify_code == .code}selected{/}>{.title}</option>
+					{/}
+				</select>
+
+				<select name="item_code" id="sb_item" style="display:none" class="validate[required] required">
+					<option value="">::항목선택::</option>
+				</select>
+			</td>
+		</tr>
+
+		<tr>
+			<th>계좌/카드명</th>
+			<td>
+				<select name="account_seqno" onchange="FinanceInoutInput.setAccount()" class="validate[required] required">
+					<option value="">::계좌/카드선택::</option>
+					{@ cfg.account}
+					<option value="{.account_seqno}" {? rs.account_seqno==.account_seqno}selected{/} data-type="{.account_type_label}" data-currency='{.currency_label}' data-name="{.bank_name}" data-number="{.account_no}"  data-account_name="{.account_name}">{.account_name}</option>
+					{/}
+				</select>
+			</td>
+			<th>구분</th>
+			<td>
+				<input type="hidden" name="account[account_name]" value="{rs.account_name}" data-group="search_rs" /> 
+				<input type="text" name="account[type]" value="{rs.account_type}" class="transparent full" readonly placeholder="계좌를 선택하세요." data-group="search_rs" /> 
+			</td>
+		</tr>
+		<tr>
+			<th>은행명/카드사</th>
+			<td>
+				<input type="text" name="account[name]" value="{rs.bank}" class="transparent full" readonly placeholder="계좌를 선택하세요." data-group="search_rs" /> 
+			</td>
+			<th>계좌번호/카드번호</th>
+			<td>
+				<input type="text" name="account[number]" value="{rs.account}" class="transparent full" readonly placeholder="계좌를 선택하세요." data-group="search_rs" /> 
+			</td>
+		</tr>
+		<tr>
+			<th>거래처</th>
+			<td><input type="text" name="trade_customer" value="{rs.trade_customer}" class="full" /></td>
+		
+			<th>처리방식</th>
+			<td>
+				<select name="process_category" class="validate[required] required">
+					<option value="" {? !rs.process_category}selected{/}>::처리방식선택::</option>
+					<option value="0" {? rs.process_category=='0'}selected{/}>자금출금</option>
+					<option value="1" {? rs.process_category=='1'}selected{/}>자금이체</option>
+					<option value="2" {? rs.process_category=='2'}selected{/}>자동이체</option>
+					<option value="3" {? rs.process_category=='3'}selected{/}>잔액이체</option>
+					<option value="4" {? rs.process_category=='4'}selected{/}>입금</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>{? rs.statement_type=='I'}입금{:}출금{/}일</th>
+			<td>
+				<input type="text" name="plan_date" value="{rs.plan_date}" class="validate[required] datepicker lg" />
+			</td>
+			<th>{? rs.statement_type=='I'}입금{:}출금{/}액</th>
+			<td>
+				<input type="text" name="amount" value="{=number_format(rs.amount)}" class="validate[required, custom[numberFormat]] number required"/>
+			</td>
+		</tr>
+		<tr>
+			<th>거래상세내역</th>
+			<td colspan="3">
+				<textarea name="info" class="hmis full" style="height:50px">{rs.info}</textarea>
+			</td>
+		</tr>
+	</tbody>
+
+</table>
+
+<div class="area-button">
+	{? mode == 'insert'}
+	<button type="submit" class="btn btn-theme btn-lg" onclick="FinanceInoutInput.setSaveMode('continue')">저장</button>
+	<button type="submit" class="btn btn-flat-purple btn-lg" onclick="FinanceInoutInput.setSaveMode('close')">저장 후 닫기</button>
+	{:}
+	<button type="submit" class="btn btn-flat-purple btn-lg" onclick="FinanceInoutInput.setSaveMode('close')">저장</button>
+	{? auth.invoice_delete}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="FinanceInoutInput.remove()">삭제</button>
+	{/}
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var FinanceInoutInput = {
+	saveMode:'continue',
+	init: function() {
+		this.setAccount();
+
+		HmisCommon.createDatepicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmInoutInput").validationEngine('attach',option);
+
+		HmisCommon.createNumber();
+
+		$('#FrmInoutInput select[name="classify_code"]').trigger('change');
+
+	},
+	loadItem: function(parent_code) {
+		var sb_item = $('#sb_item');
+		$.ajax({
+			url:'/finance/category_list',
+			data:{
+				kind:'item',
+				group_code:'{group_code}',
+				parent_code:parent_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+
+					sb_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (e.code == '{rs.item_code}')?'selected':'';
+						sb_item.append('<option value="'+e.code+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb_item.css('display','');					
+				}
+				else {
+					sb_item.val('').css('display','none');	
+				}
+			}
+		});
+	},
+	setAccount: function() {
+		var data = $('#FrmInoutInput select[name="account_seqno"]').find('option:selected').data();
+		
+		$.each(data, function(i,e){
+			$('#FrmInoutInput input[name="account['+i+']"]').val(e);
+			console.log('account['+i+']');
+		})
+		
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+	save: function() {
+		var me = this;
+		var formdata = $('#FrmInoutInput').serialize();
+		$.ajax({
+			url:'/finance_proc/inout_save',
+			data:formdata, 
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					if(me.saveMode=='continue') {
+						$('#FrmInoutInput')[0].reset();
+					}
+					else {
+						$('.modal-close').trigger('click');	
+					}
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	FinanceInoutInput.init();
+})
+</script>

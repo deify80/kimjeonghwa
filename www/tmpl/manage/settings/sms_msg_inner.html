@@ -1,0 +1,36 @@
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>SMS 이름</th>
+			<td style="line-height:20px;font-family:NGB">{row.sms_name}</td>
+		</tr>
+		<tr>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="is_use" value="Y" class="hmis" {? row.is_use=='Y'}checked{/}><span class="lbl"> 사용함</span></label>
+				<label class="hmis"><input type="radio" name="is_use" value="N" class="hmis" {? row.is_use=='N'}checked{/}><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>메세지</th>
+			<td>
+				<div style="margin-bottom:5px">
+					<button type="button" onclick="SMSMsg.insertAt('[이름]')" class="btn">이름</button>
+					<button type="button" onclick="SMSMsg.insertAt('[예약일]')" class="btn">예약일</button>
+					<button type="button" onclick="SMSMsg.insertAt('[예약시각]')" class="btn">예약시각</button>
+				</div>
+				<textarea name="msg" id="sms_msg" class="hmis validate[required]" data-errormessage-value-missing="발송할 메세지를 입력하세요." style="height:300px">{row.msg}</textarea>
+			</td>
+		</tr>
+		<tr>
+			<th>약도이미지전송</th>
+			<td>
+				<label class="hmis"><input type="checkbox" name="img_use" value="Y" class="hmis" {? row.img_use=='Y'}checked{/}><span class="lbl"> 포함</span></label>
+			</td>
+		</tr>
+	</tbody>
+</table>

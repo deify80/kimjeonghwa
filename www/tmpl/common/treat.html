@@ -1,0 +1,181 @@
+<style>
+ul.treat {
+	border:solid 1px #DDD;height:300px;overflow-y:auto;overflow-x: hidden
+}
+
+ul.treat li {
+	padding:5px;
+	cursor:pointer;
+}
+
+ul.treat li:hover {
+	background-color:#F3F3F3;
+}
+
+ul.treat li.selected {
+	background-color:#FF8000;
+	color:#FFF;
+}
+
+.table-treat thead th {background-color:#fff}
+</style>
+<table class="table table-form table-treat">
+	<colgroup>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>대분류</th>
+			<th>중분류</th>
+			<th>소분류</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<ul class="treat" id="treat_1">
+					{@ cfg.d1}
+					<li data-depth="1" data-no="{.no}" class="{? .no == selected.d1}selected{/}" >{.name}</li>
+					{/}
+				</ul>
+			</td>
+			<td>
+				<ul class="treat" id="treat_2" data-parent="1">
+					{@ cfg.d2}
+					<li data-depth="2" data-no="{.no}" class="{? .no == selected.d2}selected{/}" >{.name}</li>
+					{:}
+					<li>대분류를 선택하세요.</li>
+					{/}
+				</ul>
+			</td>
+			<td>
+				<ul class="treat" id="treat_3"  data-parent="1 2" data-msg="중분류를 선택하세요.">
+					{@ cfg.d3}
+					<li data-depth="3" data-no="{.no}" class="{? .no == selected.d3}selected{/}" >{.name}</li>
+					{:}
+					<li>중분류를 선택하세요.</li>
+					{/}
+				</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="CommonTreat.choice()">적용</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<script type="text/javascript">
+var CommonTreat = {
+	mode:'{mode}',
+	init: function() {
+		$('ul.treat > li[data-no]').on('click', function(e) {
+			CommonTreat.selecting(this)
+		})
+	},
+	callback:'{callback}',
+	selecting: function(el) {
+		var li = $(el);
+		var ul = li.closest('ul');
+		ul.find('li').removeClass('selected');
+		li.addClass('selected');
+		var data = li.data();
+
+		if(data.depth<3) this.load(data.depth, data.no);
+	},
+	load: function(parent_depth, parent_no) {
+		$('ul[data-parent~="'+parent_depth+'"]').find('li').remove();
+
+		var depth = parent_depth+1;
+		if(depth > 3) return false;
+		var target = $('#treat_'+(depth));
+		$.ajax({
+			url:'/treat_proc/json_cost',
+			data:{
+				parent_no:parent_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				target.find('li').remove();
+				$.each(r.data, function(i,e) {
+					var li = $('<li>'+e.name+'</li>');
+					var cost = {
+						origin:e.cost_origin,
+						abroad_1:e.cost_abroad_1,
+						abroad_2:e.cost_abroad_2,
+						re:e.cost_re
+					}
+					li.data('depth',depth);
+					li.data('no',e.no);
+					li.data('cost', cost);
+					li.on('click', function() {
+						CommonTreat.selecting(this);
+					})
+
+					target.append(li)
+				})
+			}
+		})
+	},
+	choice: function() {
+
+		var nav = [];
+		var d1 = $('#treat_1 > li.selected');
+		if(!d1.data('no')) {
+			HmisAlert.alert('대분류를 선택세요.');
+			return false;
+		}
+
+		if(this.mode !=='search') {
+			var d2 = $('#treat_2 > li.selected');
+			if(!d2.data('no')) {
+				HmisAlert.alert('중분류를 선택세요.');
+				return false;
+			}
+
+			var d3 = $('#treat_3 > li.selected');
+			if(!d3.data('no')) {
+				HmisAlert.alert('소분류를 선택세요.');
+				return false;
+			}
+
+			var data = {
+				no:d3.data('no'),
+				nav:[d1.text(), d2.text(), d3.text()],
+				cost:d3.data('cost')
+			}
+
+		}
+		else {
+			nav = [d1.text()];
+			var no = d1.data('no');
+			var d2 = $('#treat_2 > li.selected');
+			if(d2.data('no')) {
+				nav.push(d2.text());
+				no = d2.data('no');
+			}
+
+			var d3 = $('#treat_3 > li.selected');
+			if(d3.data('no')) {
+				nav.push(d3.text());
+				no = d3.data('no');
+			}
+
+			var data = {
+				no:no,
+				nav:nav
+			}
+		}
+
+		eval('{callback}(data)');
+		$('#HmisModal_modal_treatment .modal-close').trigger('click');
+	}
+}
+
+$(function(){
+	CommonTreat.init();
+})
+</script>

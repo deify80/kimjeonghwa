@@ -1,0 +1,175 @@
+<style>
+.person {cursor:pointer;}
+.order-yes {color:#E84E40;}
+</style>
+<form id="FrmRuleInput" onsubmit="return false">
+<input type="hidden" name="order_code" value="" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td>
+				<input type="hidden" name="biz_id" value="{cfg.biz.id}" />
+				{cfg.biz.name}
+			</td>
+			<th>유입경로</th>
+			<td>
+				<select name="path" class="validate[required] required" data-errormessage-value-missing="유입경로를 입력해주세요." >
+					<option value="">::유입경로 선택::</option>
+					{@ cfg.path}
+					<option value="{.key_}" {? .key_ == old.path}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>내용</th>
+			<td colspan="3">
+				<textarea name="memo" class="hmis full" style="height:50px">{old.memo}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div class="dashed" style="margin-top:10px"></div>
+<table class="table table-bordered table-form" style="margin-top:10px">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th colspan="2">분배순서</th>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;text-align: center">
+				{@ cfg.team}
+				<div style="margin-bottom:5px"><button type="button" class="btn btn-flat-lightgray" onclick="RuleInput.appendTeam({code:'{.key_}', name:'{.value_}'})" style="width:100px;position:relative;text-align:left">{.value_} <span id="cnt_{.key_}" style="width:20px">&nbsp;</span> <i class="fa fa-1 fa-caret-right" style="position:absolute;right:5px;"></i></button></div>
+				{/}
+
+			</td>
+			<td style="vertical-align: top;padding:0px">
+				<div style="overflow-y:scroll;overflow-x:hidden;padding:5px;height:300px" id="team_list">
+					{@ old.sort}
+					<div class="label-default person order-{.order}" style="padding:3px;margin:0px 0px 5px 0px;text-align:left" id="{.code}" data-code="{.code}"><i class="fa fa-sort fa-1 f-green"></i> {.name}<i class="fa fa-times link f-error" style="position:absolute;right:5px;" onclick="RuleInput.removeTeam(this)"></i></div>
+					{/}
+
+				</div>
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var RuleInput = {
+	frm: $("#FrmRuleInput"),
+	init: function() {
+		this.createSort();
+
+		var me = this;
+		var option = $.extend({
+			display:'alert',
+			showOneMessage:true,
+			validationEventTrigger:'submit'
+		},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		this.frm.validationEngine('attach',option);
+
+		$('div.person').on('click', function() {
+			$(this).siblings().removeClass('order-yes');
+			$(this).addClass('order-yes');
+		});
+	},
+	createSort: function() {
+		$('#team_list').sortable({
+			axis:'y',
+			containment:'parent',
+			placeholder:false
+		});
+	},
+	appendTeam: function(data) {
+		var tpl = $('<div class="label-default person" style="padding:3px;margin:0px 0px 5px 0px;text-align:left" id="'+data.code+'" data-code="'+data.code+'"><i class="fa fa-sort fa-1 f-green"></i> '+data.name+'<i class="fa fa-times link f-error" style="position:absolute;right:5px;"></i></div>');
+
+		tpl.data(data);
+		tpl.find('.fa-times').on('click', function(r){
+			RuleInput.removeTeam(this);
+		});
+
+		$('#team_list').append(tpl);
+		this.countTeam(data.code);
+	},
+	removeTeam: function(el) {
+		var e = $(el);
+		if(e.parent('div.label-default').hasClass('order-yes')) {
+			HmisAlert.alert('현재 분배순서는 삭제할 수 없습니다.');
+			return false;
+		}
+		e.parent('div.label-default').remove();
+		var data = e.parent('div.label-default').data();
+		this.countTeam(data.code);
+	},
+	countTeam: function(team_code) {
+		var length = $('#team_list').find('div#'+team_code).length;
+		var html;
+		if(length>0) html = '<span class="badge red">'+length+'</span>';
+		else html='';
+
+		$('span#cnt_'+team_code).html(html);
+
+	},
+	save: function() {
+		var order = $('#team_list').sortable('toArray');
+		if(order.length<1) {
+			HmisAlert.alert("분배순서를 설정하세요.");
+			return false;
+		}
+		var order_code = $('.order-yes').data('code');
+		if(typeof(order_code) == 'undefined') var order_code = order[0];
+
+
+		$('input[name="order_code"]').val(order_code);
+
+
+		HmisAlert.confirm("규칙을 등록하시겠습니까?", function(r){
+			if(r){
+				var formdata = $("#FrmRuleInput").serializeArray();
+				formdata.push({name:'order',value:order})
+				// return false;
+				$.ajax({
+					url:'/assign_proc/info_save',
+					data:formdata,
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						HmisAlert.alert(r.msg);
+						if(r.success) {
+							$('.modal-close').trigger('click');
+						}
+					}
+				})
+			}
+		})
+	}
+}
+
+$(function(){
+	RuleInput.init();
+})
+</script>
+

@@ -1,0 +1,190 @@
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('pay', '수납내역 등록')" ><i class="fa fa-plus fa-1"></i> 수납내역등록</button>
+<div class="btn-group hmis blue" data-toggle="buttons" style="vertical-align: -6px">
+	{@ cfg.search}
+	<label class="btn  {? search.pay_type == .key_}active{/}"><input type="radio" name="search_pay_type" value="{.key_}" onchange="PatientInfo.searchTab({pay_type:'{.key_}'})"  {? .index_<1}checked{/}>{.value_}</label>
+	{/}
+</div>
+
+<table class="table table-bordered table-center table-form">
+	<colgroup>
+
+	</colgroup>
+	<thead>
+		<tr>
+			<th colspan="3" >매출금액</th>
+			<th rowspan="2">정상수가</th>
+			<th rowspan="2">할인금액</th>
+			<th colspan="4">수납금액</th>
+			<th rowspan="2">미수금</th>
+			<!-- <th rowspan="2">환불금액</th> -->
+			<th rowspan="2">재료비</th>
+		</tr>
+		<tr>
+			<th>기본매출</th>
+			<th>추가매출</th>
+			<th>총매출</th>
+			<th>현금</th>
+			<th>카드</th>
+			<th>계좌이체</th>
+			<th>총수납액</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>{=number_format(project.amount_basic)}</td>
+			<td>{=number_format(project.amount_addition)}</td>
+			<td class="f-purple">{=number_format(project.amount_basic+project.amount_addition)}</td>
+			<td>{=number_format(project.cost)}</td>
+			<td>{? project.cost > 0}{=number_format(project.cost-project.amount_basic)}{:}-{/}</td>
+			<td>{=number_format(project.paid_cash)}</td>
+			<td>{=number_format(project.paid_card)}</td>
+			<td>{=number_format(project.paid_bank)}</td>
+			<td class="f-blue">{=number_format(project.paid_total)}</td>
+			<td>{=number_format(project.amount_unpaid)}</td>
+
+			<!--{* <td class="f-error">{=number_format(project.amount_refund)}</td> *}-->
+			<td>{=number_format(project.amount_material)}</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="dashed" style="margin:10px 0px"></div>
+
+<table class="table table-bordered table-list table-form table-striped-even">
+	<colgroup>
+		<col style="width:60px" /><!-- 선택 -->
+		<col width="60px">
+		<col style="width:100px" /><!-- 수납일자 -->
+		<col style="width:100px" /><!-- 담당의사 -->
+		<col style="width:100px" /><!-- 담당실장 -->
+		<col style="width:100px" /><!-- 수납구분 -->
+		<col style="width:100px" /><!-- 매출구분 -->
+		<col style="width:300px" /><!-- 결재금액 -->
+		<col style="width:100px" /><!-- 수납합계 -->
+		<col />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>선택</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_pay[]')"><span class="lbl"></span></th>
+			<th>수납일자</th>
+			<th>담당의사</th>
+			<th>담당실장</th>
+			<th>수납구분</th>
+			<th>매출구분</th>
+			<th>결제금액</th>
+			<th>합계</th>
+			<th>메모</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td><input type="checkbox" class="hmis" name="checked_pay[]" value="{.no}"><span class="lbl"></span></td>
+			<td><a href="javscript:;" onclick="WidgetPay.modify('{.no}')" class="link">{.date_paid}</a></td>
+			<td>{.doctor_name}</td>
+			<td>{.manager_name}</td>
+			<td>{? .pay_type=='paid'}입금{? .calc_type=='addition'}(추가){/}{:}환불{/}</td>
+			<td>{? .pay_type=='paid'} {.sales_type} {:} - {/}</td>
+			<td class="left">
+				{? .amount_paid_cash>0 }
+				<span style="margin-right:15px"><span class="label label-xs label-theme" data-toggle="tooltip" title="현금결제 수납액">현</span> {=number_format(.amount_paid_cash)}</span>
+				{/}
+				{? .amount_paid_card>0 }
+				<span style="margin-right:15px"><span class="label label-xs label-normal" data-toggle="tooltip" title="카드결제 수납액">카</span> {=number_format(.amount_paid_card)}</span>
+				{/}
+				{? .amount_paid_bank>0 }
+					<span class="label label-xs label-yellow"data-toggle="tooltip" title="계좌이체 수납액">이</span> {=number_format(.amount_paid_bank)}
+				{/}
+
+
+				{? .amount_refund_cash>0 }
+				<span style="margin-right:15px"><span class="label label-xs label-theme" data-toggle="tooltip" title="현금결제 수납액">현</span> {=number_format(.amount_refund_cash)}</span>
+				{/}
+				{? .amount_refund_card>0 }
+				<span style="margin-right:15px"><span class="label label-xs label-normal" data-toggle="tooltip" title="카드결제 수납액">카</span> {=number_format(.amount_refund_card)}</span>
+				{/}
+				{? .amount_refund_bank>0 }
+					<span class="label label-xs label-yellow"data-toggle="tooltip" title="계좌이체 수납액">이</span> {=number_format(.amount_refund_bank)}
+				{/}
+			</td>
+			<td>
+				{? .pay_type=='paid'}
+				<span class="f-blue">+ {=number_format(.amount_paid)}</span>
+				{:}
+				<span class="f-error">- {=number_format(.amount_refund)}</span>
+				{/}
+			</td>
+			<td class="left"><div class="ellipsis">{.comment}</div></td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="10" class="center">등록된 수납내역이 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div style="margin-top:7px;position:relative;height:25px">
+	{? auth.delete}
+	<button type="button" onclick="WidgetPay.remove()" class="btn btn-flat-orange">삭제</button>
+	{/}
+	<div style="position:absolute;right:0px;bottom:0px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.first}')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.prev}')"><i class="fa fa-angle-left"></i></a></li>
+				{@ paging.block}
+				<li class="{? .equal}active{/}"><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{.num}')">{.num}</a></li>
+				{/}
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.next}')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.last}')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+	<div style="clear:both"></div>
+</div>
+
+<script type="text/javascript">
+var WidgetPay = {
+	modify: function(no) {
+		PatientInfo.modalWidget('pay', '수납내역 수정', {no:no});
+	},
+	remove: function(){
+		var checked = HmisCommon.getChecked('checked_pay[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 수납내역을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var pay_no = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/patient_proc/remove_pay',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						project_no:PatientInfo.project_no,
+						pay_no:pay_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							PatientInfo.loadTab('{tab}');
+							PatientInfo.countTab();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})
+			}
+
+		});
+	}
+};
+</script>

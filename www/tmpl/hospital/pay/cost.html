@@ -1,0 +1,253 @@
+<h3 class="area-title">수술별 원가 검색</h3>
+<form id="FrmPayCostSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="{cfg.group}" />
+<input type="hidden" name="page" value="{page}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>수술일</th>
+			<td colspan="5">
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value="{search.date_s}"> ~ <input type="text" class="datepicker" name="date_e" value="{search.date_e}" id="sdate_e"> 
+				<ul class="btn-group btn-group-xs">
+					<li onclick="PayCost.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="PayCost.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="PayCost.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="PayCost.setDate('{cfg.date.yesterday}','{=cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="PayCost.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="PayCost.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<th>담당의사</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="doctor_id" value="" {? !search.sex}checked{/} data-role="search" />전체</label>
+					{@ cfg.doctor}
+					<label class="btn"><input type="radio" name="doctor_id" value="{.key_}" {? search.doctor=='M'}checked{/} data-role="search" />{.value_}</label>
+					{/}
+				</div>
+			</td>
+		
+			<th>진료구분</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="type" value="" {? !search.sex}checked{/} data-role="search" />전체</label>
+					<label class="btn"><input type="radio" name="type" value="수술" {? search.sex=='M'}checked{/} data-role="search" />수술</label>
+					<label class="btn"><input type="radio" name="type" value="시술" {? search.sex=='F'}checked{/} data-role="search" />시술</label>
+					<label class="btn"><input type="radio" name="type" value="진료" {? search.sex=='F'}checked{/} data-role="search" />진료</label>
+				</div>
+			</td>
+			<th>수납구분</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="tax_type" value="" {? !search.sex}checked{/} data-role="search" />전체</label>
+					<label class="btn"><input type="radio" name="tax_type" value="tax" {? search.sex=='M'}checked{/} data-role="search" />과세</label>
+					<label class="btn"><input type="radio" name="tax_type" value="free" {? search.sex=='F'}checked{/} data-role="search" />비과세</label>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="PatientList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="PatientList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<div class="row" style="margin-top:10px">
+	<div class="main-box infographic-box colored" style="background-color: #29B6F6">
+		<div class="headline"> <i class="fa fa-krw"></i> 총매출액</div>
+		<span class="value" id="amount_total">0</span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #C3C3C3;" >
+		<div class="headline"> <i class="fa fa-cubes"></i>  재료비</div>
+		<span class="value" id="amount_material">0</span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #80CBC4;">
+		<div class="headline"> <i class="fa fa-user"></i> 인건비(원장)</div>
+		<span class="value" id="amount_doctor">0</span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color:#80CBC4">
+		<div class="headline"> <i class="fa fa-users"></i> 인건비(간호사)</div>
+		<span class="value" id="amount_nurse">0</span>
+	</div>
+	
+	<div class="main-box infographic-box colored" style="background-color:#FFA000">
+		<div class="headline"> <i class="fa fa-line-chart"></i> 손익</div>
+		<span class="value" id="amount_income">0</span>
+	</div>
+</div>
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="120px"><!-- 수술날짜 -->
+		<col width="80px"><!-- 진료구분 -->
+		<col width="80px"><!-- 과세구분 -->
+		<col width="200px"><!-- 환자명 -->
+		<col><!-- 진료항목 -->
+		<col width="100px"><!-- 총매출 -->
+		<col width="100px"><!-- 재료비 -->
+		<col width="120px"><!-- 담당의사 -->
+		<col width="100px"><!-- 간호사 -->
+		<col width="100px"><!-- 수익 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>수술날짜</th>
+			<th>진료구분</th>
+			<th>과세구분</th>
+			<th>환자명</th>
+			<th>진료부위/항목</th>
+			<th>총매출</th>
+			<th>재료비</th>
+			<th>담당의사</th>
+			<th>간호사</th>
+			<th>손익</th>
+		</tr>
+	</thead>
+	<tbody id="project_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span> 
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">인건비</b>직원관리의 연봉정보를 입력해야 계산됩니다. (수술별 인건비 = 연봉/12/25)</li>
+		<li><b class="" style="margin-right:10px">원장/간호사</b> 직원관리의 직군이 의사 또는 간호사로 설정되어야 합니다.</li>
+		<li><b class="" style="margin-right:10px">손익금 계산</b> 총매출 - (재료비 + 담당의사 인건비 + 간호사 인건비)</li>
+	</ul>
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>${\date_project}</td>
+		<td><span class="label label-xs {if type=='수술'} label-error {elseif type=='진료'} label-purple {\else} label-orange {/if}">${\type}</span></td>
+		<td>{if tax_type=='tax'}과세{\else}비과세{/if}</td>
+		<td><a href="javascript:;" onclick="PayCost.go('${\patient_no}','${\no}')" class="link">${\name}</a> {if sex == 'F'} <i class="fa fa-1 fa-female f-pink"></i> {\else} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td class="left">{if type=='진료'}-{\else}${\treat_region_name} &gt; ${\treat_item_name}{/if}</td>
+		<td><span title="기본매출액:${HmisCommon.numberFormat(amount_basic)}원<br />추가매출액:${HmisCommon.numberFormat(amount_addition)}원" data-toggle="tooltip">${HmisCommon.numberFormat(amount_total)}</span></td>
+		<td>${HmisCommon.numberFormat(amount_material)}</td>
+		<td>${\doctor_name}</td><!-- 담당의사 -->
+		<td>${\nurse_cnt}명</td><!-- 간호사 -->
+		<td><span class="{if income>0}f-blue{\else}f-error{/if}">${HmisCommon.numberFormat(income)}</span></td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="PayCost.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="PayCost.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="PayCost.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="PayCost.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="PayCost.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var PayCost = {
+	page:1,
+	init: function() {
+		HmisCommon.createDatepicker();
+		this.load(1);
+
+		$('[data-role="search"]').on('change', function() {
+			PayCost.load(1);
+		});
+	},
+	go: function(patient_no, project_no){
+		var href = "/patient/info/"+patient_no;
+		window.open(href);
+	},
+
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load(1);
+	},
+	load: function(page) {
+	
+		var p = page || 1;
+		
+
+		var me = this;
+		var search = $('#FrmPayCostSearch').serialize();
+		
+		HmisLoading.show('#project_list');
+		$.ajax({
+			url:'/pay/cost_lists_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#project_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+					console.log(r.data.sum);
+					$.each(r.data.sum, function(i,e){
+						$('#'+i).html(HmisCommon.numberFormat(e));
+					})
+
+				}
+				else {
+					target.append('<tr><td colspan="13">검색된 원가정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	}
+};
+
+$(function(){
+	PayCost.init();
+})
+</script>

@@ -1,0 +1,98 @@
+<style>
+.tool-box button {
+	border: 1px solid #cdc3b7;
+	background: #ede4d4
+		url(/lib/js/themes/humanity/images/ui-bg_glass_70_ede4d4_1x400.png)
+		50% 50% repeat-x;
+	font-weight: normal;
+	color: #3f3731
+}
+
+.ui-button .ui-button-text {
+	display: block;
+	line-height: normal;
+	font-weight: bold;
+}
+
+td {
+    mso-number-format: "\@";
+}
+</style>
+<script>
+	function output_excel() {
+		document.location = "/finance/report_result/weekly?srch_year=<?=$_GET['srch_year']?>&srch_month=<?=$_GET['srch_month']?>&&srch_day=<?=$_GET['srch_day']?>&output_mode=EXCEL";
+	}
+</script>
+<div style="width: 98%; margin: auto;">
+	<? if($_GET['output_mode'] != "EXCEL"): ?>
+	<h3 class="area-title">주간일보</h3>
+	<? endif; ?>
+	<div style="font-weight: bold;"><?=set_date_format( 'Y-m-d', $date['start'] )?> ~ <?=set_date_format( 'Y-m-d', $date['end'] )?> / - 입금 : <?=number_format($total_list['K']['in'])?> 출금 : <?=number_format($total_list['K']['out'])?>	
+	&nbsp;&nbsp;&nbsp;&nbsp; / USD 입금 : <?=number_format($total_list['U']['in'])?> 출금 : <?=number_format($total_list['U']['out'])?>
+	&nbsp;&nbsp;&nbsp;&nbsp; / CNY 입금 : <?=number_format($total_list['C']['in'])?> 출금 : <?=number_format($total_list['C']['out'])?>
+	</div>
+	
+	<?
+	
+	 foreach($this->config->item('currency_type') as $k=>$val):
+		
+ 		 $totalindex = $total_list[$k]['in'] - $total_list[$k]['out'] ;
+
+		 if ( $totalindex != 0 ) :
+	 ?>	
+ 	<h3><?=$val?><h3>				
+	<table class="summary-list-table" <?if($_GET['output_mode']=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:700px;"<?endif;?>>
+		<colgroup>
+			<col width="10%">
+			<col width="">
+			<col width="20%">
+			<col width="12%">			
+			<col width="12%">
+			<col width="12%">
+		</colgroup>
+		<thead>
+			<tr <?if($_GET['output_mode']=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th>일자</th>
+				<th>거래내역</th>
+				<th>거래처</th>
+				<th>통화</th>				
+				<th>입금</th>
+				<th>출금</th>
+			</tr>
+		</thead>
+		<tbody>
+			<? foreach($list as $i): 
+				if ( $i->currency == $k  ) :			
+			?>
+			<tr style="font-weight:normal;">
+				<td><?=str_replace( '-' , '/' , substr($i->reg_date, -5) )?></td>
+				<td><?=$i->info?></td>
+				<td><?=$i->trade_customer?></td>
+				<td><?=$i->currencyname?></td>				
+				<td class="rt-align"><?=number_format($i->in_amount)?></td>
+				<td class="rt-align"><?=number_format($i->out_amount)?></td>
+			</tr>
+			<?
+			 endif;
+			 endforeach; ?>
+			<tr>
+				<td colspan="4" class="total">합계</td>
+				<td class="rt-align total"><?=number_format($total_list[$k]['in'])?></td>
+				<td class="rt-align total"><?=number_format($total_list[$k]['out'])?></td>
+			</tr>
+			<tr>
+				<td colspan="4" class="total">차액</td>
+				<td class="rt-align total" colspan="2"><?=number_format($total_list[$k]['in'] - $total_list[$k]['out'])?></td>
+			</tr>
+		</tbody>
+	</table>
+    <? 
+    endif;
+    endforeach;?>			
+	
+	<? if($_GET['output_mode'] != "EXCEL"): ?>
+	<div class="tool-box">
+		<button type="button" class="btn" onClick="output_excel();">EXCEL</button>
+	</div>
+	<? endif; ?>
+</div>

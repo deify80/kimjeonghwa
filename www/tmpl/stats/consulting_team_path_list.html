@@ -1,0 +1,60 @@
+<table class="table table-bordered table-center table-form table-hover" {? output_mode=="EXCEL"}border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" {/}>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			<th rowspan="2">상담팀</th>
+			<th colspan="6">상담관리</th>
+			<th colspan="4">CRM</th>
+		</tr>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+
+			<th>분배DB</th>
+			<th>내원예약</th>
+			<th>내원상담</th>
+			<th>수술예정</th>
+			<th>수술완료</th>
+			<th>수술취소</th>
+			<th>OP매출액</th>
+			<th>OP총액</th>
+			<th>예치금</th>
+			<th>환불금액</th>
+		</tr>
+	</thead>
+	<tbody id="path_list">
+		{@ path.team_list.team}
+		<tr>
+			<th>{.name}</th>
+			<td>{=number_format(.cur_db)}</td>
+			<td>{=number_format(.cst_status_51)} <font style="color:#6666ff">({=number_format(.cst_status_51_rate, 1)}%)</font></td>
+
+			<td>{=number_format(.cst_status_52)} <font style="color:#6666ff">({=number_format(.cst_status_52_rate, 1)}%)</font></td>
+
+
+			<td>{=number_format(.cst_status_98)} <font style="color:#6666ff">({=number_format(.cst_status_98_rate, 1)}%)</font></td>
+
+			<td>{=number_format(.cst_status_99)} <font style="color:#6666ff">({=number_format(.cst_status_99_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_90)} <font style="color:#6666ff">({=number_format(.cst_status_90_rate, 1)}%)</font></td>
+			<td>{=number_format(.amount_basic)}</td>
+			<td>{=number_format(.amount_paid)}</td>
+			<td>{=number_format(.amount_deposit)}</td>
+			<td>{=number_format(.amount_refund)}</td>
+		</tr>
+		{/}
+		<tr>
+			<th>합계</th>
+			<th>{=number_format(path.team_list.team_total.cur_db)}</th>
+			<th>{=number_format(path.team_list.team_total.cst_status_51)} <font style="color:#6666ff">({=number_format(path.team_list.team_total.cst_status_51_rate,1)}%)</font></th>
+			<th>{=number_format(path.team_list.team_total.cst_status_52)} <font style="color:#6666ff">({=number_format(path.team_list.team_total.cst_status_52_rate,1)}%)</font></th>
+			<th>{=number_format(path.team_list.team_total.cst_status_98)} <font style="color:#6666ff">({=number_format(path.team_list.team_total.cst_status_98_rate,1)}%)</font></th>
+			<th>{=number_format(path.team_list.team_total.cst_status_99)} <font style="color:#6666ff">({=number_format(path.team_list.team_total.cst_status_99_rate,1)}%)</font></th>
+			<th>{=number_format(path.team_list.team_total.cst_status_90)} <font style="color:#6666ff">({=number_format(path.team_list.team_total.cst_status_90_rate,1)}%)</font></th>
+			<th>{=number_format(path.team_list.team_total.amount_basic)}</th>
+			<th>{=number_format(path.team_list.team_total.amount_paid)}</th>
+			<th>{=number_format(path.team_list.team_total.amount_deposit)}</th>
+			<th>{=number_format(path.team_list.team_total.amount_refund)}</th>
+		</tr>
+	</tbody>
+</table>
+

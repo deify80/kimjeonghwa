@@ -1,0 +1,213 @@
+<form id="FrmPatientSkinInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="skin_no" value="{rs.no}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>피부관리일자</th>
+			<td>
+				<input type="text" name="date_skincare" value="{rs.date_skincare}" class="datepicker lg"  />
+			</td>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? rs.doctor_id==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>피부관리사</th>
+			<td>
+				<select name="skincare_id" class="required validate[required]">
+					<option value="">::관리사::</option>
+					{@ cfg.skincare}
+					<option value="{.key_}" {? rs.skincare_id==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="sb_team" onchange="HmisCommon.loadUser(this.value)">
+					<option value="">::팀::</option>
+					{@ cfg.manager_team}
+					<option value="{.key_}" {? rs.manager_team_code == .key_}selected{:}disabled{/}>{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="sb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>관리회차</th>
+			<td colspan="3">
+				<select name="cnt_care_used">
+					{@ range(1,15)}
+					<option value="{.value_}" {? rs.cnt_care_used == .value_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+				회차 / 총
+				<select name="cnt_care_total" class="validate[funcCall[PatientSkinInput.checkCount]]">
+					{@ range(1,15)}
+					<option value="{.value_}" {? rs.cnt_care_total == .value_}selected{/}>{.value_}</option>
+					{/}
+				</select> 회
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="2">진료항목</th>
+			<td colspan="3" style="">
+				<button type="button" onclick="HmisCommon.treat('HmisTreat.addTreat','{parient.treat_cost_no}')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="padding-bottom:0px">
+				<div id="treat_null" style="padding:7px 0px 13px;">진료항목을 선택하세요.</div>
+				<div id="treat_list">
+					{@ rs.treat_info}
+					<span class="label label-default" style="" id="{.key_}">{.value_} <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px" onclick="HmisTreat.removeTreat('{.key_}')"></i></span>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>치료내용</th>
+			<td colspan="3">
+				<textarea name="comment" style="height:100px" class="validate[required] hmis required">{rs.comment}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var PatientSkinInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmPatientSkinInput").validationEngine('attach',option);
+
+		HmisCommon.createDatepicker();
+		HmisCommon.loadUser("{rs.manager_team_code}","{rs.manager_id}");
+		this.buildTreat();
+	},
+	checkCount: function() {
+		var used = $('select[name="cnt_care_used"]').val();
+		var total = $('select[name="cnt_care_total"]').val();
+
+		if(parseInt(used)>parseInt(total)) {
+			// console.log(used, total);
+			return '총 횟수가 사용횟수와 같거나 커야 합니다.';
+		}
+	},
+	loadTreatItem: function(region_code, item_code) {
+		var region_code = region_code || $('#sb_skin_region').val();
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (i==item_code)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	//진료항목추가
+	addTreat: function() {
+		var id = $('#sb_treat_region').val()+'_'+$('#sb_treat_item').val();
+		var text = $('#sb_treat_region option:selected').text()+' > '+$('#sb_treat_item option:selected').text();
+		var target = $('#treat_list');
+
+		if(target.find('span#'+id).length>0) {
+			HmisAlert.alert('동일한 진료항목이 이미 선택되었습니다.');
+			return false;
+		}
+
+		var tbl = $('<span class="label label-default" style="margin-top:0px;margin-bottom:0px" id="'+id+'">'+text+' <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px"></i></label>');
+		tbl.find('i').on('click.treat', function() {PatientSkinInput.removeTreat(id);});
+		target.append(tbl);
+		this.buildTreat();
+	},
+	//진료항목제거
+	removeTreat: function(id) {
+		$('#treat_list > span#'+id).remove();
+		this.buildTreat();
+	},
+	buildTreat: function() {
+		if($('#treat_list > span').length>0) {
+			$('#treat_null').css('display','none');
+		}
+		else {
+			$('#treat_null').css('display','');
+		}
+	},
+	save: function(){
+		var treat = $('#treat_list > span').map(function(){ return $(this).attr('id'); }).get();
+
+		if(treat.length < 1) {
+			HmisAlert.alert('진료항목을 한개 이상 선택하세요.');
+			return false;
+		}
+
+		var formdata = $('#FrmPatientSkinInput').serializeArray();
+		formdata.push({name:'treat', value:treat});
+
+		$.ajax({
+			url:'/patient_proc/save_patient_skin',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					PatientInfo.loadTab('skin');
+					PatientInfo.countTab();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function(){
+	PatientSkinInput.init();
+})
+</script>

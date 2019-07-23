@@ -1,0 +1,229 @@
+<font style="color:#0000cc; font-weight:bold">※ 내원 : 상담상태기준(내원상담 + 수술예정 + 수술취소 + 수술완료)</font>
+
+<h3 class="area-title">신규고객 상담팀 실적
+<!-- 	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="ConsultingTeamMain.excel();"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+	</div> -->
+</h3>
+* 유입경로 - 온라인, 전화, 워킹, 소개(원장), 소개(고객), 소개(직원), 실시간상담, 온라인상담, 카카오톡, 직원, 기타
+<table class="table table-bordered table-center table-form table-hover" {? output_mode=="EXCEL"}border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" {/}>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			<th rowspan="2">상담팀</th>
+			<th colspan="5">상담관리</th>
+			<th colspan="4">CRM</th>
+		</tr>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			
+			<th>분배DB</th>
+			<th>내원</th>
+			<th>수술예정</th>
+			<th>수술취소</th>
+			<th>수술완료</th>
+			<th>OP매출액</th>
+			<th>OP총액</th>
+			<th>예치금</th>
+			<th>환불금액</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ new.team_list.team}
+		<tr>
+			<th>{.name}</th>
+			<td>{=number_format(.cur_db)}</td>
+			<td>{=number_format(.cst_status)} <font style="color:#6666ff">({=number_format(.cst_status_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_98)} <font style="color:#6666ff">({=number_format(.cst_status_98_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_90)} <font style="color:#6666ff">({=number_format(.cst_status_90_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_99)} <font style="color:#6666ff">({=number_format(.cst_status_99_rate, 1)}%)</font></td>
+			<td>{=number_format(.amount_basic)}</td>
+			<td>{=number_format(.amount_paid)}</td>
+			<td>{=number_format(.amount_deposit)}</td>
+			<td>{=number_format(.amount_refund)}</td>
+		</tr>
+		{/}
+		<tr>
+			<th>합계</th>
+			<th>{=number_format(new.team_list.team_total.cur_db)}</th>
+			<th>{=number_format(new.team_list.team_total.cst_status)} <font style="color:#6666ff">({=number_format(new.team_list.team_total.cst_status_rate,1)}%)</font></th>
+			<th>{=number_format(new.team_list.team_total.cst_status_98)} <font style="color:#6666ff">({=number_format(new.team_list.team_total.cst_status_98_rate,1)}%)</font></th>
+			<th>{=number_format(new.team_list.team_total.cst_status_90)} <font style="color:#6666ff">({=number_format(new.team_list.team_total.cst_status_90_rate,1)}%)</font></th>
+			<th>{=number_format(new.team_list.team_total.cst_status_99)} <font style="color:#6666ff">({=number_format(new.team_list.team_total.cst_status_99_rate,1)}%)</font></th>
+			<th>{=number_format(new.team_list.team_total.amount_basic)}</th>
+			<th>{=number_format(new.team_list.team_total.amount_paid)}</th>
+			<th>{=number_format(new.team_list.team_total.amount_deposit)}</th>
+			<th>{=number_format(new.team_list.team_total.amount_refund)}</th>
+		</tr>
+	</tbody>
+</table>
+
+
+
+<h3 class="area-title">기존고객 상담팀 실적</h3>
+* 유입경로 - 기존고객
+<table class="table table-bordered table-center table-form table-hover" {? output_mode=="EXCEL"}border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" {/}>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			<th rowspan="2">상담팀</th>
+			<th colspan="5">상담관리</th>
+			<th colspan="4">CRM</th>
+		</tr>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/}>
+			
+			<th>분배DB</th>
+			<th>내원</th>
+			<th>수술예정</th>
+			<th>수술취소</th>
+			<th>수술완료</th>
+			<th>OP매출액</th>
+			<th>OP총액</th>
+			<th>예치금</th>
+			<th>환불금액</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ old.team_list.team}
+		<tr>
+			<th>{.name}</th>
+			<td>{=number_format(.cur_db)}</td>
+			<td>{=number_format(.cst_status)} <font style="color:#6666ff">({=number_format(.cst_status_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_98)} <font style="color:#6666ff">({=number_format(.cst_status_98_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_90)} <font style="color:#6666ff">({=number_format(.cst_status_90_rate, 1)}%)</font></td>
+			<td>{=number_format(.cst_status_99)} <font style="color:#6666ff">({=number_format(.cst_status_99_rate, 1)}%)</font></td>
+			<td>{=number_format(.amount_basic)}</td>
+			<td>{=number_format(.amount_paid)}</td>
+			<td>{=number_format(.amount_deposit)}</td>
+			<td>{=number_format(.amount_refund)}</td>
+		</tr>
+		{/}
+		<tr>
+			<th>합계</th>
+			<th>{=number_format(old.team_list.team_total.cur_db)}</th>
+			<th>{=number_format(old.team_list.team_total.cst_status)} <font style="color:#6666ff">({=number_format(old.team_list.team_total.cst_status_rate,1)}%)</font></th>
+			<th>{=number_format(old.team_list.team_total.cst_status_98)} <font style="color:#6666ff">({=number_format(old.team_list.team_total.cst_status_98_rate,1)}%)</font></th>
+			<th>{=number_format(old.team_list.team_total.cst_status_90)} <font style="color:#6666ff">({=number_format(old.team_list.team_total.cst_status_90_rate,1)}%)</font></th>
+			<th>{=number_format(old.team_list.team_total.cst_status_99)} <font style="color:#6666ff">({=number_format(old.team_list.team_total.cst_status_99_rate,1)}%)</font></th>
+			<th>{=number_format(old.team_list.team_total.amount_basic)}</th>
+			<th>{=number_format(old.team_list.team_total.amount_paid)}</th>
+			<th>{=number_format(old.team_list.team_total.amount_deposit)}</th>
+			<th>{=number_format(old.team_list.team_total.amount_refund)}</th>
+		</tr>
+	</tbody>
+</table>
+
+
+<!-- 내원경로별 상담팀 실적:S -->
+<h3 class="area-title">내원경로별 상담팀 실적</h3>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>유입경로</th>
+			<td colspan="3">
+				<select name="srch_path" style="width:120px;" data-role="searchPath" onchange="ConsultingList.loadPath(this.value)">
+					<option value="">::전체::</option>
+					{@ cfg.path}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+
+				<select name="srch_media" id="srch_media" data-role="searchPath" onchange="ConsultingList.loadPathMedia(this.value)">
+					<option value="">::미디어선택::</option>
+					{@ cfg.media}
+					<option value="{.value_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div id="path-list-area" style="padding: 0;margin: 0;"></div>
+<!-- 내원경로별 상담팀 실적:E -->
+
+
+
+<!-- 원장 수술별 실적 :S -->
+<h3 class="area-title">원장 수술별 실적</h3>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+	</tbody>
+</table>
+
+<div id="doctor-list-area" style="padding: 0;margin: 0;"></div>
+<!-- 원장 수술별 실적:E -->
+
+
+<!-- 고객(OP매출) 내역 -->
+<h3 class="area-title">CRM-고객(OP매출) 내역</h3>
+<div id="consulting_team_detail" style="padding: 0;margin: 0;"></div>
+
+<!-- 미수금 내역 -->
+<h3 class="area-title">CRM-수술예정 고객 내역</h3>
+<div id="consulting_team_detail_unpaid" style="padding: 0;margin: 0;"></div>
+
+<script type="text/javascript">
+var ConsultingList = {
+	init: function() {
+		$('#srch_media').hide();
+		this.loadPath();
+		this.doctorList();
+
+		$('#consulting_team_detail').load('/stats/consulting_team_detail_list');
+
+		$('#consulting_team_detail_unpaid').load('/stats/consulting_team_detail_unpaid_list');
+	},
+	search: function() {
+		this.loadDetail(1);
+	},
+	loadPath: function(path_code){
+		if(path_code == "L"){
+			$('#srch_media').show();
+		}
+		else{
+			$('#srch_media').hide();
+		}
+		$('#srch_path_txt').val(path_code);
+
+		this.loadMedia();
+	},
+	loadPathMedia: function(media_code){
+		$('#srch_media_txt').val(media_code);
+
+		this.loadMedia();
+	},
+	loadMedia: function(){
+		var formdata = $('#FrmConsultingSearch').serializeArray();
+		$('#path-list-area').load('/stats/consulting_team_path_lists', formdata);
+	},
+
+	doctorList: function(){
+		var formdata = $('#FrmConsultingSearch').serializeArray();
+		$('#doctor-list-area').load('/stats/consulting_doctor_lists', formdata);
+	},
+	
+}
+
+$(function(){
+	ConsultingList.init();
+})
+
+</script>

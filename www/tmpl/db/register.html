@@ -1,0 +1,351 @@
+<div style="margin-top:0px">
+	<div style="width:500px;float:left;margin-right:10px;vertical-align:top">
+		<form id="FrmDBRegister">
+		<input type="hidden" name="hst_code" id="hst_code" value="{layout.login.info.ss_hst_code}">
+		<input type="hidden" name="biz_id" id="biz_id" value="{layout.login.info.ss_biz_id}">
+		<input type="hidden" name="mode" value="{mode}">
+		<h3 class="area-title1" style="display:inline-block">
+			DB 등록
+		</h3>
+		<table class="table table-bordered table-form">
+			<colgroup>
+				<col style="width:120px" />
+				<col />
+			</colgroup>
+			<tbody>
+				<tr>
+					<th>사업장</th>
+					<td colspan="1"><div class="minheight">{layout.login.info.ss_biz_name}</div></td>
+				</tr>
+				<tr>
+					<th>이름</th>
+					<td colspan="1"><input type="text" name="name" class="validate[required] required" data-errormessage-value-missing="이름을 입력하세요." /></td>
+				</tr>
+				<tr>
+					<th>생년월일</th>
+					<td>
+						<input type="text" name="birth" class="datepicker lg" data-mask="date" />
+					</td>
+				</tr>
+				<tr>
+					<th>성별</th>
+					<td>
+						<label class="hmis"><input type="radio" name="sex" value="F" class="hmis"><span class="lbl"> 여</span></label>
+						<label class="hmis"><input type="radio" name="sex" value="M" class="hmis"><span class="lbl"> 남</span></label>
+					</td>
+				</tr>
+				<tr>
+					<th>연락처</th>
+					<td><input type="text" size="25" name="tel" class="validate[groupRequired[contacts]] required"  data-errormessage-value-missing="연락처나 메신저를 입력하세요." /></td>
+				</tr>
+				<tr>
+					<th>메신저</th>
+					<td><input type="text" size="30" name="messenger" class="validate[groupRequired[contacts]] required"  data-errormessage-value-missing="연락처나 메신저를 입력하세요." /></td>
+				</tr>
+				<tr>
+					<th>이메일</th>
+					<td colspan="1"><input type="text" size="40" name="email" class="validate[custom[email]]" /></td>
+				</tr>
+				<tr>
+					<th>상담항목</th>
+					<td>
+						<select name="category" id="category">
+							<option value="">::상담항목선택::</option>
+							{@ cfg.category}
+							<option value="{.key_}">{.value_}</option>
+							{/}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>상담가능시간</th>
+					<td>
+						<select name="call_time">
+							<option value="">:: 선택 ::</option>
+							<option>오전9시-10시</option>
+							<option>오전10시-11시</option>
+							<option>오전11시-12시</option>
+							<option>오후12시-1시</option>
+							<option>오후1시-2시</option>
+							<option>오후2시-3시</option>
+							<option>오후3시-4시</option>
+							<option>오후4시-5시</option>
+							<option>오후5시-6시</option>
+							<option>오후6시-7시</option>
+							<option>오전</option>
+							<option>오후</option>
+							<option>상시</option>
+						</select>
+					</td>
+				</tr>
+
+				<tr>
+					<th>유입경로</th>
+					<td>
+						<select name="path" id="path" class="validate[required] required" data-ui="change" data-errormessage-value-missing="유입경로를 선택하세요.">
+							<option value="">::유입경로 선택::</option>
+							{@ cfg.path}
+							<option value="{.key_}">{.value_}</option>
+							{/}
+						</select>
+
+						{? mode == 'DIRECT'}
+						<input type="hidden" name="team_code" id="team_code" value="{layout.login.info.ss_team_code}">
+						{:}
+						<span data-ui-group="path" data-ui-value="Y" style="display: none;">
+							<select name="team_code" class="validate[required] required">
+								<option value="">::팀 선택::</option>
+								{@ cfg.team}
+								<option value="{.key_}">{.value_}</option>
+								{/}
+							</select>
+						</span>
+						{/}
+					</td>
+				</tr>
+				<tr>
+					<th>미디어</th>
+					<td>
+						<select name="media" id="media">
+							<option value="">::미디어선택::</option>
+							{@ cfg.media}
+							<option value="{.value_}">{.value_}</option>
+							{/}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>메모</th>
+					<td colspan="1"><input type="text" name="memo" class="full" /></td>
+				</tr>
+				<tr data-ui-group="path" data-ui-value="C P O"  style="display: none;">
+					<th>실시간 상담</th>
+					<td colspan="1">
+						<textarea name="realtime_memo" class="hmis" style="height:70px"></textarea>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="area-button">
+			<button type="button" class="btn btn-flat-orange btn-lg" onclick="DBRegister.duplicate()">고객중복체크</button>
+			<button type="submit" class="btn btn-theme btn-lg">저장</button>
+		</div>
+		</form>
+	</div>
+	<div style="width:1px;float:left;border-right:solid 1px #E3E3E3;min-height:800px;margin-top:5px;"></div>
+	<div style="margin-left:520px;margin-top:5px;">
+		<h3 class="area-title" style="display:inline-block">
+			내가 등록한 DB 목록
+			<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">
+				오늘 DB수 <span id="cnt_today" class="f-bold  f-error">0</span>개
+				<span class="split">|</span>
+				총 DB수 <span id="cnt_search" class="f-bold  f-blue">0</span>개
+			</span>
+		</h3>
+
+		<form id="FrmDBSearch" onsubmit="return false">
+		<input type="hidden" name="reg_user_id" value="{reg_user_id}" />
+		</form>
+
+		<table class="table table-responsive table-bordered table-list table-striped table-hover" style="">
+			<thead>
+				<tr>
+					<th>번호</th>
+					<th>분배상태</th>
+					<th>등록일자</th>
+					<th>고객명</th>
+					<th class="visible-lg">생년월일</th>
+					<th class="visible-lg">성별</th>
+					<th>연락처</th>
+					<th>메신저</th>
+					<th class="visible-lg">상담팀</th>
+					<th>상담항목</th>
+					<th>등록자</th>
+					<th>유입경로</th>
+					<th>미디어</th>
+				</tr>
+			</thead>
+			<tbody id="db_list">
+			</tbody>
+		</table>
+
+		<!-- 페이징:S -->
+		<div class="area-pagination" id="pagination"></div>
+		<!-- 페이징:E -->
+	</div>
+</div>
+
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\db_seqno}">
+		<td data-link="no">${\idx}</td>
+		<td><span class="label label-xs status-${\db_status}">${\db_status_txt}</span></td>
+		<td>${\date_insert}</td>
+		<td {if other_cnt > 0} class="f-error" {/if} >${\name}</td>
+		<td class="visible-lg">${\birth}</td>
+		<td class="visible-lg">{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {elseif sex == 'M'} <i class="fa fa-1 fa-male f-blue"></i> {\else} <span class="f-null">미입력</span>{/if}</td>
+		<td>${\tel}</td>
+		<td>${HmisCommon.isStrNull(messenger)}</td>
+		<td class="visible-lg">${\team_name}</td>
+		<td><div class="ellipsis" data-toggle="tooltip" title="${\category}">${\category}</div></td>
+		<td>${\reg_user_name}</td>
+
+		<td>${\path_txt}</td>
+
+		<td>${\media}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="DBList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="DBList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="DBList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="DBList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="DBList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var DBRegister = {
+	form_id:'FrmDBRegister',
+	init: function() {
+		var me = this;
+		this.frm = $("#"+this.form_id);
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		this.frm.validationEngine('attach',option);
+
+		$('input[data-mask="date"]').mask('9999-99-99');
+
+		$.each($('[data-ui]'), function(i,e) {
+			me.setUI(this.name);
+			var evt = $(e).data('ui');
+			$(this).on(evt,function() {
+				me.setUI(this.name);
+			});
+		});
+
+		this.load(1);
+	},
+	setUI: function(name) {
+		this.frm.validationEngine('hide');
+		var v = HmisCommon.getValue(this.frm.find('[name="'+name+'"]'));
+		var group = $('[data-ui-group="'+name+'"]');
+		group.css('display','none');
+		group.filter('[data-ui-value~="'+v+'"]').css('display','');
+		if(name == 'path') {
+			if(v == 'Y') $('#assign_type').val('F');
+			else $('#assign_type').val('{assign_type}');
+		}
+	},
+	save: function() {
+		// 20170320 kruddo : 유입경로가 '온라인'이면 미디어 강제 입력 사항, '온라인'이 아니면 미디어는 공백처리
+		// 20170921 온라인 미디어 강제 기입 제거 (김석이사 요청 처리)
+		if($('#path').val() == "L"){
+			if($('#media').val() == ""){
+				//HmisAlert.alert('유입경로가 온라인이면 미디어를 선택 해 주세요.');
+				//return;
+			}
+		}
+		else{
+			$('#media option:eq(0)').attr("selected", "selected");
+		}
+
+
+		var formdata = this.frm.serialize();
+		$.ajax({
+			url : "/db_proc/add",
+			data : formdata,
+			dataType:'json',
+			type : "POST",
+			success : function(r) {
+				if(r.success){
+					HmisAlert.alert("신규DB가 등록되었습니다.", function() {
+						DBRegister.load(1);
+					});
+
+				}
+				else {
+					HmisAlert.alert('잠시 후에 다시 시도해주세요.');
+				}
+
+			}
+		});
+	},
+	duplicate: function() {
+		var title = '고객검색';
+		var modal = new HmisModal('dbsearch', {width:500, top:200});
+		modal.open(title,'/db/search');
+	},
+	load: function(page) {
+		HmisLoading.show('#db_list');
+
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmDBSearch').serialize();
+
+		$.ajax({
+			url:'/db/lists',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#db_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+
+				}
+				else {
+					target.append('<tr><td colspan="15">검색된 DB정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				// me.createClick();
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				$('#cnt_today').html(HmisCommon.numberFormat(r.data.count.today));
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	}
+}
+
+var DBList = DBRegister;
+
+$(function() {
+	DBRegister.init();
+
+})
+
+</script>

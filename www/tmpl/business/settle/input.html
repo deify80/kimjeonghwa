@@ -1,0 +1,894 @@
+<style type="text/css">
+/*.no-border { border:0px; background:#ffffff; }*/
+</style>
+<script type="text/javascript" src="//cdn.ckeditor.com/4.4.6/standard/ckeditor.js"></script>
+<script type="text/javascript" src="/js/adapter.ckeditor.js"></script>
+<script type="text/javascript" src="/js/jquery.MultiFile.pack.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+
+<div id="settle_line-area" title="결재라인"></div>
+<div id="settle_tmp_list-area" title="임시저장목록"></div>
+
+<div style="width: 100%;margin: auto;">
+	<form name="inputFrm" id="inputFrm" action="/business_proc/settle_add" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="mode" id="mode" value="<?=$mode?>">
+		<input type="hidden" name="approval_person" id="approval_person" value="<?=$view_data['approval_person']?>">
+		<input type="hidden" name="refer_person" id="refer_person" value="<?=$view_data['refer_person']?>">
+		<input type="hidden" name="draft_no" id="draft_no" value="">
+		<input type="hidden" name="settle_no" id="settle_no" value="<?=$view_data['no']?>">
+		<input type="hidden" name="settle_tmp_no" id="settle_tmp_no" value="">
+		<input type="hidden" name="settle_tmp_file" id="settle_tmp_file" value="">
+
+		<!-- 2017/01/19 kruddo : 임시저장 여부 flag 추가 -->
+		<input type="hidden" name="tmp_yn" id="tmp_yn" value="<?=$view_data['tmp_yn']?>">
+		<!-- 2017/01/19 kruddo : 임시저장 여부 flag 추가 -->
+
+		<h3 class="area-title">
+		기안작성
+			<div class="button-box">
+				<button type="button" class="btn btn-flat-blue" onClick="settle_line();"><i class="fa fa-user fa-1"></i> 결재라인</button>
+				<button type="button" class="btn btn-flat-orange" onClick="SettleInput.resetLine();"> 결재선초기화</button>
+			</div>
+		</h3>
+
+		<table class="basic-table" style="table-layout:fixed">
+			<colgroup>
+				<col width="10%" />
+				<col width="" />
+				<col width="10%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+			</colgroup>
+			<tbody>
+				<tr>
+					<th>기안 선택</th>
+					<td colspan="3">
+						<? if($mode=='modify') { ?>
+						<?=$aSettleType[$view_data['settle_type']]?>
+						<input type="hidden" name="settle_type" value="<?=$view_data['settle_type']?>" />
+						<? } else { ?>
+						<?php
+						$cnt = 0;
+						foreach( $aSettleType as $key=>$val){
+						?>
+						<label style="display:inline">
+							<input type="radio" class="validate[required]" name="settle_type" id="settle_type<?=$cnt?>" value="<?=$key;?>" data-label="<?=$val?>"><?=$val?>
+						</label>
+						<?php
+						$cnt++;
+						}
+						?>
+						<? } ?>
+					</td>
+					<th>사업장 선택</th>
+					<td colspan="3">
+						<select name="biz_id">
+						<?
+						$biz_default = '';
+						foreach( $biz_info as $i=>$val) {
+							if($biz_default == '')	$biz_default = $i;
+							$selected = ($view_data['biz_id']==$i)?'selected':'';
+						?>
+							<option value="<?=$i?>" <?=$selected?>><?=$val['biz_name']?></option>
+						<? }?>
+						</select>
+						<!--
+						<button type="button" class="btn btn-theme" style="vertical-align:0px">기본결재선</button>
+						-->
+					</td>
+				</tr>
+				<tr>
+					<th>품의번호</th>
+					<td>
+					<input style="border:0px; background:#ffffff; width:160px;" type="text" id="settle_number" name="settle_number" value="<?=$view_data['settle_number']?>" readonly>
+					</td>
+					<th rowspan="3">결재</th>
+
+					<?php
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td class="center">
+						<div id="position<?=$i?>" style="text-align: center"><?=$approval[$i]['position_title']?></div>
+					</td>
+					<? } ?>
+
+				</tr>
+				<tr>
+					<th>작성일자</th>
+					<td>
+						<input style="border:0px; background:#ffffff;width:95%" type="text" id="reg_date" name="reg_date" value="<?=$view_data['reg_date']?>" readonly>
+					</td>
+
+					<?php
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td rowspan="2" class="center">
+						<div id="approval_name<?=$i?>" style="text-align: center"><?=$approval[$i]['name']?></div>
+					</td>
+					<?php } ?>
+				</tr>
+				<tr>
+					<th>내용구분</th>
+					<td><div id="settle_type_str"><?=$view_data['settle_type_str']?></div></td>
+				</tr>
+				<tr>
+					<th>작성자</th>
+					<td>
+					<input style="border:0px; background:#ffffff;" type="text" value="<?=$view_data['name']?>" readonly>
+					</td>
+					<th>참조</th>
+					<td colspan="5">
+						<div id="refer_name">
+							<?php
+							if(is_array($refer)) {
+								echo implode(', ',array_column($refer, 'name'));
+							}
+							?>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th>제목</th>
+					<td colspan="7">
+						<input type="text" class="validate[required]" style="width:95%;" name="title" id="title" value="<?=$view_data['title']?>">
+					</td>
+				</tr>
+				<tr class="expense_hide">
+					<th colspan="8">주요내용</th>
+				</tr>
+				<tr class="expense_hide">
+					<td colspan="8" style="padding:5px">
+
+					<!--  rows="12" cols="193"  style="height:100px;"   -->
+					<textarea name="content" id="content" style="overflow-y:scroll;" rows="12" cols="193" class="validate[required]" ><?=$view_data['content']?></textarea>
+					<script>
+						var editor = CKEDITOR.replace('content');
+		            </script>
+
+
+					</td>
+				</tr>
+				<tr class="expense_show">
+					<td colspan="8">
+
+
+						<table style="width:100%">
+							<tr>
+								<td><h3>지출예정 : <input type="text" name="expense_schedule" id="expense_schedule" style="width:300px" value="<?=$view_data['expense_schedule']?>"></h3></td>
+							</tr>
+							<tr>
+
+								<td>
+									<div id="settle_format_1"></div>
+								</td>
+							</tr>
+							<tr>
+
+								<td>
+									<div id="settle_format_2"></div>
+								</td>
+							</tr>
+							<tr>
+								<td><h3>지출완료 : <input type="text" name="expense_complete" id="expense_complete" style="width:300px" value="<?=$view_data['expense_complete']?>"></h3></td>
+							</tr>
+							<tr>
+
+								<td>
+									<div id="settle_format_3"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div id="settle_format_4"></div>
+								</td>
+							</tr>
+						</table>
+						<!-- <h3>지출예정 : <input type="text" style="width:300px" value=""></h3>
+						<div id="settle_format_1"></div>
+						<div id="settle_format_2"></div>
+						<h3>지출완료 : <input type="text" style="width:300px" value=""></h3>
+						<div id="settle_format_3"></div>
+						<div id="settle_format_4"></div> -->
+
+					</td>
+				</tr>
+				<tr>
+					<th>첨부파일</th>
+					<td colspan="7">
+						<div class="file_div">
+							<button type="button" class="file_button btn btn-theme"><i class="fa fa-upload fa-1"></i> 파일 찾기</button>
+							<input type="file" name="settle_file[]" id="attach" class="file_hidden" value=""/>
+						</div>
+						<div id="file_list" class="file_list">
+							<div id="file_msg" style="color:#A2A2A2"></div>
+							<div id="files_list">
+								<? foreach($settle_file as $file){?>
+								<div class="MultiFile-label" id="file_<?=$file['no']?>">
+									<a class="MultiFile-remove" onclick="SettleInput.removeFile('<?=$file[no]?>')" ><i class="fa fa-remove" style="color:#FF4040"></i></a>
+									<span class="MultiFile-title"><?=$file['ori_name']?></span>
+								</div>
+								<? } ?>
+							</div>
+						</div>
+
+						<!-- <input type="file" id="file_upload">
+						<div id="file_list"></div> -->
+					</td>
+				</tr>
+				<tr>
+					<th>기안참조</th>
+					<td colspan="7">
+					<button type="button" class="btn btn-theme" onClick="draft_refer();"><i class="fa fa-inbox fa-1"></i> 기안선택</button>
+					<span id="draft_refer_str"></span>
+					<!-- span class="badge" id="draft_cancel" onClick="draft_cancel();" style="display:none;cursor:pointer;" >x</span-->
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+
+
+		<div class="tool-box">
+		<button type="button" class="btn btn-flat-purple" onclick="SettleInput.save()"><i class="fa fa-send fa-1"></i> 결재올리기</button>
+
+		<? if($mode!='modify') { ?>
+		<button type="button" class="btn btn-flat-blue" onclick="SettleInput.tmp_save()"> 임시저장</button>
+		<button type="button" class="btn btn-flat-orange" onclick="SettleInput.tmp_del()"> 임시삭제</button>
+
+
+		<!-- <button type="button" class="btn btn-flat-orange" onClick="SettleInput.tmp_list();"><i class="fa fa-list fa-1"></i> 임시저장목록</button> -->
+			<i id="settle_tmp">
+				<select name="settle_tmp_list"  data-role="search" onchange="SettleInput.tmp_list_change(this)">
+					<option value="" {? !search.settle_tmp_list }selected{/}>-임시저장목록-</option>
+					<?
+					foreach( $settle_tmp_list as $i=>$val) {
+						$selected = ($view_data['no']==$val['no'])?'selected':'';
+					?>
+						<option value="<?=$val['no']?>" <?=$selected?>><?=$val['title']?>(<?=date('Y-m-d', strtotime($val['reg_date']))?>)</option>
+					<? }?>
+				</select>
+			</i>
+
+
+
+		<? } ?>
+
+		</div>
+	</form>
+</div>
+
+
+<link rel="stylesheet" type="text/css" href="/css/onoffswitch.css">
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+
+<script type="text/javascript">
+	var settle_type = 0;
+	var filetmplist = "";
+
+	var SettleInput = {
+		mode:'<?=$mode?>',
+		init: function() {
+			this.selectSettle();
+			this.createFile();
+			$('.expense_show').hide();
+
+			$("input:radio[name=settle_type]").change(this.selectSettle);
+
+			$('select[name="biz_id"]').on('change', SettleInput.setLine);
+		},
+
+		createFile : function() {
+			var me = this;
+			this.msgFile();
+
+
+			$('#attach').MultiFile({
+				list: '#file_list',
+				STRING:{
+					remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+					duplicate:'이미 등록된 파일입니다.'
+				},
+				afterFileAppend: function() {
+					me.msgFile();
+				},
+				afterFileRemove: function() {
+					me.msgFile();
+				}
+			});
+		},
+		msgFile : function() {
+			var count = $('#file_list > div.MultiFile-label');
+			if(count.length<1 || filetmplist.length < 1) {
+				$('#file_msg').html('파일을 첨부해 주세요.');
+			}
+			if(count.length>0 || filetmplist.length > 0) {
+				$('#file_msg').html('');
+			}
+		},
+		removeFile : function(file_no) {
+			$('#inputFrm').append('<input type="hidden" name="settle_file_remove[]" value="'+file_no+'" />');
+			$('#file_'+file_no).remove();
+			this.msgFile();
+		},
+		selectSettle : function() {
+			if(this.mode == 'modify') {
+				/*
+				var param = {
+					'settle_type':"<?=$view_data['settle_type']?>",
+					'settle_no':"<?=$view_data['no']?>"
+				};
+				*/
+
+				if("<?=$view_data['settle_type']?>" == 1){
+					$('.expense_hide').hide();
+					$('.expense_show').show();
+				}
+				else{
+					$('.expense_hide').show();
+					$('.expense_show').hide();
+				}
+
+			}
+			else {
+				var checked = $('input:radio[name=settle_type]:checked');
+				if(checked.length<1) return false;
+				$('#settle_type_str').text(checked.data('label'));
+
+
+				if(checked.val() == 1){
+					$('.expense_hide').hide();
+					$('.expense_show').show();
+				}
+				else{
+					$('.expense_hide').show();
+					$('.expense_show').hide();
+				}
+				//console.log(checked.val());
+
+				filetmplist = "";		// 첨부파일 초기화
+				settle_file_setting();
+				$('#inputFrm input:file').MultiFile('reset'); //멀티파일 초기화
+
+				settle_draft_setting(null);		// 기안파일 초기화
+
+			}
+
+			if(this.mode == 'modify'){
+				for(var i=1; i<=4; i++){
+					var param = {
+						'settle_type':"<?=$view_data['settle_type']?>",
+						'expense_type':i,
+						'settle_no':"<?=$view_data['no']?>"
+					};
+					$('#settle_format_'+i).load('/business/settle_format',param);
+				}
+			}
+			else{
+				for(var i=1; i<=4; i++){
+					var param = {
+						'settle_type':checked.val(),
+						'expense_type':i,
+						'settle_no':"<?=$view_data['no']?>"
+					};
+					$('#settle_format_'+i).load('/business/settle_format',param);
+				}
+
+				//결재선불러오기
+				SettleInput.setLine();
+
+			}
+		},
+		resetLine : function() {
+			//결재선 초기화
+			for( i = 0 ; i < 5 ; i++ ){
+				$("#position"+i).text('');
+				$("#approval_name"+i).text('');
+			}
+		},
+		setLine: function() {
+			var biz_id = $('select[name="biz_id"]').val();
+			var check_approval = [];
+			var check_refer = [];
+			var str_array;
+			var str_refer = "";
+			var cnt = 0;
+
+			SettleInput.resetLine();
+
+			var line = [];
+			if(biz_id == 'CMLTD') {
+				line.push({value:'101',name:'김계령', position:'대표이사'});
+
+				//참조
+
+			}
+			else if(biz_id == 'REVIVE') {
+				line.push({value:'1', name:'master kim', position:'대표이사'});
+				//참조
+
+			}
+			else {
+				line.push({value:'101',name:'김계령', position:'대표이사'});
+				line.push({value:'6',name:'박상훈', position:'대표원장'});
+			}
+
+
+
+
+			// 결재라인 값들 가져오기 및 적용
+			$.each(line, function(i,e) {
+				check_approval.push(e.value);
+				$("#approval_name"+cnt).text(e.name);
+				$("#position"+cnt).text(e.position);
+				cnt++;
+			});
+
+
+			$("#refer_name").text('');
+			$("#refer_person").val('');
+			$("#approval_person").val(check_approval);
+
+		},
+		save : function() {
+
+			//if( $('#approval_person').val() == "" ){						// 20170124 kruddo : 임시저장 시 결재라인이 0으로 저장 되는 현상
+			if( $('#approval_person').val() == "" || $('#approval_person').val() == "0" ){
+				HmisAlert.alert("결재라인을 선택해 주세요.");
+				return;
+			}
+
+			if( $('#title').val() == "" ){
+				HmisAlert.alert("제목을 입력해 주세요.");
+				$('#title').focus();
+				return;
+			}
+
+			// var url = (mode=='modify')?'/business_proc/settle_modify':'/business_proc/settle_add';
+			//
+			$("#tmp_yn").val("");
+			editor.updateElement();
+			var options = {
+				url:'/business_proc/settle_add',
+				type:'POST',
+				dataType:'json',
+				success : function(r) {
+					//HmisAlert.alert(r.msg);
+					alert(r.msg);
+					if(r.success){
+						document.location.href='/business/settle/send';
+					}
+				}
+			}
+			$('#inputFrm').ajaxSubmit(options)
+		},
+
+		// 20170119 kruddo : 임시결재 기능 추가
+		// 임시 저장 목록 이동
+
+		tmp_list_change:function(a){
+			var avalue = a.value;
+
+			forminit();
+			$('#settle_tmp_no').val(avalue);
+			// 초기화
+
+			if(avalue != ""){
+				$.ajax({
+					url:'/business_proc/settle_view',
+					type:'POST',
+					dataType:'json',
+					data:{
+                        'settle_tmp_no':$('#settle_tmp_no').val()
+                    },
+					success : function(r) {
+
+						var seld = 0;
+						var strd = $('#inputFrm [name="settle_type"]');
+						for(i=0; i<strd.length; i++){
+							if(strd[i].value == r.view_data.settle_type){
+								seld = i;
+								break;
+							}
+						}
+						document.inputFrm.settle_type[seld].checked = true;
+
+						var checked = $('input:radio[name=settle_type]:checked');
+						if(checked.length<1) return false;
+						$('#settle_type_str').text(checked.data('label'));
+
+
+						if(checked.val() == 1){
+							$('.expense_hide').hide();
+							$('.expense_show').show();
+						}
+						else{
+							$('.expense_hide').show();
+							$('.expense_show').hide();
+						}
+
+						/*
+						var param = {
+							'settle_type':checked.val(),
+							'settle_no':$('#settle_tmp_no').val()
+						};
+						$('#settle_format_1').load('/business/settle_format',param);
+						*/
+
+						for(var i=1; i<=4; i++){
+							var param = {
+								'settle_type':checked.val(),
+								'expense_type':i,
+								'settle_no':$('#settle_tmp_no').val()
+							};
+							$('#settle_format_'+i).load('/business/settle_format',param);
+						}
+
+
+						$('#title').val(r.view_data.title);
+						$('#expense_schedule').val(r.view_data.expense_schedule);
+						$('#expense_complete').val(r.view_data.expense_complete);
+						CKEDITOR.instances.content.setData(r.view_data.content);
+
+						$('#inputFrm [name="biz_id"] option[value="'+r.view_data.biz_id+'"]').prop("selected",true);
+
+						settle_line_setting(r.approval, r.refer);			// 결재라인, 참조라인 셋팅
+						filetmplist = r.file;
+						settle_file_setting();			// 첨부파일 셋팅
+						settle_draft_setting(r.draft);
+
+					}
+				});
+
+			}
+			else{
+				document.inputFrm.settle_type[0].checked = true;
+
+				var checked = $('input:radio[name=settle_type]:checked');
+				if(checked.length<1) return false;
+				$('#settle_type_str').text(checked.data('label'));
+
+				if(checked.val() == 1){
+					$('.expense_hide').hide();
+					$('.expense_show').show();
+				}
+				else{
+					$('.expense_hide').show();
+					$('.expense_show').hide();
+				}
+
+				/*
+				var param = {
+					'settle_type':checked.val()
+				};
+				$('#settle_format').load('/business/settle_format',param);
+				*/
+
+				for(var i=1; i<=4; i++){
+					var param = {
+						'settle_type':checked.val(),
+						'expense_type':i,
+						'settle_no':$('#settle_tmp_no').val()
+					};
+					$('#settle_format_'+i).load('/business/settle_format',param);
+				}
+			}
+		},
+
+
+		// 임시 저장
+		tmp_save : function() {
+			if( $('#title').val() == "" ){
+				HmisAlert.alert("제목을 입력해 주세요.");
+				$('#title').focus();
+				return;
+			}
+
+			$("#tmp_yn").val("Y");
+
+			editor.updateElement();
+			var options = {
+				url:'/business_proc/settle_add',
+				type:'POST',
+				dataType:'json',
+				success : function(r) {
+					alert("임시저장을 하였습니다.");
+					if(r.success){
+
+						tmp_list_setting(r.msg);
+						//document.location.href='/business/settle_input/';
+					}
+				}
+			}
+			$('#inputFrm').ajaxSubmit(options)
+		},
+		// 임시 삭제
+		tmp_del : function() {
+			if($('#settle_tmp_no').val() == ""){
+				HmisAlert.alert("삭제할 목록을 선택 해 주세요.");
+				return;
+			}
+
+
+			HmisAlert.confirm('삭제 후엔 복구가 불가능합니다. 삭제하시겠습니까?', function(r) {
+				if(r) {
+					var options = {
+						url:'/business_proc/settle_tmp_del',
+						type:'POST',
+						dataType:'json',
+						success : function(r) {
+							alert("삭제되었습니다.");
+							if(r.success){
+								//forminit();
+								//tmp_list_setting(r.msg);
+								document.location.href='/business/settle_input';
+							}
+						}
+					}
+					$('#inputFrm').ajaxSubmit(options)
+
+				}
+			});
+
+		},
+		// 20170119 kruddo : 임시결재 기능 추가 - 첨부파일 삭제
+		removetmpFile : function(file_no) {
+			var removeidx;
+			for(i=0; i<filetmplist.length; i++){
+				if(filetmplist[i].no == file_no){
+					removeidx = i;
+					break;
+				}
+			}
+			filetmplist.splice(removeidx, 1);
+			settle_file_setting();
+		}
+		// 20170119 kruddo : 임시결재 기능 추가 - 첨부파일 삭제
+
+	};
+
+
+	$(document).ready(function() {
+		//$( '#content' ).ckeditor();
+		SettleInput.init();
+		// open_calendar("#expense_start_date");
+		// open_calendar("#expense_end_date");
+
+		// 결재라인 다이얼로그
+		$("#settle_line-area").dialog({
+			autoOpen : false,
+			width : 940,
+			height : 480,
+			resizable : false,
+			modal : true,
+			show : {
+				effect : "blind"
+			},
+			buttons : {
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+
+		$("input:checkbox[name=expense_receipt]").change(function() {
+			var id = $(this).attr("id");
+			settle_type = $(this).val();
+
+		});
+
+		// 결재올리기
+		$("#bt-save").button("option", "icons", {
+			primary : "ui-icon-circle-check"
+		});
+
+		$("#bt-off").button("option", "icons", {
+			primary : "ui-icon-closethick"
+		});
+
+		$("#inputFrm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) SettleInput.save();
+			}
+		});
+	});
+
+
+	// 라인 레이아웃 팝업
+	function settle_line(){
+		$( '#settle_line-area' ).dialog('option', 'title', '결재라인');
+		$( "#settle_line-area" ).load( "/business/settle_line");
+		$( "#settle_line-area" ).dialog("open");
+	}
+
+	// 기안참조 레이아웃 팝업
+	function draft_refer(){
+		$( '#settle_line-area' ).dialog('option', 'title', '기안참조');
+		$( "#settle_line-area" ).load( "/business/draft_refer");
+		$( "#settle_line-area" ).dialog("open");
+
+	}
+
+	function draft_cancel( draft_cancel_no ){
+		var draft_no = $("#draft_no").val();
+
+		var draft_array = draft_no.split(',');
+
+
+		var i;
+		var draft_no_str = "";
+
+		for( i = 0 ; i < draft_array.length ; i++ ){
+
+			if( draft_array[i] == draft_cancel_no ){
+				$('#draft_cancel_id'+draft_cancel_no).remove();
+			}
+			else{
+
+				if( draft_no_str != "" ){
+					draft_no_str = draft_no_str+","+draft_array[i];
+				}
+				else{
+					draft_no_str = draft_array[i];
+				}
+			}
+		}
+
+		$("#draft_no").val(draft_no_str);
+	}
+
+
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 결재 목록 보여주기
+	function settle_line_setting(approval, refer){
+
+		for( i = 0 ; i < 5 ; i++ ){
+			$("#position"+i).text('');
+			$("#approval_name"+i).text('');
+		}
+
+		var check_approval = [];
+		var check_refer = [];
+		var str_refer = "";
+
+		if(approval != null){
+			for(i=0; i<approval.length; i++){
+				if(approval[i].name != null){
+					$("#approval_name"+i).text(approval[i].name);
+					$("#position"+i).text(approval[i].position_title);
+					check_approval.push(approval[i].user_no);
+				}
+			}
+		}
+		if(refer != null){
+			for(i=0; i<refer.length; i++){
+				if(refer[i].name != null){
+					check_refer.push(refer[i].user_no);
+					if( str_refer != "" ) str_refer += ", ";
+					str_refer += refer[i].name;
+				}
+			}
+		}
+
+		$("#refer_name").text(str_refer);
+		$("#approval_person").val(check_approval);
+		$("#refer_person").val(check_refer);
+	}
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 결재 목록 보여주기
+
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 첨부 파일 보여주기
+	function settle_file_setting(){
+		file = filetmplist;
+
+		var file_str = '';
+		var str = '';
+
+		$('#files_list').empty();
+
+		if(filetmplist.length >0 ){
+			for(var i in file){
+				str += '<div class="MultiFile-label" id="file_'+file[i].no+'">';
+				str += '<a class="MultiFile-remove" onclick="SettleInput.removetmpFile('+file[i].no+')" ><i class="fa fa-remove" style="color:#FF4040"></i></a> ';
+				str += '<span class="MultiFile-title">'+file[i].ori_name+'</span>';
+				str += '</div>';
+
+				if(i > 0){
+					file_str += ',';
+				}
+				file_str += file[i].no;
+			}
+		}
+		$('#files_list').append(str);
+		$('#settle_tmp_file').val(file_str);
+
+		SettleInput.msgFile();
+	}
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 첨부 파일 보여주기
+
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 기안 파일 보여주기
+	function settle_draft_setting(rowData){
+		$("#draft_refer_str").empty();
+
+		var str = '';
+		var cnt = 0;
+		var nostr = '';
+		for(i in rowData){
+			str += "<span id='draft_cancel_id"+rowData[i].draft_no+"'> ["+rowData[i].draft_number+"-"+rowData[i].draft_type+"]"+rowData[i].draft_title+" <span class='badge' id='draft_cancel' onClick='draft_cancel("+rowData[i].draft_no+");' style='cursor:pointer;' >x</span></span>";
+
+			if(cnt > 0){
+				nostr += ',';
+			}
+			nostr += rowData[i].draft_no;
+			cnt++;
+		}
+
+		$('#draft_no').val(nostr);
+		$("#draft_refer_str").append(str);
+
+	}
+	// 20170124 kruddo : 임시저장 - 임시저장된 목록 선택하여 기안 파일 보여주기
+
+	function tmp_list_setting(data){
+		$('#settle_tmp').empty();
+		var str = '<select name="settle_tmp_list"  data-role="search" onchange="SettleInput.tmp_list_change(this)">';
+		str += '<option value="" {? !search.settle_tmp_list }selected{/}>-임시저장목록-</option>';
+		for(i in data){
+			wdate = data[i].reg_date.toString();
+			wdate = wdate.substring(0,4)+"-"+wdate.substring(5, 7)+"-"+wdate.substring(8,10);
+			str += '	<option value="'+data[i].no+'" selecteds >'+data[i].title+'('+wdate+')</option>';
+		}
+
+		str += '</select>';
+		$('#settle_tmp').append(str);
+	}
+
+	function forminit(){
+			//$('#inputFrm')[0].reset(); //폼 초기화(리셋);
+			$('#inputFrm input:file').MultiFile('reset'); //멀티파일 초기화
+
+			// 초기화
+			$('#title').val("");
+			$('#expense_schedule').val("");
+			$('#expense_complete').val("");
+			CKEDITOR.instances.content.setData("");
+			$("#draft_refer_str").empty();
+			$('#draft_no').val("");
+
+/*
+			filetmplist = null;
+			$('#files_list').empty();
+			$('#file_msg').html('파일을 첨부해 주세요.');
+			settle_line_setting(null, null);
+*/
+			//alert(document.inputFrm.settle_type.length);
+			/*
+			for(i=0; i<document.inputFrm.settle_type.length; i++){
+				document.inputFrm.settle_type[i].checked = false;
+			}
+			$('#settle_format').load('/business/settle_format',0);
+			*/
+
+
+			/*
+			document.inputFrm.settle_type[0].checked = true;
+
+			var checked = $('input:radio[name=settle_type]:checked');
+			if(checked.length<1) return false;
+			$('#settle_type_str').text(checked.data('label'));
+			var param = {
+				'settle_type':checked.val()
+			};
+			$('#settle_format').load('/business/settle_format',param);
+			*/
+
+			$('#inputFrm [name="biz_id"] option[value="<?=$biz_default?>"]').prop("selected",true);
+
+			settle_line_setting(null, null);
+			filetmplist = "";
+			settle_file_setting();			// 첨부파일 셋팅
+			settle_draft_setting(null);
+
+	}
+</script>

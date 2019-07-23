@@ -1,0 +1,143 @@
+<h3 class="area-title">
+	<div class="button-box">
+		<button class="btn btn-flat-purple" onclick="ThreeList.openInputinfo_view('<?=$row[no]?>')"><i class="fa fa-pencil fa-1"></i> 평가자 등록</button>
+	</div>
+</h3>
+<form id="FrmGoodsSearch_popup2" onsubmit="return false">
+	<input type="hidden" name="inout_no" value="<?=$row[no]?>" />
+	<input type="hidden" name="competency_val" value="<?=$row[competency_val]?>" />
+</form>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+		<col width="80px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td><?=$row['syear']?>-<?=$row['firsthalf']?></td>
+			<th>이름</th>
+			<td><?=$row['name']?></td>
+			<th>직급</th>
+			<td><?=$row['duty_name']?></td>
+		</tr>
+		<tr>		
+			<th>사업장</th>
+			<td><?=$row['biz_list_name']?></td>
+			<th>부서명</th>
+			<td><?=$row['dept_name']?></td>
+			<th>팀명</th>
+			<td><?=$row['team_name']?></td>			
+		</tr>		
+	</tbody>
+</table>
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="160px">
+		<col width="100px">
+		<col >
+	</colgroup>
+	<thead>
+		<tr>
+		<th>평가자</th>		
+		<th>평가점수</th>
+		<th>내용보기</th>
+	</thead>
+	<tbody id="team_acc_list2">
+	</tbody>
+
+	<tbody id="team_acc_total2">
+	</tbody>
+
+</table>
+
+<div id="sdfdsfsfd22"></div>
+<textarea id="tmpl_acc_list2" style="display:none">
+	<tr>
+		<td>${name}</td>
+		<td>${c_greetings_princ} </td>
+		<td><button type="button" class="btn btn-flat-blue" onclick="ThreeList.openInputinfo_view2('${no}'  , '<?=$row[no]?>')"><i class="fa fa-check"></i> 보기</button></td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_acc_total2" style="display:none">
+	<tr>
+		<td>평점</td>
+		<td>${c_greetings_princ_total}</td>
+		<td>&nbsp;</td>
+	</tr>
+</textarea>
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<div id="sdfdsfsdf232132"></div>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var ThreeList = {
+	init: function() {
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	openInputinfo_view: function(inout_no) {
+		var title = (inout_no)?'다면평가':'다면평가';
+		var modal3 = new HmisModal('inout_input22', {width:524, top:200});
+		modal3.open(title,'/assessment/assess_view_three_setting',{inout_no:inout_no});
+	},	
+	openInputinfo_view2: function(inout_no , moseqno ) {
+		var title = (inout_no)?'다면평가':'다면평가';
+		var modal2 = new HmisModal('inout_input33', {width:824, top:200});
+		modal2.open(title,'/assessment/assess_view_three_popup',{inout_no:inout_no,moseqno:moseqno});
+	},	
+	load: function() {
+		
+		var search = $('#FrmGoodsSearch_popup2').serialize() ; 
+		
+		$.ajax({
+			url:'/assessment/select_assess_view_three',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_acc_list2');
+				var target = $('#team_acc_list2');
+				target.empty();
+
+				var tmpl2 = TrimPath.parseDOMTemplate('tmpl_acc_total2');
+				var target2 = $('#team_acc_total2');
+				target2.empty();
+
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);					
+
+					var html2 = '';
+					$.each(r.data.loop, function(i,e){
+						html2 += tmpl2.process(e);
+					});
+					target2.append(html2);										
+				}
+				else {
+					target.append('<tr><td colspan="12">내역이 없습니다.</td></tr>');
+				}
+
+			}
+		})
+	}
+}
+
+$(function() {
+	ThreeList.init();
+})
+</script>

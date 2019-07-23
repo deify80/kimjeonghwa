@@ -1,0 +1,298 @@
+
+<!-- 세부내역:S -->
+
+
+	<form id="FrmConsultingDetailUnpaidSearch">
+
+	<input type="hidden" name="unpaid" id="unpaid" value="Y">
+	<input type="hidden" name="search_limit" id="cnt_search_unpaid" value="" />
+
+	
+	{? layout.login.info.ss_dept_code !='90'}
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col width="120px">
+			<col>
+			<col width="120px">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>상담팀</th>
+				<td colspan="3">
+					<div class="btn-group hmis blue" data-toggle="buttons">
+						<label class="btn"><input type="radio" name="team_code" value="" {? !search_unpaid.team_code}checked{/} data-role="search_unpaid" />전체</label>
+						{@ cfg.team}
+						<label class="btn"><input type="radio" name="team_code" value="{.key_}" {? search_unpaid.team_code==.key_}checked{/} data-role="search_unpaid" />{.value_}</label>
+						{/}
+					</div>
+				</td>
+				<!-- <th width="100">
+					<button type="button" class="btn btn-flat-blue" onClick="ConsultingDetailUnpaidList.excel();"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+				</th> -->
+
+			</tr>
+		</tbody>
+	</table>
+	{/}
+
+	<!-- <div id="detail-list-area" style="padding: 0;margin: 0;"></div> -->
+
+	<input type="hidden" name="page" value="{page}" />
+	<input type="hidden" name="type" value="{type}" />
+	<table class="table table-bordered table-responsive table-list table-striped table-hover" id="consulting_unpaid_detail">
+		<thead>
+			<tr>
+				<th rowspan="2">번호</th>
+				<th rowspan="2">상담팀</th>
+				<th rowspan="2">성명</th>
+				<th rowspan="2">유입경로</th>
+				<th rowspan="2">미디어코드</th>
+				<th rowspan="2">수술일</th>
+				<th rowspan="2">담당의</th>
+				<th rowspan="2">수술내용</th>
+				<th rowspan="2">OP매출액</th>
+				<th rowspan="2">OP총액</th>
+				<th rowspan="2">미수금</th>
+				<th colspan="3">수납방식</th>
+				<th rowspan="2">예치금</th>
+				<th rowspan="2">환불</th>
+			</tr>
+			<tr>
+				<th>현금</th>
+				<th>카드</th>
+				<th>계좌</th>
+				
+			</tr>
+		</thead>
+		<tbody id="consulting_team_detail_unpaid_list">
+		</tbody>
+	</table>
+</form>
+	<script language="javascript" src="/js/bootstrap.button.js"></script>
+	<script language="javascript" src="/js/template.js"></script>
+
+	<!-- 페이징:S -->
+	<div class="area-pagination" id="pagination_unpaid">
+	</div>
+	<!-- 페이징:E -->
+
+	<textarea id="tmpl_list_unpaid_total" style="display:none">
+		<tr>
+			<th colspan="8">총합</th>
+			<th>${HmisCommon.numberFormat(amount_basic)}</th>			<!-- 매출액 -->
+			<th>${HmisCommon.numberFormat(amount_paid)}</th>			<!-- op총액 -->
+			<th>${HmisCommon.numberFormat(amount_unpaid)}</th>			<!-- 미수금 -->
+			<th>${HmisCommon.numberFormat(amount_paid_cash)}</th>		<!-- 현금 -->
+			<th>${HmisCommon.numberFormat(amount_paid_card)}</th>		<!-- 카드 -->
+			<th>${HmisCommon.numberFormat(amount_paid_bank)}</th>		<!-- 계좌 -->
+			<th>${HmisCommon.numberFormat(amount_deposit)}</th>			<!-- 예치금 -->
+			<th>${HmisCommon.numberFormat(amount_refund)}</th>			<!-- 환불 -->
+		</tr>
+	</textarea>
+
+	<textarea id="tmpl_list_unpaid" style="display:none">
+		<tr>
+			<td style="background-color:${\bgcolor}">${\idx}</td>
+			<td style="background-color:${\bgcolor}">${\team_name}</td>
+			<td style="background-color:${\bgcolor}">${\name}</td>
+			<td style="background-color:${\bgcolor}">${\path_name}</td>
+			<td style="background-color:${\bgcolor}">${\media}</td>
+			<td style="background-color:${\bgcolor}">${\date_project}</td>
+			<td style="background-color:${\bgcolor}">${\doctor_name}</td>
+			<td style="background-color:${\bgcolor}">${\treat_nav}</td>
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_basic)}</td>			<!-- 매출액 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_paid)}</td>			<!-- op총액 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_unpaid)}</td>			<!-- 미수금 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_paid_cash)}</td>		<!-- 현금 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_paid_card)}</td>		<!-- 카드 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_paid_bank)}</td>		<!-- 계좌 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_deposit)}</td>			<!-- 예치금 -->
+			<td style="background-color:${\bgcolor}">${HmisCommon.numberFormat(amount_refund)}</td>			<!-- 환불 -->
+		</tr>
+	</textarea>
+
+	
+
+	<textarea id="tmpl_pagination_unpaid" style="display:none">
+		<ul class="pagination">
+			<li><a href="javascript:;" onclick="ConsultingDetailUnpaidList.loadDetail(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+			<li><a href="javascript:;" onclick="ConsultingDetailUnpaidList.loadDetail(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+			{for p in block}
+			<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="ConsultingDetailUnpaidList.loadDetail(${\p.num})">${\p.num}</a></li>
+			{/for}
+			<li><a href="javascript:;" onclick="ConsultingDetailUnpaidList.loadDetail(${\next})"><i class="fa fa-angle-right"></i></a></li>
+			<li><a href="javascript:;" onclick="ConsultingDetailUnpaidList.loadDetail(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+		</ul>
+	</textarea>
+
+
+
+<script type="text/javascript">
+var ConsultingDetailUnpaidList = {
+	page:1,
+	type:'{type}',
+	init: function() {
+		$('[data-role="search_unpaid"]').on('change.search_unpaid',function() {
+			ConsultingDetailUnpaidList.search();
+		});
+
+		this.loadDetail(1);
+	},
+	search: function() {
+		this.loadDetail(1);
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+
+	loadDetail: function(page){
+	
+		HmisLoading.show('#consulting_team_detail_unpaid_list');
+		var p = page || this.page;
+		this.setPage(p);
+
+		var me = this;
+		var search = $('#FrmConsultingSearch').serialize();
+		search += '&'+$('#FrmConsultingDetailUnpaidSearch').serialize();
+
+		$.ajax({
+			url:'/stats/consulting_team_detail_lists_paging',
+			data:{
+				limit:15,
+				type:this.type,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list_unpaid');
+				var tmpl_total = TrimPath.parseDOMTemplate('tmpl_list_unpaid_total');
+				var target = $('#consulting_team_detail_unpaid_list');
+				target.empty();
+
+				if(r.success) {
+					var html = '';
+
+					$.each(r.data.paid_total_list, function(i,e){
+						html += tmpl_total.process(e);
+					});
+
+
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+
+					
+					 //console.log(html);
+					target.append(html);
+				}
+				else {
+					var td_cnt = $('table#consulting_unpaid_detail > thead > tr > th').length;
+					target.append('<tr><td colspan="'+td_cnt+'">검색된 내역이 없습니다.</td></tr>');
+				}
+
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination_unpaid');
+				$('#pagination_unpaid').empty().append(tmpl_page.process(r.data.paging));
+
+				$('#cnt_search_unpaid').val(r.data.count.search);
+
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+
+	},
+	initDetail : function(){
+		var tmpl = TrimPath.parseDOMTemplate('tmpl_list_unpaid');
+		var target = $('#consulting_team_detail_unpaid_list');
+		target.empty();
+
+		var td_cnt = $('table#consulting_unpaid_detail > thead > tr > th').length;
+		target.append('<tr><td colspan="'+td_cnt+'">검색해 주세요.</td></tr>');
+
+	},
+	excel: function() {
+		//var limit = $('#cnt_search_unpaid').val();
+		//var search = $('#FrmConsultingSearch').serialize();
+		//	search += '&'+$('#FrmConsultingDetailUnpaidSearch').serialize();
+
+		//document.location.href="/stats/consulting_team_detail_lists_paging?mode=excel&"+search;
+
+		/*
+		if(limit > 500) {
+			HmisAlert.confirm("엑셀변환데이터가 500건 이상으로 다운로드 시간이 1분이상 소요될수 있습니다.<br />다운로드받으시겠습니까?", function(r) {
+				if(r) {
+					document.location.href = '/stats/excel?'+search;
+				}
+			})
+		}
+		else {
+			document.location.href = '/stats/excel?'+search;
+		}
+		*/
+
+
+		var p = page || this.page;
+		this.setPage(p);
+
+		var me = this;
+		var search = $('#FrmConsultingSearch').serialize();
+		search += '&'+$('#FrmConsultingDetailUnpaidSearch').serialize();
+
+		$.ajax({
+			url:'/stats/consulting_team_detail_lists_paging?mode=excel',
+			data:{
+				limit:$('#cnt_search_unpaid').val(),
+				type:this.type,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					var html = '';
+
+					$.each(r.data.paid_total_list, function(i,e){
+						html += tmpl_total.process(e);
+					});
+
+
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+
+					
+					 //console.log(html);
+					target.append(html);
+				}
+				else {
+					var td_cnt = $('table#consulting_unpaid_detail > thead > tr > th').length;
+					target.append('<tr><td colspan="'+td_cnt+'">검색된 내역이 없습니다.</td></tr>');
+				}
+
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination_unpaid');
+				$('#pagination_unpaid').empty().append(tmpl_page.process(r.data.paging));
+
+				$('#cnt_search_unpaid').val(r.data.count.search);
+
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+
+	},
+}
+
+$(function(){
+	ConsultingDetailUnpaidList.init();
+})
+
+</script>

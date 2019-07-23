@@ -1,0 +1,186 @@
+<div style="margin:20px">
+	<form id="FrmLogSearch" onsubmit="return false">
+	<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:120px" />
+			<col />
+			<col style="width:120px" />
+			<col />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>발송일</th>
+				<td colspan="3">
+					<input type="text" class="datepicker lg" name="reg_date_s" id="sdate_s" value="{=date('Y-m-d')}"> ~ <input type="text" class="datepicker lg" name="reg_date_e" value="{=date('Y-m-d')}" id="sdate_e">
+					<ul class="btn-group btn-group-xs">
+						<li onclick="SMSPopupLog.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+						<li onclick="SMSPopupLog.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+						<li onclick="SMSPopupLog.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+						<li onclick="SMSPopupLog.setDate('{cfg.date.yesterday}','{=cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+						<li onclick="SMSPopupLog.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+						<li onclick="SMSPopupLog.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<th>유형</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons">
+						<label class="btn active"><input type="radio" name="reserve_chk" value="" checked="" data-role="search">전체</label>
+						<label class="btn"><input type="radio" name="reserve_chk" value="N" data-role="search">즉시전송</label>
+						<label class="btn"><input type="radio" name="reserve_chk" value="Y" data-role="search">예약전송</label>
+					</div>
+				</td>
+				<th>검색</th>
+				<td>
+					<input type="text" name="word" class="full" placeholder="이름 or 휴대폰번호" >
+				</td>
+			</tr>
+		</tbody>
+
+
+	</table>
+
+	<div class="area-button">
+		<button type="submit" class="btn btn-lg btn-theme" onclick="SMSPopupLog.load(1)"><i class="fa fa-search"></i> 검색</button>
+		<button class="btn btn-lg btn-gray" onclick="SMSPopupLog.reset()">처음으로</button>
+
+		<button type="button" class="btn btn-lg btn-theme-dark" onclick="SMSPopupLog.sms()"><i class="fa fa-send" style="vertical-align:-1px"></i>문자보내기</button>
+
+	</div>
+
+	</form>
+
+	<!-- <div class="dashed"></div> -->
+
+	<h3 class="area-title">
+		발송 목록
+		<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 발송수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 발송수 <span id="cnt_total"class="f-bold">0</span>개</span>
+		<div class="button-box" style="top:0px">
+			<label class="hmis"><input type="checkbox" id="show_msg" class="hmis" /><span class="lbl"> 메세지전체보기</span></label>
+		</div>
+	</h3>
+	<table class="table table-bordered table-list table-striped table-hover">
+		<colgroup>
+			<col width="60px"><!-- 번호 -->
+			<col width="60px"><!-- 유형 -->
+			<col width="120px"><!-- 발송일 -->
+			<col width="120px"><!-- 발송번호 -->
+			<col /><!-- 메세지 -->
+			<col width="100px"><!-- 처리결과 -->
+		</colgroup>
+		<thead>
+			<tr>
+				<th>번호</th>
+				<th>유형</th>
+				<th>발송(예약)일시</th>
+				<th>발송번호</th>
+				<th>메세지</th>
+				<th>처리결과</th>
+			</th>
+		</thead>
+		<tbody id="appointment_inner">
+		</tbody>
+	</table>
+
+	<!-- 페이징:S -->
+	<div class="area-pagination" id="pagination"></div>
+	<!-- 페이징:E -->
+
+
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>{if reserve_chk == 'Y'}예약{\else}즉시{/if}</td>
+		<td>${\regdate}</td>
+		<td>${\mobile}</td>
+		<td style="text-align:left" ><div class="msg ellipsis" >${\msg}</div></td>
+		<td>{if status.code == '0000'}성공{\else}실패{/if}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="SMSPopupLog.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="SMSPopupLog.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="SMSPopupLog.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="SMSPopupLog.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="SMSPopupLog.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var SMSPopupLog = {
+	init: function() {
+		this.load();
+		$('#show_msg').on('click', SMSPopupLog.toggle);
+	},
+	toggle: function() {
+		var checked = $('#show_msg').is(':checked');
+		if(checked) $('.msg').removeClass('ellipsis');
+		else $('.msg').addClass('ellipsis');
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmLogSearch').serialize();
+
+		$.ajax({
+			url:'/sms/popup_log_inner',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#appointment_inner');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="6">검색된 예약정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				me.toggle();
+			}
+		})
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+	},
+	sms: function() {
+		document.location.href="/sms/popup"
+	},
+	reset: function(){
+		HmisCommon.formReset('FrmLogSearch');
+		this.load();
+	}
+}
+
+$(function() {
+	SMSPopupLog.init();
+})
+</script>

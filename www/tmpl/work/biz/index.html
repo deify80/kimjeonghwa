@@ -1,0 +1,401 @@
+<h3 class="area-title">{? cfg.work_type=='D'}일일{:}주간{/}보고 검색</h3>
+<form id="FrmBizSearch" onsubmit="return false">
+<input type="hidden" name="page" value="{page}" />
+<input type="hidden" name="type" value="{cfg.work_type}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		{? layout.login.info.ss_duty_code>7 || layout.login.info.ss_user_no =='99'}
+		<tr>
+			<th>부서</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn {? search.dept_code =='all'}active{/}"><input type="radio" name="dept_code" value="all"  data-role="search" {? search.dept_code =='all'}checked{/} /><span>전체</span></label>
+					{@ cfg.dept}
+					<label class="btn {? search.dept_code ==.key_}active{/}"><input type="radio" name="dept_code" value="{.key_}"  data-role="search" {? search.dept_code ==.key_}checked{/} /><span>{.value_}</span></label>
+					{/}
+				</div>
+				<span class="split"> | </span>
+				<div class="btn-group hmis orange" data-toggle="buttons" id="team_code_wrap">
+					<label class="btn {? search.team_code =='all'}active{/}"><input type="radio" name="team_code" value="all"  data-role="search" {? search.team_code =='all'}checked{/}  /><span>전체</span></label>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>진행율</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn {? search.status =='all'}active{/}"><input type="radio" name="status" value="all"  data-role="search" {? search.status =='all'}checked{/} /><span>전체</span></label>
+					{@ cfg.work_status}
+					<label class="btn {? search.status ===.key_}active{/}"><input type="radio" name="status" value="{.key_}"  data-role="search" {? search.status ===.key_}checked{/} /><span>{.value_}</span></label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>사업장</th>
+			<td>
+				<select name="biz_id" data-role="search">
+					<option value="">-전체-</option>
+					{@ cfg.biz}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>직책</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="all">
+					<label class="btn {? search.duty_code =='all'}active{/}"><input type="radio" name="duty_code" value="all" data-role="search" {? search.duty_code =='all'}checked{/} /><span>전체</span></label>
+					{@ cfg.duty}
+					<label class="btn {? search.duty_code ==.key_}active{/}"><input type="radio" name="duty_code" value="{.key_}" data-role="search" {? search.duty_code ==.key_}checked{/} /><span>{.value_}</span></label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		{/}
+		<tr>
+			<th>등록기간</th>
+			<td>
+				<input type="text" name="date_s" id="date_s" class="datepicker lg"> ~ <input type="text" name="date_e" id="date_e" class="datepicker lg">
+			</td>
+
+			<th>직원명</th>
+			<td>
+				<input type="text" name="word" class="full">
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="WorkBiz.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="WorkBiz.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	{? cfg.work_type=='D'}일일{:}주간{/}보고 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 업무보고 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 업무보고 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="WorkBiz.input()"><i class="fa fa-pencil fa-1"></i> 업무보고등록</button>
+	</div>
+</h3>
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px" /><!-- 번호 -->
+		<col style="width:120px" /><!-- 구분 -->
+		<col /><!-- 제목 -->
+		<col style="width:120px" /><!-- 등록일 -->
+		<col style="width:120px" /><!-- 부서명 -->
+		<col style="width:120px" /><!-- 팀명 -->
+		<col style="width:100px" /><!-- 이름 -->
+		<col style="width:100px" /><!-- 진행율 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>구분</th>
+			<th>제목</th>
+			<th>등록일</th>
+			<th>부서명</th>
+			<th>팀명</th>
+			<th>이름</th>
+			<th>진행율</th>
+		</tr>
+	</thead>
+	<tbody id="biz_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td>{if type=='D'}일일업무{\else}주간업무{/if}</td>
+		<td class="left"><a href="javascript:;" onclick="WorkBiz.view('${\biz_seqno}')" class="link">${\title}</a></td>
+		<td>${\reg_date}</td>
+		<td>${\dept_name}</td>
+		<td>${\team_name}</td>
+		<td>${\name}</td>
+		<td>${\status_txt}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="WorkBiz.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="WorkBiz.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="WorkBiz.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="WorkBiz.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="WorkBiz.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var WorkBiz = {
+	page:1,
+	init: function() {
+		$('input[name="dept_code"]').change(function() {
+			WorkBiz.loadTeam($(this).val());
+		});
+
+		$('[data-role="search"]').on('change.search',function() {
+			WorkBiz.setPage(1);
+			WorkBiz.load();
+		});
+
+		WorkBiz.loadTeam('{search.dept_code}');
+		HmisCommon.createDatepicker();
+	},
+	view: function(biz_seqno) {
+		document.location = "/work/biz_log_view/{cfg.work_type}/"+biz_seqno;
+	},
+	input: function() {
+		document.location = "/work/biz_log_input/{cfg.work_type}";
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmBizSearch');
+		this.load(1);
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	load: function(page) {
+		var p = page || this.page;
+		this.setPage(p);
+
+		var me = this;
+		var search = $('#FrmBizSearch').serialize();
+
+		HmisLoading.show('#biz_list');
+
+		$.ajax({
+			url:'/work/bizlog_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#biz_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="8">검색된 업무보고가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+				HmisLoading.hide();
+			}
+		})
+	},
+	loadTeam: function(dept_code) {
+
+		var sb_team = $('#team_code_wrap');
+		sb_team.find('label:gt(0)').remove();
+
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+
+				if(r.success){
+					var team_code = '{search.team_code}';
+
+					$.each(r.data, function(i,e){
+						var checked = (team_code==i)?'checked':'';
+						var active = (team_code==i)?'active':'';
+						var label = '<label class="btn '+active+'" data-team="'+i+'"><input type="radio" name="team_code" value="'+i+'"  onchange="WorkBiz.load(1)"  '+checked+'/><span>'+e+'</span></label>'
+						sb_team.append(label);
+					});
+
+					if(team_code == 'all' || sb_team.find('label.active').length<1) {
+						sb_team.find('label:eq(0)').trigger('click');
+					}
+					else {
+						sb_team.find('label[data-team="'+team_code+'"]').trigger('click');
+					}
+					//sb_team.css('display','');
+				}
+				else {
+					//sb_team.val('').css('display','none');
+				}
+
+				WorkBiz.load(1);
+			},
+			complete: function(){
+				// UserList.load($('input[name="page"]').val());
+			}
+		});
+	}
+}
+
+$(document).ready(function() {
+	WorkBiz.init();
+
+
+	// set_list();
+
+	// $("#bt-new").button("option", "icons", {
+	// 	primary : "ui-icon-document"
+	// });
+
+
+	// open_calendar("#srch_start_date");
+	// open_calendar("#srch_end_date");
+
+	// $( ".radio" ).buttonset();
+
+	// $( ".radio" ).change(function() {
+	// 	grid_reload();
+	// });
+});
+
+// function set_list() {
+// 	$("#list").jqGrid(
+// 			{
+// 				width : 1200,
+// 				height :'auto',
+// 				url : "/work/biz_log_lists/<?=$work_type?>",
+// 				datatype : "json",
+// 				colNames:['번호','구분','제목', '등록일', '부서명', '팀명','이름','진행율','biz_seqno'],
+// 				colModel : [ {
+// 					name : "no",
+// 					index : "no",
+// 					width : 25,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "type",
+// 					index : "type",
+// 					width : 50,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "title",
+// 					index : "title",
+// 					width : 120,
+// 					align : "left",
+// 					sortable:false
+// 				}, {
+// 					name : "work_date",
+// 					index : "work_date",
+// 					width : 50,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "dept_code",
+// 					index : "dept_code",
+// 					width : 55,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "team_code",
+// 					index : "team_code",
+// 					width : 50,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "name",
+// 					index : "name",
+// 					width : 40,
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "status",
+// 					index : "status",
+// 					width : 50,
+// 					classes: "grid-col-last",
+// 					align : "center",
+// 					sortable:false
+// 				}, {
+// 					name : "biz_seqno",
+// 					index : "biz_seqno",
+// 					width : 50,
+// 					hidden:true
+// 				}
+// 				],
+// 				onSelectRow :  function(id) {
+// 					go_view(id);
+// 				},
+// 				rowNum : 20,
+// 				rowList : [ 10, 20, 30 ],
+// 				pager : "#pager",
+// 				viewrecords : true,
+// 				sortorder : "desc",
+// 				caption : "목록"
+// 			});
+
+// 	$("#list").jqGrid("navGrid", "#pager", {
+// 		edit : false,
+// 		add : false,
+// 		del : false,
+// 		search : false
+// 	});
+// 	$("#list").jqGrid('inlineNav', "#pager",  { edit: false});
+
+// }
+
+
+
+// function grid_reload() {
+// 	var data = $("#srch-frm").serialize();
+// 	var url = "/work/biz_log_lists/<?=$work_type?>/?" + data;
+
+// 	$("#list").jqGrid("setGridParam", {
+// 		url : url,
+// 		page : 1
+// 	}).trigger("reloadGrid");
+// }
+
+// function go_input() {
+// 	document.location = "/work/biz_log_input/<?=$work_type?>";
+// }
+
+// function go_view(id) {
+// 	document.location = "/work/biz_log_view/<?=$work_type?>/"+id;
+// }
+
+</script>

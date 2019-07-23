@@ -1,0 +1,532 @@
+<h3 class="area-title">입출금 검색</h3>
+<form id="FrmInoutSearch" onsubmit="return false">
+<input type="hidden" name="page" value="{page}" />
+<input type="hidden" name="grant_biz" value="{layout.page.grant_biz}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>입/출금일자</th>
+			<td colspan="7">
+				<select name="plan_date[year]" id="search_year" data-role="date" data-default="{=date('Y')}">
+					{@ range(date('Y')-2, date('Y')+5)}
+					<option value="{.value_}" {? search.plan_date.year==.value_}selected{/}>{.value_}년</option>
+					{/}
+				</select>
+
+				<select name="plan_date[month]" id="search_month" data-role="date" data-default="{=date('m')}">
+					{@ range(1,12)}
+					<option value="{=str_pad(.value_,2,'0',C.STR_PAD_LEFT)}" {? search.plan_date.month==str_pad(.value_,2,'0',C.STR_PAD_LEFT)}selected{/}>{.value_}월</option>
+					{/}
+				</select>
+
+				<ul class="btn-group btn-group-xs" id="search_days">
+					
+				</ul>
+				<span class="split">|</span>
+				<ul class="btn-group btn-group-xs" id="search_weeks">
+					
+				</ul>
+
+			</td>
+		</tr>
+		<tr>
+			<th>기간검색</th>
+			<td colspan="7">
+				<input type="text" name="plan_date_s" id="plan_date_s" value="{search.plan_date_s}" class="datepicker lg" /> ~ <input type="text" name="plan_date_e" id="plan_date_e" value="{search.plan_date_e}" class="datepicker lg" />
+				<ul class="btn-group btn-group-xs">
+					<li onclick="FinanceInout.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="FinanceInout.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="FinanceInout.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="FinanceInout.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="FinanceInout.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="FinanceInout.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+
+
+
+
+		<tr>
+			<th>계좌/카드명</th>
+			<td >
+				<select name="bank_code" data-role="search" >
+					<option value="">::계좌/카드선택::</option>
+					{@ cfg.account}
+					<option value="{.account_seqno}" {? search.account_seqno==.account_seqno}selected{/}>{.account_name}</option>
+					{/}
+				</select>
+			</td>
+			<th>구분</th>
+			<td>
+				<select name="bank_code" data-role="search" >
+					<option value="">::구분::</option>
+					<option value="C">현금</option>
+					<option value="A">계좌</option>
+					<option value="D">카드</option>
+				</select>
+			</td>	
+			<th>사업장</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.biz_id}active{/}"><input type="radio" name="biz_id" value="" {? !search.biz_id}checked{/} data-role="search" />전체</label>
+					{@ cfg.biz}
+					<label class="btn {? search.biz_id==.kye_}active{/}"><input type="radio" name="biz_id" value="{.key_}" data-role="search" />{.value_}</label>
+					{/}	
+				</div>
+			</td>
+		</tr>
+		
+		<tr>
+			<th>금융기관/카드사</th>
+			<td>
+				<select name="bank_code" data-role="search" >
+					<option value="">::금융기관/카드사선택::</option>
+					{@ cfg.bank}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+			</td>
+			
+			<th>처리방식</th>
+			<td colspan="5">
+				<select name="process_category"  data-role="search">
+					<option value="" {? !search.process_category}selected{/}>::처리방식::</option>
+					<option value="0" {? search.process_category=='0'}selected{/}>자금출금</option>
+					<option value="1" {? search.process_category=='1'}selected{/}>자금이체</option>
+					<option value="2" {? search.process_category=='2'}selected{/}>자동이체</option>
+					<option value="3" {? search.process_category=='3'}selected{/}>잔액이체</option>
+					<option value="4" {? search.process_category=='4'}selected{/}>입금</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>입/출금</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.statement_type}active{/}"><input type="radio" name="statement_type" value="" {? !search.statement_type}checked{/} data-role="search" />전체</label>
+					<label class="btn {? search.statement_type=='I'}active{/}"><input type="radio" name="statement_type" value="I" {? search.statement_type=='I'}checked{/} data-role="search" />입금</label>
+					<label class="btn {? search.statement_type=='O'}active{/}"><input type="radio" name="statement_type" value="O" {? search.statement_type=='O'}checked{/} data-role="search" />출금</label>
+				</div>
+			</td>
+			<th>분류</th>
+			<td colspan="3">
+				<select name="classify_code" data-role="search">
+					<option value="">::분류::</option>
+					{@ cfg.classify.all}
+					<option value="{.code}" data-group="{.group_code}">{.title}</option>
+					{/}
+				</select>
+				<select name="item_code" id="sb_search_item" style="display:none" data-role="search">
+					<option value="">::항목::</option>
+				</select>
+			</td>
+			
+		</tr>
+		
+		<tr>
+			<th>검색</th>
+			<td colspan="7">
+				<input type="text" name="word" class="full" placeholder="거래처 or 거래상세" value="{search.word}" />
+			</td>
+		</tr>
+		
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="FinanceInout.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="FinanceInout.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<style>
+.narrow div.main-box{
+	margin-bottom:10px;
+	margin-right:5px;
+}
+.narrow div.infographic-box.sub{
+	padding-left:7px;
+	font-size:12px;
+	line-height:16px;
+	padding-right:7px;
+}
+</style>
+<div class="row narrow" style="margin-top:10px">
+	<div class="main-box infographic-box colored f-14" style="background-color:#29B6F6;">
+		총 입금액 <span id="sum_I_total" class="f-14">0</span>
+	</div>
+	{@ cfg.classify.in}
+	<div class="main-box infographic-box colored f-14 sub" style="background-color:#EFEFEF;color:#039BE5;margin-bottom:5px;">
+		{.title} <span id="sum_I_{.code}">0</span>
+	</div>
+	{/}
+</div>
+<div class="row narrow" style="margin-top:0px">
+	<div class="main-box infographic-box colored f-14" style="background-color: #FF7043;">
+		총 출금액 <span id="sum_O_total" class="f-14">0</span>
+	</div>
+	{@ cfg.classify.out}
+	<div class="main-box infographic-box colored f-14 sub" style="background-color:#EFEFEF;color:#FF7043;margin-bottom:5px;">
+		{.title} <span id="sum_O_{.code}">0</span>
+	</div>
+	{/}
+</div>
+
+<h3 class="area-title">
+	입출금 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 입출금 <span id="cnt_search" class="f-bold  f-error">0</span>건 <span class="split">|</span> 총 입출금 <span id="cnt_total"class="f-bold">0</span>건
+	</span>
+	
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onclick="FinanceInout.input('I')"><i class="fa fa-plus fa-1"></i> 입금등록</button>
+		<button type="button" class="btn btn-flat-orange" onclick="FinanceInout.input('O')"><i class="fa fa-minus fa-1"></i> 출금등록</button>
+		<span class="split">|</span>
+		<button type="button" class="btn btn-flat-purple" onclick="FinanceInout.remove()"><i class="fa fa-trash fa-1"></i> 삭제</button>
+	</div>
+</h3>
+<table id="table_patient" class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="100px"><!-- 입출금일 -->
+		<col width="100px"><!-- 사업장 -->
+		<col width="200px"><!-- 분류 -->
+		<col width="150px"><!-- 계좌명 -->
+		<col width="150px"><!-- 금융기관/카드사 -->
+		<col width="70px"><!-- 구분 -->
+		<col style="width:150px"><!-- 거래처 -->
+		
+		<col width="100px"><!-- 입/출금액 -->
+		<col width="100px"><!-- 카드금액 -->
+
+		<col width="100px"><!-- 처리방식 -->
+		<col><!-- 거래상세내역 -->
+		<col width="100px"><!-- 등록일 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th>입/출금일</th>
+			<th>사업장</th>
+			<th>분류</th>
+			<th>계좌/카드명</th>
+			<th>금융기관/카드사</th>
+			<th>구분</th>
+			<th>거래처</th>
+			
+			<th>입/출금액</th>
+			<th>카드금액</th>
+
+			<th>처리방식</th>
+			<th>거래상세내역</th>
+			<th>등록일</th>
+		</tr>
+	</thead>
+	<tbody id="inout_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\seqno}" data-kind="${\statement_type}" data-referer="${\referer}">
+		<td>${\idx}</td>
+		<td data-link="no"><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${\seqno}"><span class="lbl"></span></label></td>
+		<td>${\plan_date}</td>
+		<td>${\biz_name}</td>
+		<td>${\category}</td>
+		<td>${\account['account_name']}</td>
+		<td>${\account['name']}</td>
+		<td>${\account_type_txt}</td>
+		<td>${\trade_customer}</td>
+		<td>{if statement_type=='I'} <span class="f-blue">+${\amount} </span>  {\else} <span class="f-error"> ${\amount} </span> {/if}</td>
+		<td>{if statement_type=='I'} <span class="f-blue">+${\amount} </span>  {\else} <span class="f-error"> ${\amount} </span> {/if}</td>
+		<td>${\process_category_txt}</td>
+		<td class="left">${\info}</td>
+		<td>${\date_insert}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="FinanceInout.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="FinanceInout.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="FinanceInout.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="FinanceInout.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="FinanceInout.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var FinanceInout = {
+	init: function() {
+		this.load($('input[name="page"]').val());
+		this.setSearch();
+		$('[data-role="search"]').on('change',function(i,e) {
+			FinanceInout.setPage(1);
+			FinanceInout.load();
+
+			switch (this.name) {
+				case 'classify_code':
+					FinanceInout.loadItem($(this).find('option:selected').val());
+				break;
+				case 'statement_type':
+					var sb = $('select[name="classify_code"]');
+					sb.find('option').show();
+					switch (this.value) {
+						case 'I':
+							sb.find('option[data-group="12"]').hide();
+
+						break;
+						case 'O':
+							sb.find('option[data-group="11"]').hide();
+						break;
+					}
+					sb.find('option:first').attr('selected',true);
+					sb.trigger('change');
+				break;
+			}
+
+		});
+
+		$('[data-role="date"]').on('change',function(i,e) {
+			FinanceInout.setSearch();
+		});
+
+		HmisCommon.createDatepicker();
+	},
+	setSearch: function() {
+		var year = $('#search_year').val();
+		var month = $('#search_month').val();
+		$.ajax({
+			url:'/finance_proc/calc_date',
+			data:{
+				year:year,
+				month:month
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				//날짜정보
+				var el_days = $('#search_days');
+				el_days.find('li').remove();
+
+				//월전체
+				var li = $('<li />');
+				li.on('click', function() {FinanceInout.setDate(r.data.month.start,r.data.month.end);});
+				li.append('<a href="javascript:;">전체</a>');
+				el_days.append(li);
+
+				$.each(r.data.days, function(i,e){
+					var li = $('<li />');
+					li.on('click', function() {
+						FinanceInout.setDate(e.date,e.date);
+					})
+					
+					li.append('<a href="javascript:;"  data-toggle="tooltip" title="'+e.w_name+'">'+e.d+'</a>');
+					el_days.append(li);
+				})
+
+				//주차정보
+				var el_weeks = $('#search_weeks');
+				el_weeks.find('li').remove();
+				$.each(r.data.weeks, function(i,e){
+					
+					var li = $('<li />');
+					li.on('click', function() {
+						FinanceInout.setDate(e.start,e.end,'plan_date_s','plan_date_e');
+					})
+					
+					li.append('<a href="javascript:;"  data-toggle="tooltip" title="'+e.start+'~'+e.end+'">'+i+'주차</a>');
+					el_weeks.append(li);
+					
+				})
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		});
+	},
+	setDate: function(ds,de) {
+		HmisCommon.setDate(ds,de,'plan_date_s','plan_date_e');
+		FinanceInout.setPage(1);
+		FinanceInout.load();
+	},
+	createClick: function() {
+		$('#inout_list > tr > td[data-link!="no"]').on('click',function() {
+			var parent = $(this).parents();
+			if(parent.data('referer') == 'report') {
+				HmisAlert.alert('결재승인된 출금내역은 수정할 수 없습니다.');
+			}
+			else {
+				FinanceInout.input(parent.data('kind'),parent.data('no'));	
+			}
+			
+		})
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	reload: function(){
+		FinanceInout.load(FinanceInout.page);
+	},
+	load: function(page) {
+		var p = page || this.page;
+		FinanceInout.setPage(p);
+
+		var me = this;
+		
+		var search = $('#FrmInoutSearch').serialize();
+
+		HmisLoading.show('#inout_list');
+		$.ajax({
+			url:'/finance/inout_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#inout_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);	
+				}
+				else {
+					//target.append('<tr><td colspan="14">'+r.msg+'</td></tr>');
+					target.append('<tr><td colspan="14">검색된 정보가 없습니다.</td></tr>');
+				}
+
+				//페이징랜더링
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+
+				//검색결과갯수
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				
+				//입출금 총액
+				$('span[id^="sum_"]').html('0');
+				$.each(r.data.sum , function(type,e) {
+					$.each(e, function(code, amount) {
+						$("#sum_"+type+'_'+code).html(HmisCommon.numberFormat(Math.abs(amount)));
+					})
+					
+				})
+				// $('#sum_in_total').html(HmisCommon.numberFormat(r.data.sum.sum_in));
+				// $('#sum_out_total').html(HmisCommon.numberFormat(Math.abs(r.data.sum.sum_out)));
+
+
+				me.createClick();
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	input: function(statement_type, no) {
+		var type_str = (statement_type=='I')?'입금':'출금';
+		var title = (no)?'수정':'등록';
+		var modal = new HmisModal('inout_input', {width:800, top:200});
+		modal.callback = FinanceInout.reload;
+		modal.open(type_str+title,'/finance/inout_input', {statement_type:statement_type, no:no});
+	},
+	loadItem: function(parent_code) {
+		// var parent_code = $('#sb_search_classify').val();
+		var sb_item = $('#sb_search_item');
+		$.ajax({
+			url:'/finance/category_list',
+			data:{
+				kind:'item',
+				parent_code:parent_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+
+					sb_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (e.code == '{rs.item_code}')?'selected':'';
+						sb_item.append('<option value="'+e.code+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb_item.css('display','');					
+				}
+				else {
+					sb_item.val('').css('display','none');	
+				}
+			}
+		});
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmInoutSearch');
+		$('#sb_search_item').css('display','none');
+		this.load(1);
+	},
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 입출금내역을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var inout = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/finance_proc/remove_inout',
+					data:{
+						inout_no:inout
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							me.reload();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})	
+			}
+		});
+	},
+	
+}
+
+$(function() {
+	FinanceInout.init();
+})
+</script>

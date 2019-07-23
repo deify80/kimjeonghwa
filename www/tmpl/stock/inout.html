@@ -1,0 +1,341 @@
+<h3 class="area-title">입고/사용 검색</h3>
+<form id="FrmInoutSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="{cfg.group}" />
+<input type="hidden" name="limit" value="" />
+<input type="hidden" name="type" value="inout" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>입고/사용일</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="InoutList.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="InoutList.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="InoutList.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="InoutList.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="InoutList.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="InoutList.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+			<th>현황</th>
+			<td>
+				<label class="hmis"><input type="radio" name="kind" value="all" class="hmis" checked data-role="search" /><span class="lbl"> 전체</span></label>
+				<label class="hmis"><input type="radio" name="kind" value="in" class="hmis" data-role="search" /><span class="lbl"> 입고</span></label>
+				<label class="hmis"><input type="radio" name="kind" value="out" class="hmis" data-role="search" /><span class="lbl"> 사용</span></label>
+				<label class="hmis"><input type="radio" name="kind" value="sale" class="hmis" data-role="search" /><span class="lbl"> 판매</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>항목</th>
+			<td>
+				<select name="classify_code" onchange="InoutList.loadItem(this.value)" data-role="search">
+					<option value="">::분류선택::</option>
+					{@ cfg.classify}
+					<option value="{.key_}" {? rs.classify_code==.key_}selected{/} >{.name}</option>
+					{/}
+				</select>
+				<select name="item_code" id="sb_search_item" style="display:none" data-role="search">
+					<option value="">::항목 선택::</option>
+				</select>
+			</td>
+			<th>과목</th>
+			<td>
+				<label class="hmis"><input type="radio" name="category_no" value="all" class="hmis" checked data-role="search" /><span class="lbl"> 전체</span></label>
+				{@ cfg.category_subject}
+					<label class="hmis"><input type="radio" name="category_no" value="{.no}" class="hmis" data-role="search" /><span class="lbl">{.name}</span></label>
+				{/}
+			</td>
+		</tr>
+		<tr>
+			<th>검색어</th>
+			<td colspan="3"><input type="text" name="word" style="width:100%" placeholder="품목명 or 요청자 or 담당자"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="InoutList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="InoutList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<style>
+.narrow div.main-box{
+	margin-bottom:10px;
+	margin-right:5px;
+}
+.narrow div.infographic-box.sub{
+	padding-left:7px;
+	font-size:12px;
+	line-height:16px;
+	padding-right:7px;
+}
+</style>
+<!-- <div class="row narrow" style="margin-top:10px">
+	<div class="main-box infographic-box colored f-14" style="background-color:#29B6F6;">
+		총 입고액 <span id="sum_in_total" class="f-14">0</span>
+	</div>
+	{@ cfg.classify}
+	<div class="main-box infographic-box colored f-14 sub" style="background-color:#EFEFEF;color:#039BE5;margin-bottom:5px;">
+		{.name} <span id="sum_in_{.key_}">0</span>
+	</div>
+	{/}
+</div>
+<div class="row narrow" style="margin-top:0px">
+	<div class="main-box infographic-box colored f-14" style="background-color: #FF7043;">
+		총 사용액 <span id="sum_out_total" class="f-14">0</span>
+	</div>
+	{@ cfg.classify}
+	<div class="main-box infographic-box colored f-14 sub" style="background-color:#EFEFEF;color:#FF7043;margin-bottom:5px;">
+		{.name} <span id="sum_out_{.key_}">0</span>
+	</div>
+	{/}
+</div> -->
+
+<h3 class="area-title">
+	입고/사용 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 입고/사용 내역 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 입고/사용 내역 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="InoutList.addInput('in')"><i class="fa fa-sign-in fa-1"></i> 입고 등록</button>
+		<button class="btn btn-flat-orange" onclick="InoutList.addInput('out')"><i class="fa fa-sign-out fa-1"></i> 사용 등록</button>
+		{? auth.goods_down}
+		<span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="InoutList.excel()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+		{/}
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="80px"><!-- 유형 -->
+		<col width="100px"><!-- 입고/사용일 -->
+		<col width="120px"><!-- 환자명 -->
+		<col width="120px"><!-- 과목 -->
+		<col width="120px"><!-- 분류 -->
+		<col width="120px"><!-- 항목 -->
+		<col ><!-- 품목명 -->
+		<col width="80px"><!-- 단위 -->
+		<col width="110px"><!-- 단가 -->
+		<col width="80px"><!-- 수량 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>유형</th>
+			<th>입고/사용일</th>
+			<th>환자명</th>
+			<th>과목</th>
+			<th>분류</th>
+			<th>항목</th>
+			<th>품목명</th>
+			<th>단위</th>
+			<th>단가</th>
+			<th>수량</th>
+		</tr>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${\no}"><span class="lbl"></span></td>
+		<!-- <td><span class="label {if kind == 'in'} label-normal {else} label-error {/if}">${kind_txt}</span></td> -->
+		<td><span class="label {if kind == 'in'} label-normal {\else} {if kind == 'out'} label-error {\else} label-theme {/if} {/if}">${\kind_txt}</span></td>
+		<td>${\date_inout}</td>
+		<td></td>
+		<td>${\category_name}</td>
+		<td>${\classify_name}</td>
+		<td>${\item_name}</td>
+		<td><a href="javascript:;" onclick="InoutList.modifyInput('${\no}')" class="link">${\goods_name}</a></td>
+		<td>${\unit}</td>
+		<td>${HmisCommon.numberFormat(unit_price)}</td>
+		<td>${\qty}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="InoutList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="InoutList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="InoutList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<link rel="stylesheet" href="/lib/js/colorbox/colorbox.css?<?=time()?>" />
+<script src="/lib/js/colorbox/jquery.colorbox-min.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+
+<script type="text/javascript">
+var InoutList = {
+	page:1,
+	group_code:"{cfg.group}",
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+
+		$('[data-role="search"]').on('change.search',function() {
+			InoutList.load();
+		});
+
+
+	},
+	reset: function() {
+		$('#FrmInoutSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	addInput: function(kind) {
+		var title = (kind == 'in')?'입고 등록':'사용 등록';
+		var modal = new HmisModal('inout_input', {width:600, top:200});
+		modal.callback = function() {
+			InoutList.reload();
+		}
+		modal.open(title,'/stock/inout_input',{kind:kind, group_code:this.group_code});
+	},
+	modifyInput: function(inout_no) {
+		var title = '입고/사용 내역 수정';
+		var modal = new HmisModal('inout_input', {width:600, top:200});
+		modal.callback = function() {
+			InoutList.reload();
+		}
+		modal.open(title,'/stock/inout_input',{inout_no:inout_no});
+	},
+	attachPreview: function(no) {
+		alert(no);
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmInoutSearch').serialize();
+
+		HmisLoading.show('#team_list');
+
+		$.ajax({
+			url:'/stock/inout_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html = tmpl.process(e);
+						target.append(html);
+					});
+
+				}
+				else {
+					target.append('<tr><td colspan="13">검색된 입고/사용 내역이 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				//입출고액
+				$.each($('span[id^="sum_"]'), function(i,e) {
+					$(this).text('0'); //입출고액 초기화
+				});
+				$.each(r.data.sum, function(type,e) {
+					$.each(e, function(code, row) {
+						$('#sum_'+type+'_'+code).text(HmisCommon.numberFormat(row));
+					})
+				})
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	loadItem: function(classify_code) {
+		var sb_search_item = $('#sb_search_item');
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:this.group_code+'_'+classify_code,
+				is_use:'Y'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_search_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						sb_search_item.append('<option value="'+e.code+'" '+selected+'>'+e.name+'</option>');
+					});
+					sb_search_item.css('display','');
+				}
+				else {
+					sb_search_item.val('').css('display','none');
+				}
+			}
+		});
+	},
+	excel: function() {
+		var limit = $('#cnt_search').html().replace(/[^0-9]/gi,'');
+		$('#FrmInoutSearch input[name="limit"]').val(limit);
+
+		var search = $('#FrmInoutSearch').serialize();
+
+		if(limit > 500) {
+			HmisAlert.confirm("엑셀변환데이터가 500건 이상으로 다운로드 시간이 1분이상 소요될수 있습니다.<br />다운로드받으시겠습니까?", function(r) {
+				if(r) {
+					document.location.href = '/stock/excel?'+search;
+				}
+			})
+		}
+		else {
+			document.location.href = '/stock/excel?'+search;
+		}
+	},
+	
+}
+
+$(function() {
+	InoutList.init();
+})
+</script>

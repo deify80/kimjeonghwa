@@ -1,0 +1,97 @@
+<h3 class="area-title">발주서 검색</h3>
+<form id="FrmOrderListSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>처리상태</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn {? !search.status}active{/}"><input type="radio" name="status" value="" {? !search.status}checked{/} data-role="search" />전체</label>
+					{@ cfg.status}
+					<label class="btn {=checked(search.status,.key_,'active')}"><input type="radio" name="status" value="{.key_}" {=checked(search.status,.key_,'checked')} data-role="search" />{.value_}</label>
+					{/}
+				</div>
+			</td>
+			<th>발주날짜</th>
+			<td>
+				<input type="text" name="date_s" id="sdate_s"  class="datepicker lg" value="{search.date_s}" data-default="{=date('Y-m-d')}" /> ~ <input type="text" name="date_e" id="sdate_e"  class="datepicker lg" value="{search.date_e}"data-default="{=date('Y-m-d')}"  />
+
+				<ul class="btn-group btn-group-xs">
+					<li onclick="OrderLists.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="OrderLists.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="OrderLists.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+<h3 class="area-title">
+	발주서목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">
+
+		검색된 발주서 <span id="cnt_search" class="f-bold  f-blue">0</span>개
+		<span class="split">|</span>
+		총 발주서 <span id="cnt_total"class="f-bold">0</span>개
+	</span>
+
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="OrderLists.input();"><i class="fa fa-plus" style="vertical-align: middle"></i> 발주서등록</button>
+	</div>
+</h3>
+
+
+<div id="inner"></div>
+
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var OrderLists = {
+	page:1,
+	init: function() {
+		this.load(1);
+	},
+	load: function(page) {
+		var p = page || this.page;
+		var search = $('#FrmOrderListSearch').serialize();
+		$('#inner').load('/stock/order_lists_inner', {page:p, search:search}, function() {
+			OrderLists.page = p;
+		})
+	},
+	reset: function() {
+		$('#FrmOrderListSearch')[0].reset();
+		this.load(1);
+	},
+	input: function(no) {
+		var title = '발주서 확인';
+		var modal = new HmisModal('order_input', {width:800});
+		modal.callback = this.reload;
+		modal.open(title,'/stock/order_view',{no:no});
+
+		//document.location.href="/stock/order_form";
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		//this.load(1);
+	},
+}
+
+$(function() {
+	OrderLists.init();
+})
+</script>

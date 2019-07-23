@@ -1,0 +1,384 @@
+{? mode == 'insert' }
+<form id="FrmInoutInputSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>물품명</th>
+			<td>
+				<div>
+					<input type="search" name="goods_name" id="search_goods_name" style="width:300px" autocomplete="off" /> 
+					<button type="submit" class="btn btn-flat-blue"  onclick="InoutInput.search()"><i class="fa fa-search fa-1"></i> 검색</button>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<div class="dashed" style="margin:10px 0px"></div>
+{/}
+
+
+<form id="FrmInoutInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="group_code" value="{rs.group_code}" data-group="search_rs" />
+<input type="hidden" name="inout_no" value="{rs.no}" /><!-- 입출고Pk -->
+<input type="hidden" name="no" id="goods_no" value="{rs.goods_no}" data-group="search_rs" /><!-- 물품PK -->
+<input type="hidden" name="biz_id" value="{rs.biz_id}" /> 
+<input type="hidden" name="kind" value="{rs.kind}" />
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>물품명</th>
+			<td>
+				<input type="text" name="goods_name" value="{rs.goods_name}" class="validate[required] transparent full" readonly placeholder="물품명을 검색하세요." data-group="search_rs" data-errormessage-value-missing="물품명을 검색하세요." data-promptposition="topLeft"  /> 
+			</td>
+		</tr>
+		<!-- <tr>
+			<th>분류</th>
+			<td>
+				<input type="text" name="classify_name" value="{rs.classify_name}" class="transparent full" readonly placeholder="물품명을 검색하세요." data-group="search_rs" /> 
+			</td>
+			<th>항목</th>
+			<td>
+				<input type="text" name="item_name" value="{rs.item_name}" class="transparent full" readonly placeholder="물품명을 검색하세요." data-group="search_rs" /> 
+			</td>
+		</tr>
+		<tr>
+			<th>단가</th>
+			<td>
+				<input type="text" name="unit_price" value="{rs.unit_price}" class="transparent full" readonly placeholder="물품명을 검색하세요." data-group="search_rs" /> 
+			</td>
+			<th>단위</th>
+			<td>
+				<input type="text" name="unit" value="{rs.unit}" class="transparent full" readonly placeholder="물품명을 검색하세요." data-group="search_rs" /> 
+			</td>
+		</tr> -->
+		<tr>
+			<th>{? rs.kind=='in'}입고일{:}사용일{/}</th>
+			<td>
+				<input type="text" name="date_inout" value="{rs.date_inout}" class="validate[required] datepicker lg" />
+			</td>
+		</tr>
+		{? rs.kind=='out'}
+		<tr>
+			<th>유형</th>
+			<td>
+				<label class="hmis"><input type="radio" name="kind" value="out" class="hmis" data-role="search" /><span class="lbl">사용</span></label>
+				<label class="hmis"><input type="radio" name="kind" value="sale" class="hmis" data-role="search" /><span class="lbl">판매</span></label>
+			</td>
+		</tr>
+		{/}
+
+		<tr>
+			<th>과목</th>
+			<td>
+				{@ cfg.category_subject}
+				<label class="hmis"><input type="radio" name="category_no" value="{.no}" class="hmis" data-role="search" /><span class="lbl">{.name}</span></label>
+				{/}
+			</td>
+		</tr>
+		<tr>
+			<th>수량</th>
+			<td><input type="text" name="qty" value="{rs.qty}" class="validate[required,custom[onlyNumber]]" /></td>
+		</tr>
+		<tr>
+			<th>비고</th>
+			<td><input type="text" name="comment" value="{rs.comment}" class="full" /></td>
+		</tr>
+		
+	</tbody>
+</table>
+
+
+<div class="area-button">
+	{? mode == 'insert'}
+	<button type="submit" data-after="continue" class="btn btn-theme btn-lg" onclick="InoutInput.setSaveMode('continue')">저장</button>
+	<button type="submit" data-after="close" class="btn btn-flat-purple btn-lg" onclick="InoutInput.setSaveMode('close')">저장 후 닫기</button>
+	{:}
+	<button type="submit" data-after="close" class="btn btn-flat-purple btn-lg" onclick="InoutInput.setSaveMode('close')">저장</button>
+	{? auth.invoice_delete}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="InoutInput.remove()">삭제</button>
+	{/}
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var InoutInput = {
+	saveMode:'continue',
+	init : function() {
+		HmisCommon.createDatepicker();
+
+		this.createFile();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmInoutInput").validationEngine('attach',option);
+
+		var el = $('#search_goods_name');
+		el.autocomplete({
+			minLength: 1,
+			disabled:true,
+			select: function(event, ui) {
+				if(ui.item.goods_no > 0) {
+					me.selectGoods(ui.item.goods_no);	
+					$('#FrmInoutInput input[name="goods_name"]').validationEngine('hide');
+				}
+			
+				$(this).val('');
+				return false;
+			},
+			delay:500,
+			source:function(request, response) {
+				var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+				$.ajax({
+					url: "/stock/goods_list",
+					data:{
+						group_code:'{rs.group_code}',
+						goods_name:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.goods_name,
+									value: v.goods_name,
+									goods_no:v.no
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 물품이 없습니다.',
+								value:'',
+								goods_no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				if(el.val().length<2) {
+					HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+					return false;
+				}
+				el.autocomplete('enable');
+				el.autocomplete("search",el.val());
+			}
+			else { 
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+	},
+	createFile : function() {
+		this.msgFile();
+		var me = this;
+		$('#attach_file').MultiFile({ 
+			accept: 'gif|jpg|png|jpeg',
+			list: '#attach_file_list',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				duplicate:'이미 등록된 파일입니다.'
+			},
+			afterFileAppend: function() {
+				me.msgFile();
+			},
+			afterFileRemove: function() {
+				me.msgFile();
+			}
+		});
+	},
+	msgFile : function() {
+		this.photoCount = $('#attach_file_list > div.MultiFile-label').length;
+		if(this.photoCount<1) {
+			$('#attach_file_msg').html('파일을 첨부해 주세요.');
+		}
+		if(this.photoCount>0) {
+			$('#attach_file_msg').html('');
+		}
+	},
+	removeFile: function(file_no) {
+		var me = this;
+		HmisAlert.confirm('이 첨부파일을 삭제하시겠습니까?', function(r){
+			if(r) {
+				$.ajax({
+					url:'/stock_proc/inout_attach_remove',
+					data:{
+						inout_no:'{rs.no}',
+						file_no:file_no,
+						attach_count:'{rs.attach_count}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(res){
+						if(res.success) {
+							$('#file_'+file_no).remove();
+							$('#FrmInoutInput input[name="attach_count"]').val(res.data.attach_count);
+							me.msgFile();
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+		})
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+	selectGoods: function(goods_no) {
+		var me = this;
+		$.ajax({
+			url:'/stock/goods_info',
+			data:{
+				group_code:'{rs.group_code}',
+				no:goods_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$.each(r.data, function(i,v) {
+						$('[name="'+i+'"][data-group="search_rs"]').val(v);
+						if(i == 'item_code') me.item_code=v;
+					});
+
+					// $('select[name="classify_code"]').trigger('change');
+					me.loadQty();
+				}
+			}
+		})
+	},
+	search: function() {
+		var search_el = $("#search_goods_name");
+		search_el.autocomplete('enable');
+		search_el.autocomplete("search", search_el.val());
+	},
+	loadQty: function(biz_id) {
+		var biz_id = biz_id || $('select[name="biz_id"]').val();
+		var goods_no = $('#goods_no').val();
+		// if(!goods_no) {
+		// 	alert('물품을 검색해주세요.');
+		// 	$('select[name="biz_id"]').val('');
+		// 	return false;
+		// }
+
+		$.ajax({
+			url:'/stock/get_qty',
+			data:{
+				goods_no:goods_no,
+				biz_id:biz_id
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					var qty_stock = r.data.qty_stock;
+					var qty_min = r.data.qty_min;
+				}
+				else {
+					var qty_stock = 0;
+					var qty_min = 0;	
+				}
+
+				$('input[name="qty_stock"]').val(qty_stock);
+				$('input[name="qty_min"]').val(qty_min);
+			}
+		})
+	},
+	save: function() {
+		var me = this;
+
+		var options = { 
+			url:'/stock_proc/inout_save',
+			type:'POST',
+			dataType:'json',
+			success : function(r) {
+				if(r.success) {
+					if(me.saveMode=='continue') {
+						$('#FrmInoutInput')[0].reset();
+
+						$('#FrmInoutInput button[type="submit"]').attr('disabled', false);
+						$('button[data-after="continue"]').html('저장');
+						$('button[data-after="close"]').html('저장 후 닫기');
+						HmisCommon.formReset('FrmInoutInput');
+						$('.MultiFile-label').remove();
+						me.msgFile();
+
+				
+					}
+					else {
+						$('.modal-close').trigger('click');	
+					}
+				}
+				else {
+					alert(r.msg);
+				}
+
+				
+
+			},
+			beforeSubmit: function() {
+				$('#FrmInoutInput button[type="submit"]').attr('disabled', true);
+				$('#FrmInoutInput button[type="submit"]').html('<img src="/images/common/loading.gif" style="vertical-align:middle"/> 저장중..');
+			}
+		}
+		$('#FrmInoutInput').ajaxSubmit(options);
+
+
+
+	},
+	remove: function() {
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/stock_proc/inout_remove',
+					data:{
+						goods_no:'{rs.goods_no}',
+						biz_id:'{rs.biz_id}',
+						inout_no:'{rs.no}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function() {
+							if(r.success) {
+								$('.modal-close').trigger('click');
+							}
+						})
+					}
+				})
+			}
+		});
+	}
+}
+
+$(function() {
+	InoutInput.init();
+})
+</script>

@@ -1,0 +1,240 @@
+<link rel="stylesheet" type="text/css" href="/css/onoffswitch.css">
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+
+<script type="text/javascript">
+	var SettleList = {
+		page:'{_GET.page}',
+		init: function() {
+			this.load(this.page);
+
+			$('[data-role="search"]').change(function() {
+				SettleList.load(1);
+			});
+			this.createDatepicker();
+		},
+		createDatepicker: function() {
+			$(".datepicker").datepicker(datepicker_option);
+		},
+		setDate: function(s,e, target_s, target_e) {
+			HmisCommon.setDate(s,e,target_s, target_e);
+			this.load(1);
+		},
+		reset: function(){
+			HmisCommon.formReset('srch-frm');
+			this.load();
+		},
+		reload: function() {
+			SettleList.load(SettleList.page);
+		},
+		load: function(page) {
+			HmisLoading.show('#settle_list');
+
+			var p = page || 1;
+			this.page = p;
+			var me = this;
+			var search = $('#srch-frm').serialize();
+
+			$.ajax({
+				url:'/business/settle_paging_lists',
+				data:{
+					page:p,
+					limit:15,
+					search:search
+				},
+				dataType:'json',
+				type:'POST',
+				success: function(r) {
+					var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+
+					var target = $('#settle_list');
+					target.empty();
+					if(r.success) {
+						var html = '';
+						$.each(r.data.list, function(i,e){
+							html += tmpl.process(e);
+						});
+						target.append(html);
+
+
+					}
+					else {
+						target.append('<tr><td colspan="11">검색된 정보가 없습니다.</td></tr>');
+					}
+
+					me.createClick();			// 20170215 kruddo : 클릭하면 고객 상세 정보 보기로 이동
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+					me.page = p;
+
+					$('[data-toggle="tooltip"]').tooltip();
+
+				},
+				error:function(){
+					var target = $('#settle_list');
+					target.empty();
+					target.append('<tr><td colspan="11">검색된 DB정보가 없습니다.</td></tr>');
+				},
+				complete: function() {
+					HmisLoading.hide();
+				}
+			})
+		},
+
+		createClick: function() {
+			$('#settle_list > tr > td[data-link!="no"]').on('click',function(event) {
+				var parent = $(this).parents();
+				//alert(parent.data('no'));
+				var mode = 'send';
+				document.location = "/business/settle_view/"+mode+"/"+parent.data('no')+'?mode={cfg.page_info}&page='+SettleList.page
+			})
+		},
+
+	}
+
+	$(function(){
+		SettleList.init();
+
+	});
+</script>
+
+
+
+
+
+
+<form id="srch-frm">
+<input type="hidden" name="mode" id="mode" value="<?=$mode;?>">
+<input type="hidden" name="tmp_yn" id="tmp_yn" value="">
+<input type="hidden" name="page_info" value="{cfg.page_info}">
+<!-- 올린결재 -->
+
+
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:100px" />
+			<col />
+			<col style="width:100px" />
+			<col />
+		</colgroup>
+		<tbody>
+			<!-- <tr>
+				<th>상태</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn active"><input type="radio" name="srch_settle_status" value="" checked data-role="search" />전체</label>
+						{@ cfg.aSettleStatus}
+						<label class="btn "><input type="radio" name="srch_settle_status" value="{.key_}" data-role="search" />{.value_}</label>
+						{/}
+					</div>
+				</td>
+				<th>사업장</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn active"><input type="radio" name="srch_settle_biz" value="" checked data-role="search" />전체</label>
+						{@ cfg.biz_info}
+						<label class="btn "><input type="radio" name="srch_settle_biz" value="{.value_.biz_id}" data-role="search" />{.value_.biz_name}</label>
+						{/}
+					</div>
+				</td>
+			</tr> -->
+			<tr>
+				<th>구분</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn active"><input type="radio" name="srch_settle_type" value="" checked data-role="search" />전체</label>
+						{@ cfg.aSettleType}
+						<label class="btn "><input type="radio" name="srch_settle_type" value="{.key_}" data-role="search" />{.value_}</label>
+						{/}
+					</div>
+				</td>
+				<th>사업장</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn active"><input type="radio" name="srch_settle_biz" value="" checked data-role="search" />전체</label>
+						{@ cfg.biz_info}
+						<label class="btn "><input type="radio" name="srch_settle_biz" value="{.value_.biz_id}" data-role="search" />{.value_.biz_name}</label>
+						{/}
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>등록기간</th>
+				<td>
+					<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker">
+				</td>
+				<? if(in_array($mode, array('attendance'))): ?>
+					<th>제목/내용/작성자</th>					<!-- 20170220 kruddo : 검색 조건에 작성자 추가 -->
+				<? else: ?>
+					<th>제목/내용</th>
+				<? endif;?>
+				<td>
+					<input type="text" name="srch_title" id="srch_title">
+					<button id="bt-srch" onclick="SettleList.load();">검색</button>
+					<button id="bt-reset" onclick="SettleList.reset();">초기화</button>
+				</td>
+			</tr>
+
+
+		</tbody>
+	</table>
+
+
+</form>
+
+<table class="table table-responsive table-bordered table-list table-striped table-hover">
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>품의번호</th>
+			<th>사업장</th>
+			<th>구분</th>
+			<th>작성일자</th>
+			<th>작성자</th>
+			<th>제목</th>
+			<th>결재진행</th>
+			<th>상태</th>
+			<th>최종결재자</th>
+			<th>최종일자</th>
+		</tr>
+	</thead>
+	<tbody id="settle_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+<!-- 페이징:E -->
+
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\no}">
+		<td>${\idx}</td>
+		<td>${\settle_number}</td>
+		<td>${\biz_name}</td>
+		<td>${\settle_type_name}</td>
+		<td>${\reg_date}</td>
+		<td>${\name}</td>
+		<td>${\title}</td>
+		<td>${\approval_now}</td>
+		<td>${\status_txt}</td>
+		<td>${\approval_last}</td>
+		<td>${\mod_date}</td>
+	</tr>
+</textarea>
+
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="SettleList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="SettleList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="SettleList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="SettleList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="SettleList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>

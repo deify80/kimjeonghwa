@@ -1,0 +1,153 @@
+<script>
+	$(document).ready(function() {
+		set_list();
+		
+		$('#passwd-bbs').dialog({
+			autoOpen : false,
+			width : 400,
+			height : 250,
+			modal : true,
+			buttons : {
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+		
+	});
+	
+
+	function set_list() {
+		$("#list").jqGrid({
+			width : 805,
+			height : 470,
+			url : "/bbs_lists/<?=$bbs_code?>",
+			datatype : "json",
+			colNames : [ "번호", "제목", "등록일", "reg_user_name", "조회수", "bbs_seqno", "type"],
+			colModel : [ {
+				name : "no",
+				index : "no",
+				width : 30,
+				align : "center",
+				sortable : false
+			}, {
+				name : "title",
+				index : "title",
+				width : 150,
+				align : "left",
+				sortable : false
+			}, {
+				name : "reg_date",
+				index : "reg_date",
+				width : 70,
+				align : "center",
+				sortable : false
+			},  {
+				name : "reg_user_name",
+				index : "reg_user_name",
+				width : 0.1,
+				align : "center",
+				sortable : false
+			}, 	{
+				name : "hit",
+				index : "hit",
+				width : 40,
+				align : "center",
+				sortable : false
+			}, {
+				name : "bbs_seqno",
+				width : 0.1,
+				sortable : false
+			}, {
+				name : "type",
+				width : 0.1,
+				sortable : false
+			}],
+			rowNum : 20,
+			rowList : [ 10, 20, 30 ],
+			pager : "#pager",
+			viewrecords : true,
+			sortorder : "desc",
+			caption : "목록",
+			onSelectRow :  function(id) {
+				var data = $('#list').getRowData(id);
+				bbs_view('<?=$bbs_code?>', id, data.type);
+			}			
+		});
+		
+		$("#list").hideCol(["bbs_seqno", "type", "reg_user_name"]);
+	}
+	
+	
+	function bbs_input(bbs_code) {
+		document.location="/bbs_input/"+bbs_code;
+	}
+	
+	
+	function bbs_view(bbs_code, id, type) {
+		
+		<? if ($this->session->userdata( 'ss_duty_code' ) == '9'): ?>
+		document.location="/bbs_view/"+bbs_code+"/"+id;	
+		<? else: ?>
+		
+		if (type == "1") {
+			$("#bbs_seqno").val(id);
+			$("#passwd").val("");
+			$('#passwd-bbs').dialog("open");
+			
+		} else {
+			document.location="/bbs_view/"+bbs_code+"/"+id;	
+		}			
+		<? endif; ?>
+	}
+	
+	
+	
+	function confirm_passwd() {	
+		if ($("#passwd").val() == "") {
+			alert("비밀번호를 입력해주세요.");
+			return;
+		}
+		var url = "/bbs_proc/confirm_passwd/<?=$bbs_code?>";
+		var data = $("#confirm-frm").serialize();
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				var obj = $.parseJSON(result_data);				
+				if (obj.is_success == "0") {
+					alert("비밀번호가 일치하지 않습니다.");
+				} else {
+					document.location = obj.url;
+				}
+			}
+		});
+	}
+	
+	
+</script>
+<div id="passwd-bbs" title="비밀번호 확인">
+<form id="confirm-frm">
+<input type="hidden" name="bbs_seqno" id="bbs_seqno">
+<table class="basic-table" style="margin-top: 30px;">
+	<colgroup>
+	<col width="25%">
+	<col width="">
+	</colgroup>
+	<tr>
+		<th>비밀번호</th>
+		<td>
+		<input type="password" name="passwd" id="passwd" size="30"><button onClick="confirm_passwd();">확인</button>
+		</td>
+	</tr>
+</table>	
+</form>
+</div>
+
+<h3 class="area-title"><?=$bbs_config['bbs_title']?></h3>
+<div class="tool-box" style="margin: 0px;padding-right: 15px;padding-bottom: 5px;">
+<button onClick="bbs_input('<?=$bbs_code?>');">글쓰기</button>
+</div>
+<table id="list"></table>
+<div id="pager"></div>

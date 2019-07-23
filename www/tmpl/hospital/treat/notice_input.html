@@ -1,0 +1,160 @@
+<style>
+#notice_input ul > li {
+	line-height:1.5;
+	/*margin:5px 0px;*/
+	padding:5px 0px;
+	border-top:solid 1px #E3E3E3;
+}
+
+#notice_input ul > li:nth-child(odd) {
+	/*background-color: #F7F7F7;*/
+}
+
+#notice_input ul > li:hover {
+	background-color: #F7F7F7;
+}
+
+
+#notice_input .label {margin:0px;}
+
+#notice_input ul > li:first-child {
+	border:none;
+	/*border-top:solid 1px #E3E3E3;*/
+}
+</style>
+<div class="well" style="margin:0px;padding:5px;">
+	<form id="FrmNoticeInput">
+	<table class="table" style="margin:0px">
+		<colgroup>
+			<col style="width:250px" />
+			<col />
+			<col style="width:50px" />
+		</colgroup>
+		<tr>
+			<td>
+				<input type="text" name="display_start" value="" class="datepicker lg validate[required]" placeholder="공지시작일" />
+				<input type="text" name="display_end" value="" class="datepicker lg validate[required]" placeholder="공지종료일" />
+			</td>
+			<td>
+				<input type="text" name="contents" value="" class="full validate[required]" placeholder="공지내용" data-errormessage-value-missing="공지내용을 입력하세요"/>
+			</td>
+			<td>
+				<button type="submit" class="btn btn-onlyicon btn-flat-orange"><i class="fa fa-1 fa-pencil"></i></button>
+			</td>
+		</tr>
+	</table>
+
+	</form>
+</div>
+<div class="dashed" style="margin:10px 0px"></div>
+
+<!-- 
+<div class="well2" style="margin-bottom:5px">
+	<span class="label label-error">도움말</span> 현재날짜 기준으로 노출중인 공지만 표시됩니다.
+</div>
+ -->
+<div class="well" id="notice_input">
+	<ul style="position:relative">
+		
+		{@ notice}
+		<li data-no="{.no}">
+			<span class="label label-xs label-default">{.display_start} ~ {.display_end}</span> {.contents}
+			{? .writer_id == me.user_id}
+			<i class="fa fa-1 fa-trash f-error" onclick="NoticeInput.remove(this)" style="position:absolute;right:5px;"></i>
+			{/}
+		</li>
+		{:}
+		<li id="list_null">등록된 공지사항이 없습니다.</li>
+		{/}
+	</ul>
+</div>
+
+
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<!-- 템플릿:S -->
+<textarea id="tmpl_notice" style="display:none">
+<li data-no="${no}">
+	<span class="label label-xs label-default">${\display_start} ~ ${\display_end}</span> ${\contents}
+	<i class="fa fa-1 fa-trash f-error" onclick="NoticeInput.remove(this)" style="position:absolute;right:5px;"></i>
+</li>
+</textarea>
+<!-- 템플릿:E -->
+
+<script language="javascript" src="/js/template.js"></script>
+<script style="text/javascript">
+var NoticeInput = {
+	init: function(){
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmNoticeInput").validationEngine('attach',option);
+
+		HmisCommon.createDatepicker();
+	},
+	save: function(){
+		var formdata = $('#FrmNoticeInput').serialize();
+		$.ajax({
+			url:'/treat_proc/save_notice',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					var tmpl = TrimPath.parseDOMTemplate("tmpl_notice");
+					var tmpl_parse  = tmpl.process(r.data);
+					$('#notice_input > ul').append(tmpl_parse);
+				}
+
+				NoticeInput.checkNull();
+			}
+		});
+	},
+	checkNull: function() {
+		if($('#notice_input > ul > li').length > 0) {
+			$('#list_null').remove();
+		}
+		else {
+			$('#notice_input > ul').append('<li id="list_null">등록된 공지사항이 없습니다.</li>');
+		}
+	},
+	remove: function(el){
+		var $e = $(el).parent('li');
+		
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/treat_proc/remove_notice',
+					data:{
+						no:$e.data('no')
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						
+						if(r.success){
+							$e.remove();
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+
+						NoticeInput.checkNull();
+					}
+				});
+			}
+		})
+	}
+}
+
+$(function(){
+	NoticeInput.init();
+})
+</script>

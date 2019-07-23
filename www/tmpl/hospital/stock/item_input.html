@@ -1,0 +1,88 @@
+<form id="FrmItemInput" onsubmit="return false">
+<input type="hidden" name="mode" value="<?=$cfg['mode']?>">
+<input type="hidden" name="kind" value="<?=$rs['kind']?>">
+<input type="hidden" name="code_parent" value="<?=$rs['code_parent']?>">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>상위분류</th>
+			<td>
+				<b><?=$cfg['classify'][$rs['code_parent']]['name']?></b>
+				<!-- <select name="code_parent">
+					<? foreach($cfg['classify'] as $code=>$classify) {?>
+					<option value="<?=$code?>" <?=($code==$rs['code_parent'])?'selected':''?>><?=$classify['name']?></option>
+					<? } ?>
+				</select> -->
+			</td>
+		</tr>
+		<tr>
+			<th>항목코드</th>
+			<td>
+				<? if($cfg['mode'] == 'insert'){ ?>
+				<input type="text" name="code" style="width:80px" class="validate[required,custom[onlyLetterNumber],funcCall[ItemInput.checkCode]]">
+				<? } else {?>
+				<input type="text" name="code" value="<?=$rs['code']?>" class="transparent" readonly>
+				<? } ?>
+			</td>
+		</tr>
+		<tr>
+			<th>항목명</th>
+			<td><input type="text" name="name" value="<?=$rs['name']?>" class="validate[required] full" /></td>
+		</tr>
+		<tr>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="is_use" value="Y" <?=($rs['is_use']=='Y')?'checked':''?> class="hmis" /><span class="lbl"> 사용</span></label>
+				<label class="hmis"><input type="radio" name="is_use" value="N" <?=($rs['is_use']=='N')?'checked':''?> class="hmis" /><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var ItemInput = {
+	init: function(){
+		var me = this;
+		var option = $.extend({},validation_option,  {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmItemInput").validationEngine('attach',option);
+	},
+	checkCode: function(field, rules, i, options) {
+		if(field.val().length!=4) {
+			return '항목코드는 4자리로 입력하세요.';
+		}
+	},
+	save: function() {
+		var formdata = $('#FrmItemInput').serialize();
+		$.ajax({
+			url:'/stock_proc/category_save',
+			data:formdata,
+			dataType:'JSON',
+			type:'POST',
+			success: function(r) {
+				StockSettings.loadItem("<?=$rs['code_parent']?>");
+				$('.modal-close').trigger('click');
+			}
+		})
+	}
+}
+
+$(function(){
+	ItemInput.init();
+})
+</script>

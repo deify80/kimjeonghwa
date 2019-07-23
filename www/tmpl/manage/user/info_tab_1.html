@@ -1,0 +1,310 @@
+<h2>인적사항</h2>
+<form id="FrmUserInfoTab" >
+<input type="hidden" name="no" value="<?=$basic['no']?>" />
+<input type="hidden" name="tab_no" value="1" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tr>	
+		<th>이름(영문)</th>
+		<td><input type="text" name="name_en" value="<?=$basic['name_en']?>" /></td>
+		<th>이름(한자)</th>
+		<td><input type="text" name="name_cn" value="<?=$basic['name_cn']?>" /></td>
+		<th>세대주(관계)</th>
+		<td>
+			<input type="text" name="householder" value="<?=$basic['householder']?>" placeholder="세대주명" />
+			<select name="householder_relationship">
+				<option value="">::관계선택::</option>
+				<? foreach($cfg['householder'] as $householder){ ?>
+				<option value="<?=$householder?>" <?=($basic['householder_relationship']==$householder)?'selected':''?>><?=$householder?></option>
+				<? } ?>
+				
+			</select>
+		</td>
+	</tr>
+	<tr>	
+		<th>특기/취미</th>
+		<td><input type="text" name="hobby" value="<?=$basic['hobby']?>" /></td>
+		<th>종교</th>
+		<td><input type="text" name="religion" value="<?=$basic['religion']?>" /></td>
+		<th>혈액형</th>
+		<td>
+			<select name="blood">
+				<option value="">::혈액형선택::</option>
+				<? foreach($cfg['blood'] as $blood){ ?>
+				<option value="<?=$blood?>" <?=($basic['blood']==$blood)?'selected':''?>><?=$blood?></option>
+				<? } ?>
+			</select>
+		</td>
+	</tr>
+	<tr>	
+		<th>주민등록번호</th>
+		<td><input type="text" name="personal_number" value="<?=$basic['personal_number']?>" data-mask="personal_number"/></td>
+		<th>생년월일</th>
+		<td colspan="3">
+			<input type="text" name="birthday" value="<?=$basic['birthday']?>" class="datepicker lg" style="margin-right:10px" data-mask="date" />
+			<label class="hmis"><input type="radio" name="birthday_type" value="1" class="hmis" <?=($basic['birthday_type']=='양력')?'checked':''?> /><span class="lbl"> 양력</span></label>
+			<label class="hmis"><input type="radio" name="birthday_type" value="2" class="hmis" <?=($basic['birthday_type']=='음력')?'checked':''?> /><span class="lbl"> 음력</span></label>
+		</td>
+	</tr>
+	<tr>
+		<th>주소(주민등록)</th>
+		<td colspan="5">
+			<input type="text" name="zipcode" id="zipcode" value="<?=$basic['zipcode']?>" placeholder="우편번호" readonly/> <button type="button" onclick="HmisCommon.post('zipcode','address')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+			<input type="text" name="address" id="address" value="<?=$basic['address']?>" style="width:300px" placeholder="주소" readonly />
+			<input type="text" name="address_detail" value="<?=$basic['address_detail']?>" style="width:300px" placeholder="상세주소" />
+		</td>
+	</tr>
+	<tr>
+		<th>주소(실거주지)</th>
+		<td colspan="5">
+			<label class="hmis" style="margin-left:0px"><input type="checkbox" value="Y" class="hmis" onclick="UserInfoTab.syncAddress(this.checked)" /><span class="lbl"> 상동</span></label>
+			<input type="text" name="zipcode_real" id="zipcode_real" value="<?=$basic['zipcode_real']?>" placeholder="우편번호" readonly/> <button type="button" onclick="HmisCommon.post('zipcode_real','address_real')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+			<input type="text" name="address_real" id="address_real" value="<?=$basic['address_real']?>" style="width:300px" placeholder="주소" readonly />
+			<input type="text" name="address_detail_real" value="<?=$basic['address_detail_real']?>" style="width:300px" placeholder="상세주소" />
+			
+		</td>
+	</tr>
+	<tr>
+		<th>계좌번호</th>
+		<td colspan="5">
+			<select name="account_bank">
+				<option value="">::은행선택::</option>
+				<? foreach($cfg['bank'] as $bank){ ?>
+				<option value="<?=$bank?>" <?=($basic['account_bank']==$bank)?'selected':''?>><?=$bank?></option>
+				<? } ?>
+			</select>
+			<input type="text" name="account_number" value="<?=$basic['account_number']?>"  style="width:200px"/>
+		</td>
+	</tr>
+</table>
+
+<h2 style="margin-top:20px">병역사항</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>제대구분</th>
+		<td colspan="5">
+			<? foreach($cfg['military']['type'] as $k => $v){?>
+			<label class="hmis"><input type="radio" name="military_type" value="<?=$k?>" class="hmis" data-ui="change" <?=($basic['military_type']==$v)?'checked':''?> /><span class="lbl"> <?=$v?></span></label>
+			<? } ?>
+		</td>
+	</tr>
+	<!-- 군필입력사항:S -->
+	<tr data-ui-group="military_type"  data-ui-value="1">
+		<th>전역사유</th>
+		<td>
+			
+			<select name="military_info[reason_honor]">
+				<option value="">::전역사유 선택::</option>
+				<? foreach($cfg['military']['honor'] as $v){?>
+				<option <?=($v==$basic['military_info']['reason_honor'])?'selected':''?>><?=$v?></option>
+				<? } ?>
+			</select>
+		</td>
+		<th>복무기간</th>
+		<td colspan="3">
+			<input type="text" name="military_info[honor_date_start]" value="<?=$basic['military_info']['honor_date_start']?>" class="datepicker lg" placeholder="입대일" /> ~ 
+			<input type="text" name="military_info[honor_date_end]" value="<?=$basic['military_info']['honor_date_end']?>" class="datepicker lg" placeholder="전역일" />
+		</td>
+	</tr>
+	<tr data-ui-group="military_type"  data-ui-value="1">
+		<th>군별</th>
+		<td>
+			<select name="military_info[group]">
+				<option value="">::군별 선택::</option>
+				<? foreach($cfg['military']['group'] as $v){?>
+				<option <?=($v==$basic['military_info']['group'])?'selected':''?>><?=$v?></option>
+				<? } ?>
+				
+			</select>
+		</td>
+		<th>최종계급</th>
+		<td>
+			<select name="military_info[rank]">
+				<option value="">::계급선택::</option>
+				<? foreach($cfg['military']['rank'] as $v){?>
+				<option <?=($v==$basic['military_info']['rank'])?'selected':''?>><?=$v?></option>
+				<? } ?>				
+			</select>
+		</td>
+		<th>군보직</th>
+		<td><input type="text" name="military_info[branch]" value="<?=$basic['military_info']['branch']?>" /></td>
+	</tr>
+	<!-- 군필입력사항:E -->
+
+	<!-- 미필입력사항:S -->
+	<tr data-ui-group="military_type"  data-ui-value="2">
+		<th>미필사유</th>
+		<td colspan="5">
+			<input type="text" name="military_info[reason_unfinished]" value="<?=$basic['military_info']['reason_unfinished']?>" class="full" />
+		</td>
+	</tr>
+	<!-- 미필입력사항:E -->
+
+	<!-- 면제입력사항:S -->
+	<tr data-ui-group="military_type"  data-ui-value="3">
+		<th>면제사유</th>
+		<td colspan="5">
+			<input type="text" name="military_info[reason_exemption]" value="<?=$basic['military_info']['reason_exemption']?>" class="full" />
+		</td>
+	</tr>
+	<!-- 면제입력사항:E -->
+
+	<!-- 특례입력사항:S -->
+	<tr data-ui-group="military_type"  data-ui-value="4">
+		<th>특례지정기간</th>
+		<td colspan="5">
+			<input type="text" name="military_info[speical_date_start]" value="<?=$basic['military_info']['speical_date_start']?>" class="datepicker lg" placeholder="" /> ~ 
+			<input type="text" name="military_info[speical_date_end]" value="<?=$basic['military_info']['speical_date_end']?>" class="datepicker lg" placeholder="" />
+		</td>
+	</tr>
+	<!-- 특례입력사항:E -->
+	</tbody>
+</table>
+
+<h2 style="margin-top:20px">보훈</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>보훈대상여부</th>
+		<td colspan="5">
+			<label class="hmis"><input type="radio" name="veterans_type" value="1" class="hmis" data-ui="change" <?=($basic['veterans_type']=='대상')?'checked':''?> /><span class="lbl"> 대상</span></label>
+			<label class="hmis"><input type="radio" name="veterans_type" value="2" class="hmis" data-ui="change" <?=($basic['veterans_type']=='비대상')?'checked':''?> /><span class="lbl"> 비대상</span></label>
+		</td>
+	</tr>
+	<tr data-ui-group="veterans_type"  data-ui-value="1">
+		<th>보훈등급</th>
+		<td>
+			<select name="veterans_info[grade]">
+				<option value="">::보훈등급선택::</option>
+				<? foreach(range(1,7) as $v){ ?>
+				<option value="<?=$v?>" <?=($v==$basic['veterans_info']['grade'])?'selected':''?>><?=$v?>등급</option>
+				<?}?>
+			</select>
+		</td>
+		<th>보훈번호</th>
+		<td><input type="text" name="veterans_info[number]" value="<?=$basic['veterans_info']['number']?>"/></td>
+		<th>보훈사유</th>
+		<td><input type="text" name="veterans_info[reason]" value="<?=$basic['veterans_info']['reason']?>" class="full"/></td>
+	</tr>
+	</tbody>
+</table>
+
+<h2 style="margin-top:20px">장애</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>장애여부</th>
+		<td colspan="5">
+			<label class="hmis"><input type="radio" name="defect_type" value="1" class="hmis" data-ui="change" <?=($basic['defect_type']=='장애')?'checked':''?> /><span class="lbl"> 장애</span></label>
+			<label class="hmis"><input type="radio" name="defect_type" value="2" class="hmis" data-ui="change" <?=($basic['defect_type']=='비장애')?'checked':''?> /><span class="lbl"> 비장애</span></label>
+		</td>
+	</tr>
+	<tr data-ui-group="defect_type"  data-ui-value="1">
+		<th>장애등급</th>
+		<td colspan="5">
+			<select name="defect_info[grade]">
+				<option value="">::장애등급선택::</option>
+				<? foreach(range(1,10) as $v){ ?>
+				<option value="<?=$v?>" <?=($v==$basic['defect_info']['grade'])?'selected':''?>><?=$v?>등급</option>
+				<?}?>
+			</select>
+		</td>
+	</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg" onclick="document.location.href='/manage/user_main'">목록</button>
+</div>
+</form>
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var UserInfoTab = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmUserInfoTab").validationEngine('attach',option);
+
+		$('input[data-mask="personal_number"]').mask('999999-9999999');
+		$('input[data-mask="date"]').mask('9999-99-99');
+		HmisCommon.createDatepicker();
+
+		$.each(jQuery('[data-ui]'), function(i,e) {
+			me.render(this.name);
+			var evt = $(e).data('ui');
+			$(this).on(evt,function() {
+				me.render(this.name, this.value);
+			});
+		});
+
+	},
+	save: function() {
+		var formdata = $('#FrmUserInfoTab').serialize();
+		$.ajax({
+			url:'/manage_proc/save_user_tab',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg);
+			}
+		})
+	},
+	syncAddress: function(checked) {
+		if(checked) {
+			$('#zipcode_real').val($('#zipcode').val());
+			$('#address_real').val($('#address').val());	
+		}
+	},
+	render: function(name, value) {
+		var v = value || HmisCommon.getValue($('[name="'+name+'"]'));
+		
+		var group = $('[data-ui-group="'+name+'"]');
+		group.css('display','none');
+		group.filter('[data-ui-value*="'+v+'"]').css('display','');
+		
+	}
+};
+
+$(function(){
+	UserInfoTab.init();
+})
+</script>

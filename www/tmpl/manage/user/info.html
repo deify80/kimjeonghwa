@@ -1,0 +1,80 @@
+<style>
+.center-block {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<? // pre($basic)?>
+<table class="table">
+	<colgroup>
+		<col style="width:300px" />
+		<col />
+	</colgroup>
+	<tr>
+		<td style="vertical-align:top">
+			<div class="well" id="basic">
+				
+			</div>
+		</td>
+		<td style="vertical-align:top">
+	
+			<div class="wel2l">
+
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist" >
+					<li role="presentation" class="active"><a href="#content" data-tabindex="6" role="tab" data-toggle="tab">기본정보</a></li> <!-- 가족사항 -->
+					<li role="presentation"><a href="#content" data-tabindex="1" role="tab" data-toggle="tab">개인정보</a></li> <!-- 가족사항 -->
+					<li role="presentation"><a href="#content" data-tabindex="5" role="tab" data-toggle="tab">가족사항</a></li> <!-- 가족사항 -->
+					<li role="presentation"><a href="#content" data-tabindex="2" role="tab" data-toggle="tab">자격사항</a></li>
+					<li role="presentation"><a href="#content" data-tabindex="3"  role="tab" data-toggle="tab">학력/경력사항</a></li>
+					<li role="presentation"><a href="#content" data-tabindex="4" role="tab" data-toggle="tab">기타</a></li><!-- 긴급연락 -->
+				</ul>
+
+				<!-- Tab panes -->
+				<div class="tab-content" style="padding:20px;border:solid 1px #DDDDDD;border-top:none;border-radius: 0px 0px 2px 2px">
+					<div role="tabpanel" class="tab-pane active" id="content"></div>
+				</div>
+			</div>
+		</td>
+	</tr>
+</table>
+
+<link rel="stylesheet" href="/css/bootstrap.tab.css?<?=time()?>" />
+<script type="text/javascript" src="/js/bootstrap.tab.js"></script>
+<script type="text/javascript">
+var UserInfo = {
+	user_no:"<?=$basic['no']?>",
+	init: function() {
+		$('#tablist').tab()
+		this.initTab();
+		this.loadBasic();
+	},
+	initTab: function() {
+		$('[data-toggle="tab"]').click(function() {
+
+			var me = $(this);
+			var href = '/manage/user_info_tab/'+UserInfo.user_no+'/'+me.data('tabindex');
+		
+			$.get(href, function(data) {
+				$('#content').html(data);
+				$('#content').find('[data-toggle="tooltip"]').tooltip();
+			});
+
+			// $this.tab('show');
+			// return false;
+		});
+
+		$('[data-toggle="tab"]').first().trigger('click');
+	},
+	loadBasic: function() {
+		$.get('/manage/user_info_basic/'+UserInfo.user_no, function(data) {
+			$('#basic').html(data);
+		});
+	}
+}
+
+$(function() {
+	UserInfo.init();
+})
+</script>

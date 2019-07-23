@@ -1,0 +1,590 @@
+<div style="position:relative;">
+<form id="FrmPatientMaterialInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="group_code" value="{rs.group_code}" data-group="search_rs" />
+<input type="hidden" name="no" id="goods_no" value="{rs.goods_no}" data-group="search_rs" /><!-- 물품PK -->
+<input type="hidden" name="material_no" value="{rs.no}" /><!-- 물품기록지PK -->
+
+	<div style="width:400px;float:left">
+		{? mode == 'insert'}
+		<table class="table table-bordered table-form">
+			<colgroup>
+				<col width="120px">
+				<col>
+
+			</colgroup>
+			<tbody>
+				<tr>
+					<th>물품명 검색</th>
+					<td>
+						<div>
+							<input type="search" name="goods_name" id="search_goods_name" style="width:150px" autocomplete="off" class="search" />
+							<button type="button" class="btn btn-flat-blue"><i class="fa fa-search fa-1"></i> 검색</button>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="dashed" style="margin:10px 0px"></div>
+		{/}
+
+		<table class="table table-bordered table-form">
+			<colgroup>
+				<col width="120px">
+				<col>
+				<col width="120px">
+				<col>
+			</colgroup>
+			<tbody>
+				<tr>
+					<th>사용일</th>
+					<td colspan="3">
+						<input type="text" name="use_date" value="{=date('Y-m-d')}" class="validate[required] datepicker lg" data-errormessage-value-missing="사용일을 입력하세요."/>
+					</td>
+				</tr>
+				<tr>
+					<th>OP분류</th>
+					<td colspan="3">
+						<select name="classify_code" data-role="search">
+							<option value="">::분류::</option>
+							{@ basic.StockClassify}
+							<option value="{.code_parent}_{.code}">{.name}</option>
+							{/}
+						</select>
+						<select name="item_code" id="sb_search_item" style="display:none" data-role="search">
+							<option value="">::항목::</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>마취종류</th>
+					<td colspan="3">
+						{@ basic.anesthetize}
+							<label class="hmis"><input type="checkbox" name="anesthetize_no" value="{.code_parent}_{.code}" class="hmis" data-role="search" /><span class="lbl"> {.name}</span></label>
+						{/}
+					</td>
+				</tr>
+				<tr>
+					<th>유형</th>
+					<td colspan="3">
+						<label class="hmis"><input type="radio" name="kind" value="out" class="hmis" data-role="search" checked /><span class="lbl"> 사용</span></label>
+						<label class="hmis"><input type="radio" name="kind" value="sale" class="hmis" data-role="search" /><span class="lbl"> 판매</span></label>
+					</td>
+				</tr>
+				<tr>
+					<th>과목</th>
+					<td colspan="3">
+						{@ basic.category_subject}
+							<label class="hmis"><input type="checkbox" name="category_subject" value="{.no}" class="hmis" data-role="search" /><span class="lbl">{.name}</span></label>
+						{/}
+					</td>
+				</tr>
+				<tr>
+					<th>물품 총 금액</th>
+					<td colspan="3">
+						<input type="text" name="goods_total_price" id="goods_total_price" value="0" readonly>
+					</td>
+				</tr>
+
+			</tbody>
+		</table>
+	</div>
+
+	<div style="float:right;height:500px;width:640px;overflow-y:scroll;margin-top:5px;border:solid 1px #ddd;">
+		<table class="table table-bordered2 table-closely table-center table-form" style="margin-top:0px">
+			<colgroup>
+				<col width="40px">
+				<col width="150px">
+				<col width="250px">
+				<col />
+				<col width="60px">
+			</colgroup>
+			<tbody>
+				<tr>
+					<th style="padding:10px">no</th>
+					<th>중분류</th>
+					<th>물품명</th>
+					<th>수량</th>
+					<th>삭제</th>
+				</tr>
+
+				<tbody id="goods_list">
+					{@ rs.goods_info}
+					<tr id="tr_{.goods_code}" data-gno="{.goods_code}">
+						<td>{.index_+1}</td>
+						<td>
+							{.classify_name} / {.item_name}
+						</td>
+						<td class="left">
+							<input type="hidden" name="goods_code[]" value="{.goods_code}">
+							<input type="hidden" name="goods_name[]" value="{.goods_name}">
+							<input type="hidden" name="goods_unit_price[]" value="{.goods_unit_price}" data-group="goods" data-name='goods_unit_price' class="goods_unit_price">
+							<input type="hidden" name="goods_unit_total_price[]" value="{.goods_unit_total_price}" class="goods_unit_total_price">
+							<input type="hidden" name="classify_name[]" value="{.classify_name}">
+							<input type="hidden" name="item_name[]" value="{.item_name}">
+							{.goods_name}
+						</td>
+						<td style="padding:5px">
+
+							<button type="button" class="btn btn-up" onclick="PatientMaterialInput.up(this)"><i class="fa fa-chevron-up fa-1" style="color:#828282;"></i></button>
+							<input type="text" name="goods_count[]" value="{.goods_count}" data-group="goods" data-name='goods_count' class="validate[required,custom[number]] number center"  data-errormessage-value-missing="수량을 입력해주세요." data-errormessage-custom-error="숫사로만 입력해주세요." style="width:40px" maxlength="4" autocomplete="off" />
+							<button type="button" class="btn btn-down" onclick="PatientMaterialInput.down(this)"><i class="fa fa-chevron-down fa-1" style="color:#828282;"></i></button>
+						</td>
+						<td>
+							<button type="button" class="btn btn-flat-orange bt_remove">삭제</button>
+						</td>
+					</tr>
+					{/}
+		<!-- 		<tr>
+					<td colspan="5" style="text-align:center">
+						물품을 검색 해 주세요.
+					</td>
+				</tr> -->
+				</tbody>
+
+			</tbody>
+		</table>
+	</div>
+
+
+<div style="clear:both"></div>
+
+
+<div class="area-button">
+	{? mode == 'insert'}
+	<button type="submit" class="btn btn-theme btn-lg" onclick="PatientMaterialInput.setSaveMode('continue')">저장</button>
+	<button type="submit" class="btn btn-flat-purple btn-lg" onclick="PatientMaterialInput.setSaveMode('close')">저장 후 닫기</button>
+	{:}
+	<button type="submit" class="btn btn-theme btn-lg" onclick="PatientMaterialInput.setSaveMode('close')">저장</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+</div>
+
+
+<textarea id="tmpl_goods" style="display:none">
+	<tr id="tr_${\gno}" data-gno="${\gno}" data-parent="">
+		<td>${\rownum}</td>
+		<td>
+			${\classify_name} / ${\item_name}
+		</td>
+		<td class="left">
+			<input type="hidden" name="goods_code[]" value="${\gno}">
+			<input type="hidden" name="goods_name[]" value="${\goods_name}">
+			<input type="hidden" name="goods_unit_price[]" value="${\goods_unit_price}" data-group="goods" data-name='goods_unit_price' class="goods_unit_price">
+			<input type="hidden" name="goods_unit_total_price[]" value="${\goods_unit_price}" class="goods_unit_total_price">
+			<input type="hidden" name="classify_name[]" value="${\classify_name}">
+			<input type="hidden" name="item_name[]" value="${\item_name}">
+			${\goods_name}
+		</td>
+		<td style="padding:5px">
+			<button type="button" class="btn btn-up" onclick="PatientMaterialInput.up(this)"><i class="fa fa-chevron-up fa-1" style="color:#828282;"></i></button>
+			<input type="text" name="goods_count[]" value="1" id="" data-group="goods" data-name='goods_count' class="validate[required,custom[number]] number center"  data-errormessage-value-missing="수량을 입력해주세요." data-errormessage-custom-error="숫사로만 입력해주세요." style="width:40px" maxlength="4" autocomplete="off" />
+			<button type="button" class="btn btn-down" onclick="PatientMaterialInput.down(this)"><i class="fa fa-chevron-down fa-1" style="color:#828282;"></i></button>
+		</td>
+		<td>
+			<button type="button" class="btn btn-flat-orange bt_remove">삭제</button>
+		</td>
+	</tr>
+</textarea>
+
+
+<script type="text/javascript">
+goodsArr={};
+var PatientMaterialInput = {
+
+	saveMode:'continue',
+	target:$('#goods_list'),
+	init : function() {
+		HmisCommon.createDatepicker();
+		var me = this;
+		var option = $.extend({},validation_option, {
+			display:'alert',
+			showOneMessage:true,
+			validationEventTrigger:'submit',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		this.tmpl = TrimPath.parseDOMTemplate('tmpl_goods');
+
+		$("#FrmPatientMaterialInput").validationEngine('attach',option);
+
+
+		$('[data-role="search"]').on('change',function(i,e) {
+			switch (this.name) {
+				case 'classify_code':
+					me.loadItem($(this).find('option:selected').val());
+				break;
+				case 'item_code':
+					me.loadGoods($(this).find('option:selected').val());
+				break;
+				case 'anesthetize_no':
+					//console.log($(this).is(':checked')+"::::::"+$(this).find('checkbox:checked').val()+"::::"+$(this).val());
+					 me.loadGoodsAnesthetize($(this).is(':checked'), $(this).val());
+				break;
+			}
+
+		});
+
+		this.createAutocomplete();
+		me.loadGoodsInfo();
+		me.loadGoodsDefault();
+
+	},
+	createAutocomplete: function(){
+		var me = this;
+		var el = $('#search_goods_name');
+		el.autocomplete({
+			minLength: 1,
+			disabled: true,
+			select: function(event, ui) {
+				if(ui.item.goods_no > 0) {
+					me.selectGoods(ui.item.goods_no);
+					$('#FrmPatientMaterialInput input[name="goods_name"]').validationEngine('hide');
+				}
+
+				$(this).val('');
+				return false;
+
+			},
+			delay:500,
+			source:function(request, response) {
+				$.ajax({
+					url: "/stock/goods_list",
+					data:{
+						group_code:'{rs.group_code}',
+						goods_name:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.goods_name,
+									value: v.goods_name,
+									goods_no:v.no
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 물품이 없습니다.',
+								value:'',
+								goods_no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+
+			if(e.keyCode === 13) {
+				// if(el.val().length<2) {
+				// 	HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+				// 	return false;
+				// }
+				el.autocomplete('enable');
+				el.autocomplete("search",el.val());
+				return false;
+			}
+			else {
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+	},
+	setSaveMode: function(mode) {
+		this.saveMode = mode;
+	},
+
+	save: function() {
+		// if(!confirm('저장하시겠습니까?')) return false;
+		var me = this;
+		var formdata = $('#FrmPatientMaterialInput').serialize();
+		$.ajax({
+			url:'/patient_proc/save_patient_material',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					if(me.saveMode=='continue') {
+						$('#FrmPatientMaterialInput')[0].reset();
+					}
+					else {
+						$('.modal-close').trigger('click');
+					}
+					PatientInfo.loadTab('{tab}');
+					PatientInfo.countTab();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+
+	loadItem: function(code_parent) {
+		// var parent_code = $('#sb_search_classify').val();
+		var sb_item = $('#sb_search_item');
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:code_parent
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+
+					sb_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						//selected = (e.code == '{rs.item_code}')?'selected':'';
+						//sb_item.append('<option value="'+e.code+'" '+selected+'>'+e.title+'</option>');
+						sb_item.append('<option value="'+e.code_parent+'_'+e.code+'" >'+e.name+'</option>');
+					});
+					sb_item.css('display','');
+				}
+				else {
+					sb_item.val('').css('display','none');
+				}
+			}
+		});
+	},
+	loadGoodsInfo:function(){
+		var me = this;
+		$(".bt_remove").off("click");
+
+		$('input[name="goods_count[]"]').on('keyup', function(evt) {
+			var val = parseInt($(this).val());
+			switch (evt.keyCode) {
+				case 38:
+					$(this).val(val+1);
+				break;
+				case 40:
+					var new_val = val-1;
+					if(new_val<0) new_val=0;
+					$(this).val(new_val);
+				break;
+				default:
+				break;
+			}
+
+			me.setGoodsTotalPrice();
+		});
+
+		$('.bt_remove').on('click',function(){
+			var tr = $(this).closest('tr');
+			var gno = tr.data('gno');
+			delete goodsArr[gno];
+			tr.remove();
+
+			//goodsArr[e.gno] = e;
+			$.each(me.target.find('tr'), function(i,e){
+				var td = $(this).find('td').first();
+				td.text(i+1);
+			})
+			me.setGoodsTotalPrice();
+		});
+
+		me.setGoodsTotalPrice();
+	},
+
+	setGoodsTotalPrice:function(){
+		var list = $('#goods_list tr');
+		var totalPrice = 0;
+
+		$.each(list, function(i,el){
+			var e = $(el);
+			var price_unit = e.find('input[name="goods_unit_price[]"]').val();
+			var cnt = e.find('input[name="goods_count[]"]').val();
+
+			totalPrice += parseInt(price_unit)*parseInt(cnt);
+		})
+
+		$('#goods_total_price').val(HmisCommon.numberFormat(totalPrice));
+	},
+
+	loadGoods: function(code_parent) {
+		console.log('loadGoods',code_parent);
+		var me = this;
+
+		$.ajax({
+			url:'/stock/category_sub_list',
+			data:{
+				kind:'item_sub',
+				code_parent:code_parent
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_goods');
+				var target = $('#goods_list');
+				//target.empty();
+				if(r.success) {
+					$.each(r.data, function(i,e){
+						e.rownum=0;
+						goodsArr[e.gno] = e;
+					});
+				}
+				//me.setGoodsList();
+			}
+		});
+	},
+	//마취데이터
+	loadGoodsAnesthetize: function(status, code_parent) {
+		var me = this;
+		if(status === true){
+			if(status){
+				$.ajax({
+					url:'/stock/category_sub_list',
+					data:{
+						kind:'item_sub',
+						code_parent:code_parent
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							$.each(r.data, function(i,e){
+								e.rownum=0;
+								if(typeof(goodsArr[e.gno]) == 'undefined' ) goodsArr[e.gno] = e;
+							});
+
+						}
+						me.setGoodsList();
+					}
+				});
+			}
+		}
+		else{
+			var tmpArr = goodsArr;
+			//goodsArr = {};
+			$.each(goodsArr, function(i,e){
+				//console.log(code_parent, e.pcode_parent);
+				if(code_parent == e.pcode_parent){
+					//console.log('remove', i);
+					me.removeGoods(i, false);
+				}
+			});
+
+			me.setGoodsTotalPrice();
+			me.setGoodsList();
+		}
+	},
+	removeGoods: function(gno, reset) {
+		var me = this;
+		delete goodsArr[gno];
+
+		//var target = $('#goods_list');
+		//target.find('tr#tr_'+gno).remove();
+
+		if(reset === true) {
+			me.setGoodsTotalPrice();
+			me.setGoodsList();
+		}
+	},
+	selectGoods: function(goods_no) {
+		var me = this;
+		var target = $('#goods_list');
+		$.ajax({
+			url:'/stock/goods_info',
+			data:{
+				group_code:'{rs.group_code}',
+				no:goods_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					var rd = r.data;
+					var cnt = $('#tr_'+r.data.no).length;
+					if(cnt > 0) HmisAlert.alert('이미 등록된 물품입니다.');
+					else {
+						var data = {
+							classify_name:rd.classify_name,
+							gno:rd.no,
+							goods_name:rd.goods_name,
+							goods_unit_price:rd.unit_price,
+							item_code:'',
+							item_name:rd.item_name,
+							pcode_parent:'',
+							pno:'',
+							rownum:target.find('tr').length+1
+						}
+
+						var html = me.tmpl.process(data);
+						target.append(html);
+					}
+				}
+				//me.setGoodsList();
+			}
+		})
+	},
+	setGoodsList:function(){
+
+		var me = this;
+		var tmpl = TrimPath.parseDOMTemplate('tmpl_goods');
+		var target = $('#goods_list');
+		//target.empty();
+
+		var html = '';
+		var rownum = target.find('tr').length+1;
+
+		//존재하지 않는 tr삭제
+		$.each(me.target.find('tr'), function(i,e){
+			if(($(this).data('gno').toString() in goodsArr) === false) $(this).remove();
+		});
+
+		$.each(goodsArr, function(i,e){
+			//이미 출력중이면 제외
+			var len = target.find('tr#tr_'+i).length;
+			if(len > 0) return true;
+
+			e.rownum = rownum++;
+			html += tmpl.process(e);
+		});
+
+		target.append(html);
+
+		$.each(me.target.find('tr'), function(i,e){
+			var td = $(this).find('td').first();
+			td.text(i+1);
+		});
+
+		me.loadGoodsInfo();
+	},
+	loadGoodsDefault:function(){
+
+	},
+	up: function(e) {
+		var input = $(e).next('input');
+		var val = parseInt(input.val())+1;
+		input.val(val);
+	},
+	down: function(e){
+		var input = $(e).prev('input');
+		var val = parseInt(input.val())-1;
+		var new_val = (val<0)?'0':val;
+		input.val(new_val);
+	}
+
+
+
+}
+
+$(function() {
+	  PatientMaterialInput.init();
+})
+</script>

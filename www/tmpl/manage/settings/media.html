@@ -1,0 +1,139 @@
+<h3 class="area-title">검색</h3>
+<form id="FrmMediaSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>검색기간</th>
+			<td>
+				<input type="text" name="sdate_s" id="sdate_s" class="datepicker" value="<?=date('Y-m-d')?>"> ~ <input type="text" name="sdate_e"  id="sdate_e" class="datepicker" value="<?=date('Y-m-d')?>">
+
+				<ul class="btn-group btn-group-xs">
+					<li onclick="Media.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="Media.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="Media.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="Media.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="Media.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="Media.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+			<th>미디어그룹</th>
+			<td>
+				<div class="btn-group hmis orange" data-toggle="buttons">
+					<label class="btn active"><input type="radio" name="parent" value="all" onchange="Media.filter('all')" checked>전체</label>
+					{@ cfg.media_group}
+					<label class="btn"><input type="radio" name="parent" value="{.key_}" onchange="Media.filter('{.key_}')">{.value_}</label>
+					{/}
+				</div>
+				
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="Media.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="Media.reset()">처음으로</button>
+</div>
+
+
+<h3 class="area-title">미디어코드
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onclick="Media.add(0)"><i class="fa fa-1 fa-plus"></i> 미디어코드 추가</button>
+	</div>
+</h3>
+
+<form id="FrmCostMatch">
+<table class="table table-bordered table-form  table-center">
+	<colgroup>
+		<col style="width:150px" />
+		<col style="width:250px" />
+		<col style="width:100px" />
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>미디어그룹</th>
+			<th>미디어항목</th>
+			<th>DB수</th>
+			<th>설명</th>
+		</tr>
+	</thead>
+	<tbody id="media_inner">	
+	</tbody>
+</table> 
+</form>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var Media = {
+	no:'all',
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.editSave();
+			}
+		});
+
+		$("#FrmCostMatch").validationEngine('attach',option);
+		
+		DefaultLayout.param.filter = DefaultLayout.param.filter || 'all';
+		var radio = $('input[name="parent"][value="'+DefaultLayout.param.filter+'"]');
+		radio.parent('label').addClass('active');
+		radio.trigger('change');
+
+		this.load();
+		this.createDatepicker();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load();
+	},
+	createDatepicker : function(){
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	filter: function(no){
+		if(no=='all') {
+			$('tr[data-route]').show();
+		}
+		else {
+			$('tr[data-route]').hide();
+			$('tr[data-route^="'+no+'"]').show();
+		}
+		DefaultLayout.param.filter = no;
+	},
+	load: function() {
+		var search = $('#FrmMediaSearch').serializeArray();
+		$('#media_inner').load('/settings/media_inner', search, function() {
+			Media.filter(DefaultLayout.param.filter);	
+		});
+		
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmMediaSearch');
+		Media.filter('all');
+		this.load();
+	},
+	add: function(parent) {
+		var title = '미디어코드 추가';
+		var modal = new HmisModal('mediainput', {width:800, top:200});
+		modal.open(title,'/settings/media_input',{mode:'insert',parent_code:parent});
+	},
+	modify: function(code) {
+		var title = '미디어코드 수정';
+		var modal = new HmisModal('mediainput', {width:800, top:200});
+		modal.open(title,'/settings/media_input',{mode:'update',code:code});
+	}
+};
+
+$(function() {
+	Media.init();
+})
+</script>

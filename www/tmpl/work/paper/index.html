@@ -1,0 +1,210 @@
+<script>
+$(document).ready(function() {
+	set_list();	
+	tempcheck();
+	
+	open_calendar("#srch_start_date");
+	open_calendar("#srch_end_date");
+	
+	$("#bt-new").button("option", "icons", {
+		primary : "ui-icon-circle-plus"
+	});
+
+	$("#bt-reset").button("option", "icons", {
+		primary : "ui-icon-arrowrefresh-1-s"
+	});
+
+	$( ".radio" ).buttonset();
+	go_input('');
+	
+	$(document).on('click', 'ul#file-area li span', function() {
+		var remove = " <span class='badge bt-remove'>-</span>";		
+		var idx = $(this).index( "ul#file-area li span" );
+		
+		if (idx > 0) {
+			$("#file-area li").eq(idx).remove();
+		} else if (idx == 0) {
+			$("#file-area li").last().clone().insertAfter("#file-area li:last");
+			if ($("#file-area li").length == 2) {
+				$("#file-area li span").last().remove();
+				$("#file-area li").last().append(remove);
+			}
+		} 
+	});
+	
+	
+	$( "input:radio" ).change(function() {
+		grid_reload();
+	});
+	
+});	
+
+function set_list() {
+	$("#list").jqGrid(
+			{
+				width : 600,
+				height : 500,
+				url : "/work/paper_lists",
+				datatype : "json",
+				colNames:['번호','등록일자','팀', '작성자', '서류명', '제목'],
+				colModel : [ {
+					name : "no",
+					index : "no",
+					width : 25,
+					align : "center",
+					sortable:false					
+				}, {
+					name : "reg_date",
+					index : "reg_date",
+					width : 65,
+					align : "center",
+					sortable:false	
+				}, {
+					name : "team_name",
+					index : "team_name",
+					width : 50,
+					align : "center",
+					sortable:false						
+				}, {
+					name : "name",
+					index : "name",
+					width : 40,
+					align : "center",
+					sortable:false		
+				}, {
+					name : "work_type",
+					index : "work_type",
+					width : 40,
+					align : "center",
+					sortable:false		
+				}, {
+					name : "title",
+					index : "title",
+					width : 100,
+					align : "left",
+					sortable:false		
+				}		
+				],
+				onSelectRow :  function(id) {
+					go_input(id);
+				},	
+				rowNum : 10,
+				rowList : [ 10, 20, 30 ],
+				pager : "#pager",
+				viewrecords : true,
+				sortorder : "desc",
+				caption : "목록"
+			});
+
+	$("#list").jqGrid("navGrid", "#pager", {
+		edit : false,
+		add : false,
+		del : false,
+		search : false
+	});
+	$("#list").jqGrid('inlineNav', "#pager",  { edit: false});	
+		
+}
+
+
+
+function grid_reload() {
+	var data = $("#srch-frm").serialize();
+	var url = "/work/paper_lists?" + data;
+	
+	$("#list").jqGrid("setGridParam", {
+		url : url,
+		page : 1
+	}).trigger("reloadGrid");
+}
+
+
+
+function go_input(id) {
+	$("#input-area").hide();
+	$.ajax({
+		type : "GET",
+		url : "/work/paper_input/"+id,
+		data : "",
+		success : function(result_data) {
+			$("#input-area").html(result_data);
+			$("#input-area").fadeIn();
+		}
+	});
+}
+
+function tempcheck( tempindex ) {
+	
+	var tempindex ;
+
+	$.ajax({
+			 type: 'POST',
+			 url: '/work/work_ser/',
+			 data: { ptempindex: tempindex  },	 
+			 dataType : "html", 
+			 success : function(htmldata) {
+				$('#search_view').html(htmldata) ;
+			}
+	 });
+}
+
+</script>
+
+<div style="width:50%;float: left;position:relative">
+<h3 class="area-title">검색</h3>
+<div class="button-box" style="top:10px">
+<button id="bt-new" onClick="go_input('');">신규등록</button>
+</div>
+<form id="srch-frm">
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col width="14%">
+			<col width="25%">
+			<col width="14%">
+			<col width="">
+		</colgroup>
+		<tbody>	
+			<tr>
+				<th>팀</th>
+				<td colspan="3">
+					<div class="radio">
+						<input type="radio" id="radio0" name="srch_team_code" checked="checked" value=""><label for="radio0">전체</label>
+						<? foreach($team_list as $i=>$val): ?>
+						<input type="radio" id="radio<?=$i?>" name="srch_team_code" value="<?=$i?>" onclick="tempcheck(this.value);"><label for="radio<?=$i?>"><?=$val?></label>
+						<? endforeach; ?>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>서류명</th>
+				<td colspan="3">
+					<div id="search_view" ></div>
+				</td>
+			</tr>
+			<tr>
+				<th>등록기간</th>
+				<td colspan="3">
+					<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker">
+				</td>	
+			</tr>
+			<tr>	
+				<th>작성자</th>
+				<td>
+					<input type="text" name="srch_name" size="15">
+				</td>	
+				<th>제목</th>
+				<td>
+					<input type="text" name="srch_title" size="15">
+					<button id="bt-srch" onclick="grid_reload();">검색</button>
+					<button id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button>
+				</td>					
+			</tr>
+		</tbody>
+	</table>
+</form>
+
+<table id="list"></table>
+<div id="pager"></div>
+</div>
+
+<div style="float: left;width:49%;margin-left: 12px;" id="input-area">			</div>

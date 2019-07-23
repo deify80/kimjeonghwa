@@ -1,0 +1,80 @@
+<script>
+$(document).ready(function() {
+	$("#input-frm").validationEngine('attach', {
+		onValidationComplete : function(form, status) {
+			if (status) save();
+		}
+	})
+	
+	
+	$( "input[name=type]" ).click(function() {
+		  if ($(this).val() == "1") $("input[name=passwd]").show();
+		  else $("input[name=passwd]").hide();
+	});
+	
+	
+	
+});
+
+
+function save() { 
+	var url = "/bbs_proc/insert/<?=$bbs_code?>";
+	var data = $("#input-frm").serialize();
+		$.ajax({
+		type : "POST",
+		url : url,
+		data : data,
+		success : function(result_data) {
+			var obj = $.parseJSON(result_data);		
+			if (obj.is_valid == "Y") document.location = "/bbs/<?=$bbs_code?>";
+			else alert(obj.msg);
+		}
+	});
+
+}
+	
+
+function check_pass(field, rules, i, options){
+	if ($( "input[name=type]:checked" ).val() == "1" && $("#passwd").val() == "") {
+		var error_msg = "비밀번호를 입력해주세요.";
+		return error_msg;
+	}
+}
+
+</script>
+<div style="width:98%;">
+<h3 class="area-title"><?=$bbs_config['bbs_title']?></h3>
+<form id="input-frm">
+<div class="tool-box" style="margin: 0px;padding-bottom: 5px;">
+<button onClick="document.location='/bbs/<?=$bbs_code?>'">목록</button>
+<button type="submit">저장</button>
+</div>
+<table class="basic-table" style="width:800px;">
+<colgroup>
+	<col width="20%">
+	<col width="">
+</colgroup>
+	<tr>
+		<th>구분</th>
+		<td>
+		<? foreach($type_list as $i=>$val): ?>
+		<input type="radio" name="type" id="type<?=$i?>" value="<?=$i?>" class="validate[required,funcCall[check_pass]]"><?=$val?> 
+		<? endforeach; ?>
+		<input type="password" name="passwd" id="passwd" style="display: none;">
+		</td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td><input type="text" name="title" id="title" class="validate[required]" size="80" placeholder="제목"></td>
+	</tr>
+	<tr>
+		<th>내용</th>
+		<td><textarea name="contents" id="bbs_contents" class="validate[required]" cols="80" rows="20"></textarea></td>
+	</tr>
+	<tr>
+		<th>스팸방지코드</th>
+		<td style="padding-top: 4px;padding-bottom: 4px;"><?=$captcha['image']?><br><input type="text" name="captcha" id="captcha" size="30" placeholder="스팸방지코드" class="validate[required]"> (대소문자구분없음)</td>
+	</tr>
+</table>
+</form>
+</div>

@@ -1,0 +1,18 @@
+{@ list}
+		<tr data-route="{.key_}">
+			<th rowspan="{.count}"><a href="javascript:;" onclick="Media.modify('{.key_}')" class="link">{.name}</a> <i class="fa fa-1 fa-plus f-gray link" style="margin-left:5px" onclick="Media.add('{.key_}')"></i></th>
+			{@ .children}
+				{? ..index_ >0}<tr  data-route="{.key_}_{..key_}">{/}
+				<td><div class="minheight"><a href="javascript:;" onclick="Media.modify('{..key_}')" class="link">{..title}</a></div></td>
+				<td>{? ..cnt>0}{=number_format(..cnt)}{:}<span class="f-null">0</span>{/}</td>
+				<td class="left" >{..etc}</td>
+			{? ..index_ >0}</tr>{/}
+			{:}
+			<td colspan="3" class="left f-null">등록된 미디어코드가 없습니다.</td>
+			{/}
+		</tr>
+		{:}
+		<tr>
+			<td colspan="3">등록된 미디어 코드가 없습니다.</td>
+		</tr>
+		{/}

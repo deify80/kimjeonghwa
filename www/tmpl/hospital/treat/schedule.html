@@ -1,0 +1,235 @@
+<!-- 공지사항:S -->
+<div style="position:absolute;top:-49px;right:15px;z-index:10" id="notice"></div>
+<!-- 공지사항:E -->
+
+
+
+<!-- 20170210 kruddo : 진료일정 > 환자정보 바로 가기 검색 추가 -->
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px" />
+		<col />
+
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>환자 정보 검색</th>
+			<td>
+				<input type="search" name="" value="" id="search_patient"  class="search" style="width:300px" placeholder="환자명 or 휴대폰번호 or 차트번호" />
+				<button type="button" class="btn btn-theme" onclick="Schedule.searchPatient();" ><i class="fa fa-search fa-1"></i> 검색</button>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!-- 20170210 kruddo : 진료일정 > 환자정보 바로 가기 검색 추가 -->
+
+<div class="widget" style="margin-top:10px">
+
+
+<table class="table" style="margin:0px">
+	<colgroup>
+		<col style="width:1000px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<td>
+				<!--
+				<select name="search_">
+					<option value="">::담당의사::</option>
+				</select>
+				-->
+				<input type="text" id="search_word" style="width:200px;vertical-align: 1px" placeholder="고객명 or 연락처 or 차트번호" />
+				<button type="button" class="btn btn-theme" onclick="ScheduleList.filterSchedule();"><i class="fa fa-search fa-1"></i> 검색</button>
+				<button type="button" class="btn btn-gray" onclick="Schedule.resetSearch()"><i class="fa fa-refresh fa-1"></i> 처음으로</button>
+				<button type="button" class="btn btn-pink" onclick="Schedule.searchAppointment()"><i class="fa fa-search-plus fa-1"></i> 예약현황조회</button>
+				{? auth.schedule_admin}
+				<span class="split">|</span>
+				<div class="btn-group hmis orange" data-toggle="buttons" data-default="" style="vertical-align: -6px">
+					<label class="btn active"><input type="radio" name="search_team" value="" />전체</label>
+					{@ cfg.team}
+					<label class="btn"><input type="radio" name="search_team" value="{.key_}" />{.value_}</label>
+					{/}
+				</div>
+				{/}
+			</td>
+			<td style="text-align:right">
+				<button type="button" class="btn btn-flat-blue" onclick="Schedule.openModal('환자등록','/patient/input',1200)"><i class="fa fa-plus-square-o fa-1"></i> 환자등록</button>
+				{? auth.schedule_admin}
+				<span class="split"> | </span>
+				<button type="button" class="btn btn-flat-purple" onclick="Schedule.openModal('휴일설정','/treat/settings_holiday',400)"><i class="fa fa-cog fa-1"></i> 휴일설정</button>
+				<button type="button" class="btn btn-flat-purple" onclick="Schedule.openModal('예약유형설정','/treat/settings_type',400)"><i class="fa fa-cog fa-1"></i> 유형설정</button>
+				<button type="button" class="btn btn-flat-purple" onclick="Schedule.openModal('예약상태설정','/treat/settings_status',400)"><i class="fa fa-cog fa-1"></i> 상태설정</button>
+				{/}
+			</td>
+		</tr>
+	</tbody>
+</table>
+</div>
+
+<div id="schedule" style="position:relative"></div>
+
+<link rel="stylesheet" href="/css/schedule.css?{=time()}" />
+<link rel="stylesheet" href="/css/bootstrap.popover.css?{=time()}" />
+<link rel="stylesheet" href="/lib/js/contextmenu/context.css?{=time()}" />
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript" src="/js/bootstrap.popover.js"></script>
+<script type="text/javascript" src="/lib/js/contextmenu/context.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script language="javascript" src="/js/Hmis.treat.js"></script>
+<script type="text/javascript">
+var Schedule = {
+	search: {
+		manager_team_code:'',
+		doctor_id:'',
+		status_code:'',
+		group:'',
+		appointment_date:"{cfg.today}",
+		or:''
+	},
+	init: function() {
+		this.load();
+		this.loadNotice();
+		$('#search_word').on('keypress',function(e){
+			if(e.keyCode === 13) {
+				ScheduleList.filterSchedule();
+			}
+		});
+
+		$('input[name="search_team"]').on('change', function() {
+			ScheduleList.filterSchedule({manager_team_code:this.value});
+		})
+
+		this.createAutocomplete();
+	},
+	loadNotice: function(){
+		$('#notice').load('/treat/notice_inline');
+	},
+	load: function(date) {
+		this.setSearch({or:$('#search_word').val(), appointment_date:date});
+		var d = date || $('input[name="day"]:checked').val();
+		// $('#schedule').fadeOut(100);
+		$('#schedule').load('/treat/schedule_list',{date:date}, function() {
+			// console.log($(this));
+			// $(this).fadeIn(100);
+		});
+	},
+	openModal: function(title, url, width) {
+		var modal = new HmisModal('modal', {width:width, top:200});
+		modal.open(title,url);
+	},
+	openAppointment: function(el) {
+		var time = $(el).data('time');
+		var type = $(el).data('row');
+		var appointment_no = $(el).data('no');
+		var modalReserve = new HmisModal('modal-appointment', {width:1200, top:50});
+		modalReserve.open('진료예약','/treat/appointment_input', {no:appointment_no, date:this.search.appointment_date, time:time, type:type});
+	},
+	searchAppointment: function() {
+		var modal = new HmisModal('searchAppointment', {width:1000, top:100});
+		modal.open('예약현황조회','/treat/appointment_search');
+	},
+	setSearch: function(search) {
+		var or = $('#search_word').val();
+		$.extend(this.search, {or:or});
+		$.extend(this.search, search);
+	},
+	resetSearch: function() {
+		this.search = {
+			manager_team_code:'',
+			doctor_id:'',
+			status_code:'',
+			group:'',
+			appointment_date:"{cfg.today}",
+			or:''
+		}
+
+		$('#search_word').val('');
+		this.load(this.search.appointment_date);
+	},
+	// <!-- 20170210 kruddo : 진료일정 > 환자정보 바로 가기 검색 추가 -->
+	searchPatient: function() {
+		var search_el = $("#search_patient");
+		search_el.autocomplete('enable');
+		search_el.autocomplete("search", search_el.val());
+	}, //환자검색
+	createAutocomplete: function(){
+		var me = this;
+		var el = $('#search_patient');
+		el.autocomplete({
+			minLength: 1,
+			disabled: true,
+			select: function(event, ui) {
+				if(ui.item.rs != null) {
+					var patient_no = ui.item.rs.no;
+					if(patient_no > 0) {
+						//me.patient_no = patient_no;
+						me.render(patient_no)
+					}
+				}
+
+				$(this).val('');
+				return false;
+			},
+			source:function(request, response) {
+				$.ajax({
+					url: "/patient/patient_list",
+					data:{
+						search_word:request.term,
+						field:'no, name, mobile, messenger',
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.name+' - '+v.search,
+									value: v.name,
+									rs:v
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 환자가 없습니다.',
+								value:'',
+								no:''
+							}]);
+						}
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				if(el.val().length<2) {
+					HmisAlert.alert('최소 2자리 이상 입력후 검색하세요.', function(){ el.focus(); });
+					return false;
+				}
+				el.autocomplete('enable');
+				el.autocomplete("search",el.val());
+			}
+			else {
+				el.autocomplete('disable');
+			}
+		}).on('keyup',function(e) {
+			if ((e.keyCode == 8) || (this.value == "") || (e.keyCode == 46)){
+				el.autocomplete("disable");
+			}
+		});
+	},
+	render: function(patient_no) {
+		window.open('/patient/info/'+patient_no);
+		//document.location.href='/patient/info/6178';
+	},
+	
+	// <!-- 20170210 kruddo : 진료일정 > 환자정보 바로 가기 검색 추가 -->
+}
+
+$(function() {
+	Schedule.init();
+})
+
+
+</script>

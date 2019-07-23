@@ -1,0 +1,75 @@
+<?
+$submenu = $this->menu[MK_1]['children'];
+?>
+<ul id="menu">
+	<? foreach($submenu as $d2) { ?>
+
+		<? if($d2['href']) {?>
+		<li class="d3">
+		<a href="<?=$d2['href']?>"><?=$d2['name']?></a>
+		<? } else { ?>
+		<li>
+		<a href="#"><?=$d2['name']?></a>
+		<? } ?>
+		<ul>
+			<? foreach($d2['children'] as $d3) {?>
+			<li class="d3"><a href="javascript:;" onclick="LeftMenu.href('<?=$d3['href']?>')" class="<?=(MK_3==$d3['no'])?'selected':''?>"><?=$d3['name']?><span></span></a><span id="badge_<?=$d3['no']?>"></span></li>
+			<? } ?>
+		</ul>
+	</li>
+	<? } ?>
+</ul>
+
+<style>
+ul.left-func li {
+	margin-bottom:3px;
+}
+
+ul.left-func li button{
+	width:130px;
+	height:40px;
+	text-align:left;
+}
+
+ul.left-func li button span, ul.left-func li button i{
+	font-size:14px;
+}
+
+ ul.left-func li button i {
+ 	margin-right:5px;
+ }
+
+
+</style>
+
+<? if($this->common_lib->check_auth_group('hide_banner')) { ?>
+<div style="padding: 10px; vertical-align: bottom; position: fixed; bottom: 20px; clear: both; cursor: pointer">
+	<ul class="left-func">
+		<? if(MK_1=='1'){?>
+		<li>
+			<button class="btn btn-flat-orange" onclick="open_helper();"><i class="fa fa-quote-left"></i> <span>도움말</span></button>
+		</li>
+		<? } ?>
+		<li><?if($this->common_lib->check_auth_group('sms_limit')) {?>
+			<button class="btn btn-gray" onclick="open_sms('')" style="background-color:#8bc34a;" ><i class="fa fa-envelope"></i> <span>문자보내기</span></button>
+		</li>
+		<? } ?>
+		<li>
+			<button class="btn btn-gray" onclick="open_bbs('bbs_notice');" style="background-color:#8bc34a;" ><i class="fa fa-list"></i> <span>게시판</span></button>
+		</li>
+	</ul>
+</div>
+<? } ?>
+
+<script type="text/javascript">
+var LeftMenu = {
+	href:function(href) {
+		$.ajax({
+			url:'/common/refresh',
+			complete: function() {
+				document.location.href=href;
+			}
+		})
+	}
+}
+</script>

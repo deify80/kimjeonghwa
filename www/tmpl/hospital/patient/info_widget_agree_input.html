@@ -1,0 +1,111 @@
+<form id="FrmPatientAgreeInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="agree_no" value="{rs.no}" />
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="category" value="1" class="hmis" {? rs.category=='수술동의서' || mode =='insert'}checked{/}><span class="lbl"> 수술동의서</span></label>
+				<label class="hmis"><input type="radio" name="category" value="2" class="hmis" {? rs.category=='사진활용동의서'}checked{/}><span class="lbl"> 사진활용동의서</span></label>
+				<label class="hmis"><input type="radio" name="category" value="3" class="hmis" {? rs.category=='부위별수술동의서'}checked{/}><span class="lbl"> 부위별 수술동의서</span></label>
+			</td>
+		</tr>
+		{? mode == 'insert'}
+		<tr>
+			<th>동의서등록</th>
+			<td>
+				<div class="file_div">
+					<button type="button" class="btn btn-flat-blue"><i class="fa fa-photo fa-1"></i> 동의서찾기</button>
+					<input type="file" name="agree[]" id="attach_agree" class="multi file_hidden" value="" style="width:100px" multiple>
+				</div>
+				<div id="attach_agree_list" class="file_list" style="margin-bottom:0px">
+					<div id="agree_file_msg" style="color:#A2A2A2"></div>
+				</div>
+			</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" onclick="PatientagreeInput.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var PatientagreeInput = {
+	mode:'{mode}',
+	agreeCount:0,
+	init: function() {
+		this.createFile();
+	},
+	createFile : function() {
+		this.msgFile();
+		var me = this;
+		$('#attach_agree').MultiFile({
+			accept: 'gif|jpg|png|bmp|jpeg',
+			list: '#attach_agree_list',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				duplicate:'이미 등록된 파일입니다.'
+			},
+			afterFileAppend: function() {
+				me.msgFile();
+			},
+			afterFileRemove: function() {
+				me.msgFile();
+			}
+		});
+	},
+	msgFile : function() {
+		this.agreeCount = $('#attach_agree_list > div.MultiFile-label').length;
+		if(this.agreeCount<1) {
+			$('#agree_file_msg').html('파일을 첨부해 주세요.');
+		}
+		if(this.agreeCount>0) {
+			$('#agree_file_msg').html('');
+		}
+	},
+	save: function() {
+		if(this.agreeCount<1 && this.mode == 'insert') {
+			HmisAlert.alert('동의서를 선택하세요.');
+			return false;
+		}
+
+		var options = {
+			url:'/patient_proc/save_patient_agree',
+			type:'POST',
+			dataType:'json',
+			success : function(r) {
+				if(r.success){
+					$('.modal-close').trigger('click');
+					PatientInfo.loadTab('agree');
+					PatientInfo.countTab();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			},
+			beforeSubmit: function() {
+				$('#FrmPatientAgreeInput button[type="submit"]').attr('disabled', true);
+				$('#FrmPatientAgreeInput button[type="submit"]').html('<img src="/images/common/loading.gif" style="vertical-align:middle"/> 저장중..');
+			}
+		}
+		$('#FrmPatientAgreeInput').ajaxSubmit(options)
+	}
+}
+
+$(function(){
+	PatientagreeInput.init();
+})
+</script>

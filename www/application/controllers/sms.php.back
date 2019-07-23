@@ -1,0 +1,187 @@
+<?php
+if (! defined( 'BASEPATH' )) exit( 'No direct script access allowed' );
+
+
+
+class Sms extends CI_Controller {
+
+
+
+	public function __construct() {
+		parent::__construct();
+		$this->load->model( array (
+				'Sms_model',
+				'Consulting_model'
+		) );
+		$this->load->library( 'sms_lib' );
+		$this->yield = TRUE;
+		$this->layout = 'sms_layout';
+	}
+
+
+
+	public function main() {
+
+		$receiver_list = null;
+		if (is_array( $this->input->post( 'chk' ) )) {
+			foreach ( $this->input->post( 'chk' ) as $i => $val ) {
+				$cst_seqno[] = $val;
+			}
+		}
+
+		$imp_cst_seqno = implode( ',', $cst_seqno );
+		$where = null;
+		$where[] = 'cst_seqno in (' . $imp_cst_seqno . ')';
+		if (is_array( $cst_seqno )) $result = $this->Consulting_model->get_cst_in( $where );
+		foreach ( $result as $i => $row ) {
+			if ($row['tel'] != '' && preg_match( '/[0-9]/', $row['tel'] )) $receiver_list[] = $row['tel'];
+		}
+
+		$sms_list = $this->input->post('sms', true);
+		if(is_array($sms_list)) {
+			foreach($sms_list as $mobile) {
+				if ($mobile != '' && preg_match( '/[0-9]/', $mobile )) $receiver_list[] = $mobile;
+			}
+		}
+
+
+		$category = array (
+				'상담안내',
+				'내원예약',
+				'수술예약',
+				'수술컨펌',
+				'경과예약',
+				'해피콜'
+		);
+
+		$data = array (
+			'category'=>$category,
+			'receiver_list'=>$receiver_list
+		);
+		$this->load->view( 'sms/input', $data );
+	}
+
+
+
+	public function lists() {
+		if (isset( $_GET['srch_type'] ) && ! empty( $_GET['srch_type'] )) $where['reserve_chk'] = $_GET['srch_type'];
+		if (isset( $_GET['srch_status'] ) && ! empty( $_GET['srch_status'] )) {
+			if ($_GET['srch_status'] == "Y") $where['SUBSTRING(status,6,4)'] = '0000';
+			else if ($_GET['srch_status'] == "N") $where['SUBSTRING(status,6,4) != '] = '0000';
+		}
+
+		$start_date = date( 'Y-m-d' );
+		$end_date = date( 'Y-m-d' );
+
+		if ($_GET['srch_start_date'] != '') {
+			$start_date = $_GET['srch_start_date'];
+			$end_date = $_GET['srch_end_date'];
+		}
+		$where['reg_date >= '] = str_replace( '-', '', $start_date ) . '000000';
+		$where['reg_date <= '] = str_replace( '-', '', $end_date ) . '999999';
+
+		$result = $this->Sms_model->get_list( $where );
+		foreach ( $result as $i => $row ) {
+
+			$exp_status = explode( '|', $row['status'] );
+			$list[$i]->msg_type = $row['msg_type'];
+			$list[$i]->receiver = $row['receiver'];
+			$list[$i]->sender = $row['sender'];
+			$list[$i]->msg = $row['msg'];
+			$list[$i]->reserve_type = ($row['reserve_chk'] == 'Y') ? '예약발송' : '즉시발송';
+			$list[$i]->reg_date = substr( $row['reg_date'], 0, 4 ) . '/' . substr( $row['reg_date'], 4, 2 ) . '/' . substr( $row['reg_date'], 6, 2 ) . ' ' . substr( $row['reg_date'], 8, 2 ) . ':' . substr( $row['reg_date'], 10, 2 );
+
+			$status = str_replace( 'msg:', '', $exp_status[1] );
+			$list[$i]->status = ($status == '등록성공' || $status == '등록실패') ? str_replace( '등록', '발송', $status ) : $status;
+		}
+		$selected['srch_type'][$_GET['srch_type']] = 'selected';
+		$selected['srch_status'][$_GET['srch_status']] = 'selected';
+
+		$data = array (
+				'list'=>$list,
+				'selected'=>$selected,
+				'start_date'=>$start_date,
+				'end_date'=>$end_date
+		);
+		$this->load->view( 'sms/list', $data );
+	}
+
+
+
+	public function default_msg() {
+		$row = $this->Sms_model->get_msg( $this->input->post( 'category' ) );
+		echo $row['msg'];
+	}
+
+
+
+	public function send() {
+		//팀별 sms발송 갯수 제한 by 이혜진 2015-08-07
+		$max = 500;
+		$team = $this->session->userdata("ss_team_code");
+		$team_user = $this->common_lib->get_user($team);
+		$month_start = date('Ym01000000');
+		$month_end = date('YmdHis');
+
+		//기존 발송갯수 체크
+		$count = $this->Sms_model->count_log(array('user_id'=>array_keys($team_user), 'reg_date >= '=>$month_start, 'reg_date <= '=>$month_end));
+
+		$receiver = $this->input->post( 'receiver' );
+		if($max <= $count) {
+			echo "이번달 발송가능 갯수를 모두 사용하셨습니다.";
+			exit;
+		}
+		if($max < $count+count($receiver)) {
+			echo "이번달 발송 가능한 잔여SMS는 ".($max-$count)."개입니다.";
+			exit;
+		}
+
+
+		$success_total = 0;
+		foreach ( $this->input->post( 'receiver' ) as $i => $val ) {
+
+			$msg_type = strtolower( $this->input->post( 'msg_type' ) );
+			$receiver = $val;
+			$sender = str_replace( '-', '', $this->input->post( 'sender' ) );
+			// $msg = htmlspecialchars( $this->input->post( 'msg' ) );
+			$msg = str_replace( "'", "", $this->input->post( 'msg' ) );
+			$reserve_time = ($this->input->post( 'chk' ) == 'Y') ? $this->input->post( 'send_date' ) . ' ' . str_pad( $this->input->post( 'send_hour' ), 2, '0', STR_PAD_LEFT ) . ':' . str_pad( $this->input->post( 'send_minute' ), 2, '0', STR_PAD_LEFT ) . ':00' : NULL;
+			$reserve_chk = ($this->input->post( 'chk' ) == 'Y') ? 'Y' : 'N';
+			$msg_type = ($msg_type == 'lms') ? 'mms' : $msg_type;
+			$reserve_time = trim( $reserve_time );
+
+			// $map = ($this->session->userdata( 'ss_biz_id' ) == 'klasseps' && $_POST['category'] == 0)? 'http://klasseps.com/images/quick/map_details.jpg':'';
+			$map = ($this->session->userdata( 'ss_biz_id' ) == 'HBPS' && $_POST['category'] != '5')? 'http://cmltd.kr/images/common/sms_map.jpg?20161108012':'';
+
+			if ($map != '') $msg_type = 'mms';
+
+			$result = $this->sms_lib->sms_send( $msg_type, $receiver, $msg, $sender, $map, $reserve_time, NULL, NULL, NULL, $reserve_chk );
+			$status = $result['code'];
+
+			$input = null;
+			$input['msg_type'] = $msg_type;
+			$input['receiver'] = $receiver;
+			$input['sender'] = $sender;
+			$input['msg'] = $msg;
+			$input['reserve_time'] = $reserve_time;
+			$input['reserve_chk'] = $reserve_chk;
+			$input['reg_date'] = TIME_YMDHIS;
+			$input['status'] = $result;
+			$input['user_id'] = $this->session->userdata( 'ss_user_id' );
+			$input['biz_id'] = $this->session->userdata( 'ss_biz_id' );
+			$input['hst_code'] = $this->session->userdata( 'ss_hst_code' );
+
+			$this->Sms_model->insert_log( $input );
+
+			$exp_result = explode( '|', $result );
+			$code = str_replace( 'code:', '', $exp_result[0] );
+
+			if ($code == '0000') $success_total ++;
+		}
+
+		if ($reserve_chk == 'Y') $msg = '총 ' . $success_total . '건의 문자가 정상적으로 예약되었습니다';
+		else $msg = '총 ' . $success_total . '건의 문자가 정상적으로 발송되었습니다';
+
+		echo $msg;
+	}
+}

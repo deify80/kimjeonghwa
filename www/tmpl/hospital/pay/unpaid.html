@@ -1,0 +1,229 @@
+<h3 class="area-title">수납내역 검색</h3>
+<form id="FrmPatientUnPaidSearch" onsubmit="UnPaidList.load(1); return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>수납기간</th>
+			<td colspan="3">
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e"> 
+				<ul class="btn-group btn-group-xs">
+					<li onclick="UnPaidList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<li onclick="UnPaidList.setDate('<?=$cfg['date']['weekday_db']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+					<li onclick="UnPaidList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+					<li onclick="UnPaidList.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"><a href="javascript:;">어제</a></li>
+					<li onclick="UnPaidList.setDate('<?=$cfg['date']['pre_week_start_db']?>','<?=$cfg['date']['pre_week_end_db']?>');"><a href="javascript:;">지난주</a></li>
+					<li onclick="UnPaidList.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+			
+			<th>진료구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="tax_type" value="과세진료" class="hmis" /><span class="lbl"> 과세진료</span></label>
+				<label class="hmis"><input type="radio" name="tax_type" value="면세진료" class="hmis" /><span class="lbl"> 면세진료</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>검색어</th>
+			<td colspan="1">
+				<input type="text" name="word" class="full" placeholder="환자명 or 휴대폰번호" >
+			</td>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					<? foreach($cfg['doctor'] as $doctor_id => $doctor_name){?>
+					<option value="<?=$doctor_id?>"><?=$doctor_name?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="scsb_team" onchange="HmisCommon.loadUser(this.value, '', 'scsb')">
+					<option value="">::팀::</option>
+					<? foreach($cfg['team'] as $team_code => $team_name){?>
+					<option value="<?=$team_code?>"><?=$team_name?></option>
+					<? } ?>
+				</select>
+				<select name="manager_id" id="scsb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+			
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" ><i class="fa fa-search"></i> 검색</button>
+	<button type="button" class="btn btn-lg btn-gray" onclick="UnPaidList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	미수금 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 미수건수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 미수건수 <span id="cnt_total"class="f-bold">0</span>건</span>
+	<div class="button-box">
+		<div class="label" style="background-color:#EF5350">
+		<div class="headline"> 미수총액 <span class="value" style="margin-left:10px" id="amount_unpaid"><?=number_format($sum['unpaid'])?></span> 원</div>
+	</div>
+	</div>
+</h3>
+
+
+
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px" /><!-- 번호 -->
+		<col style="width:100px" /><!-- 차트번호 -->
+		<col style="width:100px" /><!-- 수납일자 -->
+		<col style="width:60px" /><!-- 구분 -->
+		<col style="width:100px" /><!-- 환자명 -->
+		<col style="width:120px" /><!-- 연락처 -->
+		<col style="width:100px" /><!-- 담당의사 -->
+		<col style="width:100px" /><!-- 담당자 -->
+		<col style="width:100px" /><!-- 진료구분 -->
+		<col style="width:100px" /><!-- 총매출 -->
+		<col style="width:100px" /><!-- 총수납액 -->
+		<col style="width:100px" /><!-- 미수금 -->
+		<col ><!-- 특이사항 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>차트번호</th>
+			<th>수납일자</th>
+			<th>구분</th>
+			<th>환자명</th>
+			<th>연락처</th>
+			<th>담당의사</th>
+			<th>담당실장</th>
+			<th>진료구분</th>
+			<th>총매출</th>
+			<th>수납금액</th>
+			<th>미수금</th>
+			<th>특이사항</th>
+		</tr>
+	</thead>
+	<tbody id="unpaid_list">
+	</tbody>
+</table>
+
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td>${chart_no}</td>
+		<td>${date_paid}</td>
+		<td>${sales_type}</td>
+		<td>${name} {if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {else} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td>${mobile}</td>
+		<td>${doctor_name}</td>
+		<td>${manager_name}</td>
+		<td>${tax_type}</td>
+		<td>${HmisCommon.numberFormat(amount_total)}</td>
+		<td>${HmisCommon.numberFormat(amount_paid)}</td>
+		<td style="color:#EF5350">${HmisCommon.numberFormat(amount_unpaid)}</td>
+		<td class="left">${comment}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="PatientList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="PatientList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="PatientList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var UnPaidList = {
+	page:1,
+	init: function() {
+		this.load(1);
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+	},
+	reload: function() {
+		PatientList.load(PatientList.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmPatientUnPaidSearch').serialize();
+		
+		$.ajax({
+			url:'/pay/unpaid_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#unpaid_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					console.log(r.data.sum);
+
+					$('#amount_unpaid').text(HmisCommon.numberFormat(r.data.sum.unpaid));
+
+
+				}
+				else {
+					$('#amount_unpaid').text('0');
+					target.append('<tr><td colspan="13">검색된 수납내역이 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+			}
+		})
+	},
+	reset: function(){
+		HmisCommon.formReset('FrmPatientUnPaidSearch');
+		this.load();
+	}
+}
+
+$(function() {
+	UnPaidList.init();
+})
+</script>

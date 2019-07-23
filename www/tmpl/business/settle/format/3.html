@@ -1,0 +1,103 @@
+<!-- 근태신청서 포맷 -->
+<?php
+$data = $settle_expense[0];
+// pre($this->session->userdata);
+?>
+<table id="format_3" class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px">
+	<colgroup>
+		<!-- <col width="120px" /> -->
+		<col width="120px" />
+		<col width="100px" />
+		<col width="70px" />
+		<col width="70px" />
+		<col width="200px" />
+		<col />
+		<col width="120px" />
+		<col width="100px" />
+		<col width="100px" />
+	</colgroup>
+	<tbody >
+		<tr>
+			<!-- <th>사업장</th> -->
+			<th>부서명</th>
+			<th>팀명</th>
+			<th>직급</th>
+			<th>이름</th>
+			<th>구분</th>
+			<th>기간</th>
+			<th>사유</th>
+			<th>대리업무자</th>
+			<th>비상연락망</th>
+		</tr>
+		<tr>
+			<!-- <td><?=$this->session->userdata( 'ss_biz_name' );?></td> -->
+			<td><?=$this->session->userdata( 'ss_dept_name' );?></td>
+			<td><?=$this->session->userdata( 'ss_team_name' );?></td>
+			<td><?=$this->session->userdata( 'ss_position_name' );?></td>
+			<td><?=$this->session->userdata( 'ss_name' );?></td>
+			<td>
+				<select name="expense_holiday_type" onchange="SettleFormat.setHoliday(this.value)">
+					<?foreach($cfg['attendance_settle'] as $k=>$v){?>
+					<option value="<?=$k?>" <?=($data['expense_holiday_type']==$k)?'selected':''?>><?=$v['name']?></option>
+					<? } ?>
+				</select>
+				
+				<select name='expense_holiday' id="expense_holiday" style="width:75px">
+				</select>
+			</td>
+			<td>
+				<input type="text" name="expense_start_date" class="datepicker" value="<?=substr($data['expense_start_date'],0,10)?>"> ~ <input type="text" name="expense_end_date" class="datepicker" value="<?=substr($data['expense_end_date'],0,10)?>">
+ 			<span id="expense_period"></span>
+			</td>
+			<td><input type='text' style='width:95%;' name='expense_desc' value='<?=$data['expense_desc']?>' /></td>
+			<td><input type='text' style='width:95%;' name='expense_customer' value='<?=$data['expense_customer']?>' /></td>
+			<td><input type='text' style='width:95%;' name='expense_etc' value='<?=$data['expense_etc']?>' /></td>
+		</tr>
+	</tbody>
+</table>
+
+<script type="text/javascript">
+var SettleFormat = {
+	settle_no:'<?=$settle_no?>',
+	init:function() {
+		HmisCommon.createDatepicker();
+		if(!this.settle_no) {
+			$("#title").val("");
+			CKEDITOR.instances['content'].setData("다음의 내용으로 근태를 신청하오니 검토 후 재가바랍니다.<br/>< 다 음 >");	
+		}
+		this.setHoliday($('select[name="expense_holiday_type"]').val());
+	},
+	setHoliday : function(type){
+		$.ajax({
+			url:'/business/get_settle_holiday',
+			data:{
+				type:type
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var target=$('#expense_holiday');
+				if(r.success) {
+					target.empty();
+					$.each(r.data , function(i, e) {
+						var selected = (i=='<?=$data['expense_holiday']?>')?'selected':'';
+						target.append('<option value="'+i+'" '+selected+'>'+e+'</option>');
+					});
+					target.css('display','');
+				}
+				else {
+					target.val('');
+					target.css('display','none');
+
+				}
+				
+			}
+		})
+	}
+};
+
+$(function(){
+	SettleFormat.init();	
+});
+
+</script>

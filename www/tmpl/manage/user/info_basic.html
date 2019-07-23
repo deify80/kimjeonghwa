@@ -1,0 +1,72 @@
+<div class="f-18 f-blue"><?=$basic['name']?></div>
+<? if($basic['status'] == '1') {?>
+<div class="f-theme f-small" style="margin-top:5px"><i class="fa fa-circle" style="font-size:10px"></i> 근무중</div>
+<? } else if($basic['status'] == '2') {?>
+<div class="f-theme f-small" style="margin-top:5px"><i class="fa fa-circle" style="font-size:10px"></i> 휴직중</div>
+<? } else {?>
+<div class="f-gray f-small" style="margin-top:5px"><i class="fa fa-circle" style="font-size:10px"></i> 퇴사</div>
+<? } ?>
+<div style="margin-top:10px;text-align:center">
+	<form id="FrmUserPhoto" onsubmit="return false">
+		<input type="hidden" name="user_no" value="<?=$basic['no']?>" />
+		<!-- <img src="<?=$basic['photo_path']?>" style="width:150px;height:175px;" class="img" /> -->
+		<img src="<?=$basic['photo_path']?>" style="width:200px;height:200px;border-radius:50%" class="img center-block">
+		<input type="file" name="user_photo" id="attach" class="file_hidden"  style="width:200px;height:200px;margin:10px"/>
+	</form>
+</div>
+<div style="margin:10px 0px;text-align:center">
+	<span class="label label-normal"><?=if_empty($basic['user_code'],'<span style="color:#FFFFFF">사번없음</span>')?></span>
+</div>
+<div class="dashed" style="margin:10px 0px"></div>
+<div>
+	<dl class="inline">
+		<dt>부서/팀</dt><dd><?=$basic['dept_name']?> &gt; <?=$basic['team_name']?></dd>
+		<dt>직급</dt><dd><?=$basic['position_name']?></dd>
+		<dt>직책</dt><dd><?=$basic['duty_name']?></dd>
+		<dt>사업장</dt><dd><?=$basic['dept_name']?></dd>
+		<dt>입사일</dt><dd><?=if_empty($basic['join_date'])?></dd>
+
+		<dt>근속기간</dt><dd>
+			<?=($basic['join_date'] == date('Y-m-d'))?'0일':''; ?>
+			<?=($basic['service']['years'] > 0)?$basic['service']['years'].'년':''?>
+			<?=($basic['service']['months'] > 0)?$basic['service']['months'].'개월':''?>
+			<?=($basic['service']['days'] > 0)?$basic['service']['days'].'일':''?>
+		</dd>
+	</dl>
+</div>
+
+<script type="text/javascript">
+var UserInfoBasic = {
+	init: function() {
+		$('#attach').MultiFile({
+			accept: 'gif|jpg|png|bmp|jpeg',
+			onFileSelect: function(ele, value, master_ele) {
+				UserInfoBasic.uploadPhoto();
+			},
+			afterFileAppend:function() {
+				$('#attach_wrap_list').empty();
+			}
+		});
+	},
+	uploadPhoto: function() {
+		var options = { 
+			url:'/manage_proc/save_user_photo',
+			type:'POST',
+			dataType:'json',
+			success : function(r) {
+				if(r.success){
+					UserInfo.loadBasic();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		}
+		$('#FrmUserPhoto').ajaxSubmit(options)
+	}
+}
+
+$(function(){
+	UserInfoBasic.init();
+})
+</script>

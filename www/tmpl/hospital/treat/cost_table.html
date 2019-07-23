@@ -1,0 +1,191 @@
+<div>
+	<div class="btn-group hmis orange" data-toggle="buttons">
+		<label class="btn"><input type="radio" name="parent" value="all" onchange="CostTable.filter('all')">전체</label>
+		{@ list}
+		<label class="btn"><input type="radio" name="parent" value="{.no}" onchange="CostTable.filter('{.no}')">{.name}</label>
+		{/}
+	</div>
+	<div style="float:right">
+		<button type="button" class="btn btn-flat-blue" onclick="CostTable.add(0)"><i class="fa fa-1 fa-plus"></i> 분류추가</button>
+		<button type="button" class="btn btn-flat-purple" onclick="CostTable.settings()"><i class="fa fa-1 fa-cog"></i> 설정</button>
+	</div>
+</div>
+
+<form id="FrmCostTable">
+<table class="table table-bordered table-form table-center">
+	<colgroup>
+		<col style="width:150px" />
+		<col style="width:150px" />
+		<col style="width:250px" />
+		<col>
+		<col>
+		<col>
+		<col>
+	</colgroup>
+	<thead>
+	<tr>
+		<th>대분류</th>
+		<th>중분류</th>
+		<th>소분류</th>
+		<th>정상수가</th>
+		<th>재수술</th>
+		<th>Private</th>
+		<th>해외수가</th>
+	</tr>
+	</thead>
+	<tbody>
+	{@ list}
+	<tr data-route="{.no}_">
+		<th rowspan="{.count}"><a href="javascript:;" onclick="CostTable.modify({.no})" class="link">{.name}</a> <span style="margin-left:5px"><i class="fa fa-1 fa-plus f-gray link" onclick="CostTable.add('{.no}')"></i></span></th>
+		{@ .children}
+			{? ..index_ > 0}<tr data-route="{.no}_{..no}">{/}
+			<td rowspan="{..count}"><a href="javascript:;" onclick="CostTable.modify({..no})" class="link">{..name}</a> <span style="margin-left:5px"><i class="fa fa-1 fa-plus f-gray link" onclick="CostTable.add('{..no}')"></i></span></td>
+			{@ ..children}
+				{? ...index_ > 0}<tr data-route="{.no}_{..no}_{...no}">{/}
+				<td><div class="minheight"><a href="javascript:;" onclick="CostTable.modify({...no})" class="link" style="{? ...match}color:#FF5722;border-color:#FF5722;{/}">{...name}</a></div></td>
+				{@ (cfg.cost)}
+				<td class="left">
+					<span id="edited_{...no}_{....value_}"><a href="javascript:;" onclick="CostTable.editable('{...no}', '{....value_}')" class="dash">
+						{? ....value_=='origin'}
+						<span>{=number_format(...cost_origin)}</span>
+						{: ....value_=='re'}
+						<span>{=number_format(...cost_re)}</span>
+						{: ....value_=='abroad_1'}
+						<span>{=number_format(...cost_abroad_1)}</span>
+						{:}
+						<span>{=number_format(...cost_abroad_2)}</span>
+						{/}
+
+					 원</a></span>
+					<span id="editable_{...no}_{....value_}" style="display:none">
+						<input type="text" id="cost_{...no}_{....value_}" data-no="{...no}" data-kind="{....value_}" value="" class="validate[custom[numberFormat] required] number required"  data-errormessage-value-missing="수가를 입력하세요." />
+						<button type="button" class="btn btn-onlyicon btn-flat-blue" onclick="CostTable.editSave('{...no}', '{....value_}')" ><i class="fa fa-1 fa-save"></i></button>
+						<button type="button" class="btn btn-onlyicon btn-gray" onclick="CostTable.editCancel()" ><i class="fa fa-1 fa-undo"></i></button>
+					</span>
+				</td>
+				{/}
+				{? ...index_ > 0}</tr>{/}
+			{:}
+			<td colspan="5" class="left"><div class="minheight f-null">등록된 소분류가 없습니다.</div></td>
+			{/}
+			{? ..index_ > 0}</tr>{/}
+		{:}
+		<td colspan="6" class="left"><div class="minheight f-null">등록된 중분류가 없습니다.</div></td>
+		{/}
+		</tr>
+	{:}
+	<tr>
+		<td colspan="7">등록된 수가 정보가 없습니다.</td>
+	</tr>
+	{/}
+
+	</tbody>
+</table>
+</form>
+
+<script type="text/javascript">
+var CostTable = {
+	no:'',
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.editSave();
+			}
+		});
+
+		$("#FrmCostTable").validationEngine('attach',option);
+
+		this.createNumber();
+
+		$('input[id^="cost_"]').on('keyup', function(evt, e){
+			if(evt.keyCode == '13'){
+				me.editSave($(this).data('no'), $(this).data('kind'));
+			}
+		})
+
+
+		var radio = $('input[name="parent"][value="'+CostTab.filter.table+'"]');
+		radio.parent('label').addClass('active');
+		radio.trigger('change');
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+		})
+	},
+	filter: function(no){
+		if(no=='all') {
+			$('tr[data-route]').show();
+		}
+		else {
+			$('tr[data-route]').hide();
+			$('tr[data-route^="'+no+'_"]').show();
+		}
+
+		CostTab.filter.table = no;
+	},
+	add: function(parent) {
+		var title = '분류등록';
+		var modal = new HmisModal('costinput', {width:600, top:200});
+		modal.open(title,'/treat/cost_input',{mode:'insert',parent:parent});
+	},
+	modify: function(no) {
+		var title = '분류수정';
+		var modal = new HmisModal('costinput', {width:600, top:200});
+		modal.open(title,'/treat/cost_input',{mode:'update',no:no});
+	},
+	settings: function() {
+		var title = '수가기본설정';
+		var modal = new HmisModal('costsettings', {width:500, top:200});
+		modal.open(title,'/treat/cost_settings');
+	},
+	editable : function(no, kind) {
+		this.editCancel();
+		this.no = no;
+		var edited = $('#edited_'+no+'_'+kind);
+		var editable = $('#editable_'+no+'_'+kind);
+		edited.hide();
+		editable.show();
+		editable.find('input').val(edited.find('span').text());
+	},
+	editSave: function(no, kind){
+		var cost = $('#cost_'+no+'_'+kind).val();
+		if(!cost) return false;
+
+		$.ajax({
+			url:'/treat_proc/save_cost',
+			data:{
+				mode:'update',
+				no:no,
+				kind:kind,
+				cost:cost
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					CostTab.loadTab('table');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+
+		})
+	},
+	editCancel: function(){
+		$('span[id^="edited_"]').show();
+		$('span[id^="editable_"]').hide();
+		$('#FrmCostTable')[0].reset();
+	}
+};
+
+$(function() {
+	CostTable.init();
+})
+</script>

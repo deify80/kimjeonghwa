@@ -1,0 +1,375 @@
+<!-- 일일매출보고 포맷 -->
+
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+
+var BizOpFormat = {
+	init:function() {
+		$('#mode').val('');
+		//$('#s_expense_customer').focus();
+
+		HmisCommon.createDatepicker();
+		this.createNumber();
+
+		$("#FrmBizOpInput :input").keypress(function(){
+            if (event.keyCode == 13) {
+				BizOpFormat.add();
+            }
+        });
+
+		if($('#work_type').val() != ''){
+			$('.col_span').attr("colSpan",2);
+			$('.td_hide').addClass('hide');
+		}
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+			me.calculatePrice(e.data('group'), e.data('name'));	
+		
+		})
+	},
+	add : function() {
+
+		var formdata = $('#FrmBizOpInput').serialize();
+		formdata += "&team_code="+$('#team_code').val();
+		formdata += "&biz_type="+$('#biz_type').val();
+
+		var biz_type = $('#biz_type').val();
+
+		$.ajax({
+			url : "/work_proc/add_biz_sales_codi_op_log",
+			data : formdata,
+			dataType:'json',
+			type : "POST",
+			success : function(r) {
+				if(r.success){
+					WorkBiz.loadSchedule(biz_type);
+				}
+				else {
+					HmisAlert.alert('잠시 후에 다시 시도해주세요.');
+				}
+
+			},
+			error : function(xhr, status, error){
+				console.log(xhr.status);
+				console.log(error);
+			}
+		});
+	},
+	remove :function(no) {
+		//alert(this.page);
+		var biz_type = $('#biz_type').val();
+
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var formdata = $('#FrmBizOpInput').serialize();
+				$.ajax({
+					url : "/work_proc/remove_biz_sales_log",
+					data:{
+						no:no,
+						biz_type:biz_type,
+						biz_table:'op'
+					},
+					dataType:'json',
+					type : "POST",
+					success : function(r) {
+						if(r.success){
+							WorkBiz.loadSchedule(biz_type);
+						}
+						else {
+							HmisAlert.alert('잠시 후에 다시 시도해주세요.');
+						}
+
+					}
+				});
+			}
+			
+		});
+
+	},
+	calculatePrice : function(group, name) {
+		var sum = 0;
+		// 총액
+		$.each($('input[data-group="'+group+'"]'), function(i,e){
+			var price = $(e).val().replace(/,/gi,'');
+			if ($.isNumeric(price)) {
+				sum+=parseInt(price);
+			}
+		});
+		$('#expense_'+group+'_price').val(HmisCommon.numberFormat(sum));
+		//this.calculateTotal(group, name);
+	},
+	calculateTotal : function(group, name) {
+		var total_price = 0;
+
+		$("input:enabled[id^=expense_"+group+"_price]" ).each(function() {
+			if( this.value ){
+				total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+			}
+		});
+
+		$("#total_"+group+"_price").val(total_price.number_format(0));				// 총액
+
+		// 현금, 카드, 계좌, 환불, 미수금
+		total_price = 0;
+		$.each($('input[name^=expense_'+group+'_'+name+']'), function(i,e){
+			if( this.value ){
+				total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+			}
+		});
+		$("#total_"+group+"_"+name).val(total_price.number_format(0));
+	},
+
+};
+
+$(function(){
+	BizOpFormat.init();	
+});
+
+</script>
+<!-- 코디팀 -->
+
+<div id="biz_title"  class="hide">
+	<p style="text-align:center; font-size:20px; font-weight:bold">매출현황( {=search_date} )</p>
+	<table id="sign_box" class="table table-center" style="margin-top:5px;margin-bottom:0px">
+		<tr>
+			<td colspan="15">
+			</td>
+			<td style="width:300px">
+				<table id="sign_box" class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px" border="1">
+					<tr>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;담 당 자&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;이    사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+						<th>&nbsp;&nbsp;&nbsp;&nbsp;대표이사&nbsp;&nbsp;&nbsp;&nbsp;</th>
+					</tr>
+					<tr>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+						<td style="height: 60px;"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+<form id="FrmBizOpInput" onsubmit="return false">
+
+<table class = "table table-center table-list">
+	<tr>
+		<td>
+		</td>
+	</tr>
+</table>
+
+<h3>일일OP매출보고서</h3>
+<table class="table table-center table-list">
+	<colgroup>
+		<col/>
+		<col width="200px" />
+	</colgroup>
+	<tr style="vertical-align:top">
+		<td></td>
+		<td>
+			<table class="table table-bordered table-center table-list" border="1">
+				<colgroup>
+					<col width="80px" />
+					<col width="80px" />
+				</colgroup>
+
+				<tr style="background-color:#b6b6b6">
+					<th colspan="2">OP 진료과목 내역</th>
+				</tr>
+				{@ treatment}
+				<tr>
+					<td>{.treatment_name}</td>
+					<td>{.treatment_cnt}</td>
+				</tr>
+				{/}
+				
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2></td>
+	</tr>
+</table>
+
+<table class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px" border="1">
+	<colgroup>
+		<col width="30px" /><!-- No -->
+		<col width="100px" /><!-- 항목 -->
+		<col width="100px" /><!-- 상담일 -->
+		<col width="80px" /><!-- 환자-->
+		<col width="100px" /><!-- 연락처 -->
+		<col width="80px" /><!-- OP내용 -->
+		<col width="80px" /><!-- 공급가액 -->
+		<col width="80px" /><!-- 부가세 -->
+		<col width="80px" /><!-- 총 OP매출액 -->
+		<col width="80px" /><!-- OP수납 : 카드 -->
+		<col width="80px" /><!-- OP수납 : 현금 -->
+		<col width="80px" /><!-- OP수납 : 계좌 -->
+		<col width="80px" /><!-- 예치금수납 : 카드 -->
+		<col width="80px" /><!-- 예치금수납 : 현금 -->
+		<col width="80px" /><!-- 예치금수납 : 계좌 -->
+		<col width="80px" /><!-- 수술예정금 -->
+		<col width="80px" /><!-- 미수금 -->
+		<col width="80px" /><!-- 보증금 -->
+		<col width="80px"/><!-- 집도원장 -->
+		<col width="80px"/><!-- 상담자 -->
+		<col class="col_span"/>				<!-- 비고 -->
+		<col width="30px"  class="td_hide" /><!-- 추가/삭제 버튼 -->
+	</colgroup>
+
+	<thead>
+		<tr style="background-color:#b6b6b6">
+			<th rowspan="2">No</th>
+			<th rowspan="2">항목</th>
+			<th rowspan="2">상담일</th>
+			<th rowspan="2">환자</th>
+			<th rowspan="2">연락처</th>
+			<th rowspan="2">OP내용</th>
+			<th rowspan="2">총 OP매출액</th>
+			<th rowspan="2">공급가액</th>
+			<th rowspan="2">부가세</th>
+
+			<th colspan="3">OP수납</th>
+			<th colspan="3">예치금수납</th>
+			<th rowspan="2">수술예정금</th>
+			<th rowspan="2">미수금</th>
+			<th rowspan="2">보증금</th>
+			<th rowspan="2">집도원장</th>
+			<th rowspan="2">상담자</th>
+			<th rowspan="2" class="col_span">비고</th>
+			<th rowspan="2" class="td_hide"></th>
+		</tr>
+		<tr style="background-color:#b6b6b6">
+			<th>현금</th>
+			<th>카드</th>
+			<th>계좌</th>
+			<th>현금</th>
+			<th>카드</th>
+			<th>계좌</th>
+		</tr>
+	</thead>
+
+	<tbody >
+		{? mode != 'excel'  && cfg.work_type == ''}
+		<tr class="td_hide">
+			<td></td>
+			<td><select name='expense_item' id='expense_item'>
+					<option value='성형외과'>성형외과</option>
+					<option value='피부과'>피부과</option>
+					<option value='기타'>기타</option>
+				</select>
+			</td>	<!-- 항목 //-->
+			<td><input type='text' class='datepicker' name='expense_consulting_date' id='expense_consulting_date' value="<?=date('Y-m-d')?>" /></td>		<!-- 상담일 -->
+			<td><input type='text' class="full" name='expense_customer' id='expense_customer' value='' /></td>	<!-- 환자 -->
+			<td><input type='text' class="full" name='expense_tel' id='expense_tel' value='' /></td>	<!-- 연락처 //-->
+			<td><input type='text' class="full" name='expense_op_contents' value='' /></td><!-- OP내용 //-->
+			<td><input type='text' class='number full' name='expense_op_price' value=''></td><!-- 총 OP매출액 //-->
+			<td><input type='text' class='number full' name='expense_provide_price' value=''></td><!-- 공급가액 //-->
+			<td><input type='text' class='number full' name='expense_surtax_price' value=''></td><!-- 부가세 //-->
+
+			<!-- OP수납:S -->
+			<td><input type='text' class='number full' name='expense_op_money' data-group="op" data-name='money' value=''></td>	<!-- OP수납:현금 -->
+			<td><input type='text' class='number full' name='expense_op_card' data-group="op" data-name='card' value=''></td>		<!-- OP수납:카드 -->
+			<td><input type='text' class='number full' name='expense_op_account' data-group="op" data-name='account' value=''></td><!-- OP수납:계좌 -->
+			<!-- OP수납:E -->
+
+			<!-- 예치금수납:S -->
+			<td><input type='text' class='number full' name='expense_deposit_money' data-group="deposit" data-name='money' value=''></td>	<!-- 예치금수납:현금 -->
+			<td><input type='text' class='number full' name='expense_deposit_card' data-group="deposit" data-name='card' value=''></td>		<!-- 예치금수납:카드 -->
+			<td><input type='text' class='number full' name='expense_deposit_account' data-group="deposit" data-name='account' value=''></td><!-- 예치금수납:계좌 -->
+			<!-- 예치금수납:E -->
+
+			<td><input type='text' class='number full' name='expense_reserve_account' value=''></td><!-- 수술예정금 -->
+			<td><input type='text' class='number full' name='expense_unpaid_account' value=''></td><!-- 미수금 -->
+			<td><input type='text' class='number full' name='expense_deposit_price' value=''></td><!-- 보증금 -->
+
+			<td>
+				<select name='expense_doctor' id='expense_doctor'>
+					{@ cfg.work_biz_expense_doctor }
+					<option value='{.key_}'>{.value_}</option>
+					{/}
+				</select>
+			</td>		<!-- 원장 -->
+
+			<td>
+				<select name='expense_consulting' id='expense_consulting'>
+					{@ cfg.expense_consultant_list }
+					<option value='{.key_}'>{.value_['name']}</option>
+					{/}
+				</select>
+			</td>		<!-- 내원상담 : 상담실장 목록 -->
+
+			<td><input type='text' class='full' name='expense_etc' id='expense_etc' value=''></td>	<!-- 비고 -->
+			<td><span class='badge lg green' onClick='BizOpFormat.add();' style='cursor:pointer;vertical-align: middle;'><i class="fa fa-plus"></i></span></td>		<!-- 추가버튼 -->
+			
+		</tr>
+		{/}
+
+
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td>{.expense_item}</td>
+			<td>{.expense_consulting_date}</td>
+			<td>{.expense_customer}</td>
+			<td>{.expense_tel}</td>
+			<td>{.expense_op_contents}</td>
+
+			<td>{=number_format(.expense_op_price)}</td>
+			<td>{=number_format(.expense_provide_price)}</td>
+			<td>{=number_format(.expense_surtax_price)}</td>
+
+			<td>{=number_format(.expense_op_money)}</td>
+			<td>{=number_format(.expense_op_card)}</td>
+			<td>{=number_format(.expense_op_account)}</td>
+			<td>{=number_format(.expense_deposit_money)}</td>
+			<td>{=number_format(.expense_deposit_card)}</td>
+			<td>{=number_format(.expense_deposit_account)}</td>
+			<td>{=number_format(.expense_reserve_account)}</td>
+			<td>{=number_format(.expense_unpaid_account)}</td>
+			<td>{=number_format(.expense_deposit_price)}</td>
+			<td>{=.doctor_name}</td>
+			<td>{=.expense_consulting_name}</td>
+			<td style="text-align:left" class="col_span">{.expense_etc}</td>
+			<td class="td_hide"><span class='badge lg red' onClick="BizOpFormat.remove('{.no}')" style='cursor:pointer;vertical-align: middle;'><i class="fa fa-minus"></i></span></td>
+		</tr>
+	
+		{/}	
+		<tr id="tr_total">
+			<th colspan="6" style="text-align:center;">합계</th>
+			<th>{=number_format(total.expense_op_price)}</th>
+			<th>{=number_format(total.expense_provide_price)}</th>
+			<th>{=number_format(total.expense_surtax_price)}</th>
+
+			<th>{=number_format(total.expense_op_money)}</th>
+			<th>{=number_format(total.expense_op_card)}</th>
+			<th>{=number_format(total.expense_op_account)}</th>
+
+			<th>{=number_format(total.expense_deposit_money)}</th>
+			<th>{=number_format(total.expense_deposit_card)}</th>
+			<th>{=number_format(total.expense_deposit_account)}</th>
+
+			<th>{=number_format(total.expense_reserve_account)}</th>
+			<th>{=number_format(total.expense_unpaid_account)}</th>
+			<th>{=number_format(total.expense_deposit_price)}</th>
+
+			<th colspan="4"></th>
+		</tr>
+		
+		
+	</tbody>
+
+</table>
+
+<!-- <div id="sales_list" style="padding: 0;margin: 0;"></div> -->
+</form>

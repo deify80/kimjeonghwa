@@ -1,0 +1,123 @@
+<style>
+ul.dbsearch li {
+	border-bottom:solid 1px #E3E3E3;
+	padding:7px;
+}
+
+ul.dbsearch li div {color:#A2A2A2;}
+ul.dbsearch li > a:hover, ul.dbsearch li > a:hover > div {color:#FE635F;}
+
+</style>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:100px" />
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>
+				고객검색
+			</th>
+			<td>
+				<input type="search"  id="search_db" class="search" style="width:300px" autocomplete="off" placeholder="고객명 or 연락처 or 메신저" /> 
+				<button type="button" class="btn btn-flat-blue btn-onlyicon" onclick="DBSearch.search()" ><i class="fa fa-search fa-1"></i></button>
+				<!-- <button type="button" class="btn btn-gray" onclick="PatientInput.reset()"><i class="fa fa-refresh fa-1"></i> 처음으로</button> -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div class="dashed" style="margin:10px 0px"></div>
+
+<div id="dbsearch_error" class="well error" style="display:;margin-bottom:5px;">
+	정확한 검색결과를 위해서 검색어를 2자리 이상입력해주세요.
+</div>
+
+<div id="dbsearch_list" class="well" style="height:200px;overflow-y:auto;padding:5px">
+	
+</div>
+
+
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<textarea id="tmpl_dbsearch" style="display:none">
+	<li>
+		<a href="javascript:;" onclick="">
+			<span class="label label-xs label-" style="margin-right:5px;{if location=='team'}background-color:#8BC34A;{/if}">${\status}</span>
+			<span style="font-weight:bold;">${\name} ${\messenger}</span> 
+			<span class="split"> | </span> 
+			${\contact} 
+			<span class="split"> | </span> ${\team}
+			<span class="split"> | </span> 
+			${\path} 
+		</a>
+	</li>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var DBSearch = {
+	init: function() {
+		$('#search_db').on('keypress',function(e){
+			if(e.keyCode === 13) {
+				DBSearch.search();
+			}
+		});
+	},
+	search: function() {
+		var q = $('#search_db').val();
+		if(q.length <3) {
+			HmisAlert.alert("검색어는 3글자 이상 입력해 주세요.", function(){
+				$('#search_db').focus();
+			});
+			return false;
+		}
+
+		$.ajax({
+			url:'/db_proc/search',
+			data:{
+				query:q
+			},
+			type:'POST',
+			dataType:'json',
+			success: function(r) {
+				console.log(r);
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_dbsearch');
+				var target = $('#dbsearch_list');
+				target.empty();
+				
+					var html = '';
+					var ul = $('<ul class="dbsearch">');
+					$.each(r.data, function(i,e){
+						e.idx = i;
+						html += tmpl.process(e);
+						
+					});
+					ul.append(html);
+					target.append(ul);
+
+				if(r.data.length>=100) {
+					$('#dbsearch_error').html("검색 결과가 너무 많아 100건만 표시합니다. ");
+				}
+				else if(r.data.length < 1){
+					$('#dbsearch_error').html('<b>검색된 고객정보가 없습니다.</b>');	
+				}
+				else {
+					$('#dbsearch_error').html(r.data.length+'건의 고객정보가 검색되었습니다.');		
+				}
+			}
+		})
+	},
+	value: function(zipcode, address) {
+		$('#'+this.target.zipcode).val(zipcode);
+		$('#'+this.target.address).val(address);
+		$('#HmisModal_modal-db .modal-close').trigger('click');
+	}
+}
+
+$(function() {
+	DBSearch.init();
+})
+</script>

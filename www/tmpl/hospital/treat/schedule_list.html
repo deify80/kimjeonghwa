@@ -1,0 +1,865 @@
+<style>
+{@ cfg.status}
+div.appointment.type-{.code} {
+	background-color:{.etc.bg};
+	border-color:{.etc.bg};
+	color:{.etc.font};
+}
+{/}
+
+.now {background-color:#FFF3E0 ;}
+th.now {color:#F44336;}
+.calendar-row:nth-child(even) th, .calendar-row:nth-child(even) {background-color:#FBFBFB;}
+</style>
+<div>
+	<ul class="btn-group btn-group-xs btn-group-striped" style="margin-top:10px;float:left">
+		<li><a href="javascript:;" onclick="Schedule.load('{=date('Y-m-d', cfg.month.prev)}')" ><i class="fa fa-chevron-left fa-1"></i> {=date('Y.m',cfg.month.prev)} </a></li>
+		<li><a href="javascript:;" onclick="Schedule.load('{cfg.today}')" >오늘</a></li>
+		<li><a href="javascript:;" onclick="Schedule.load('{=date('Y-m-d', cfg.month.next)}')" > {=date('Y.m', cfg.month.next)} <i class="fa fa-chevron-right fa-1"></i> </a></li>
+	</ul>
+
+	<!-- 달력:S -->
+	<div style="margin-left:3px;float:left;margin-top:10px;">
+		<input type="text" id="datepicker" style="width:1px;z-index:10;position:relative" class="transparent" />
+	</div>
+	<!-- 달력:E -->
+
+	<!-- 날짜버튼:S -->
+	<div style="margin-left:5px;float:left;margin-top:10px;">
+		<div class="btn-group hmis blue" data-toggle="buttons" >
+			{@ range(cfg.days.start, cfg.days.end, 86400)}
+			<label class="btn {? cfg.search_date == date('Y-m-d', .value_)}active{/}" >
+				<input type="radio" name="search_day" value="{=date('Y-m-d', .value_)}" {?  cfg.search_date == date('Y-m-d', .value_)}checked{/} onchange="ScheduleList.loadSchedule({appointment_date:'{=date('Y-m-d', .value_)}'})" />
+				<span  class="f-days-{=date('w', .value_)}" style="{? array_key_exists( date('Y-m-d', .value_), cfg.holiday)}color:#E84E40;{/}">{=date('d', .value_)} ({=day(date('w', .value_))})</span>
+			</label>
+			{/}
+		</div>
+	</div>
+	<!-- 날짜버튼:E -->
+
+</div>
+
+<div style="clear:both"></div>
+<div class="dashed" style="margin:10px 0px"></div>
+
+<!-- 예약상태:S -->
+<div class="search_wrap" style="position:relative">
+	{? auth.ex_crmbutton1}
+	<span id="cnt_wrap" data-status="">
+		<a href="javascript:;" onclick="ScheduleList.buildFilter(this, 'group', 'first', 'cnt')"><span class="label label-xs" style="font-size:11px;background-color:#B2DFDB;color:#000;height:20px;" ><i class="fa fa-1"></i>초진 <span id="cnt_first">0</span></span></a>
+
+		<a href="javascript:;" onclick="ScheduleList.buildFilter(this, 'group','surgery', 'cnt')"><span class="label label-xs" style="font-size:11px;background-color:#B2DFDB;color:#000;height:20px;" ><i class="fa fa-1"></i>수술 <span id="cnt_surgery">0</span></span></a>
+	</span>
+	<span class="split"> | </span>
+	{/}
+
+	<span id="doctor_wrap" data-status="">
+		{@ cfg.doctor}
+		<a href="javascript:;" onclick="ScheduleList.buildFilter(this, 'doctor_id', '{.key_}', 'doctor')"><span class="label label-xs" style="font-size:11px;background-color:#FFCDD2;color:#000;height:20px;" ><i class="fa fa-1"></i>{.value_} <span id="cnt_{.key_}">0</span></span></a>
+		{:}
+		의료진을 등록하세요.
+		{/}
+	</span>
+
+	<span class="split"> | </span>
+	<span id="status_wrap" data-status="">
+		{@ cfg.status}
+		<a href="javascript:;" onclick="ScheduleList.buildFilter(this, 'status_code', '{.code}', 'status')"><span class="label label-xs" style="background-color:{.etc.bg};color:{.etc.font};height:20px;" ><i class="fa fa-1"></i>{.title} <span id="cnt_{.code}"></span></span></a>
+		{:}
+		예약상태를 설정하세요.
+		{/}
+
+	</span>
+</div>
+<!-- 예약상태:E -->
+
+<div id="calendar"></div>
+
+<div style="overflow-x:auto;margin-bottom:30px;margin-right:15px">
+<table id="calendar_wrap" class="table table-bordered table-center calendar" ><!-- style="width:1723px" -->
+	<colgroup>
+		<col style="width:90px" />
+		<col />
+	</colgroup>
+	<thead>
+		<tr>
+			<th class="calendar_label f-notice" style="background-color:#F3F3F3"><span id="search_date">{cfg.search_date}</span></th>
+			<td style="padding:0px">
+				<div class="calendar-head">
+					<table class="table">
+						<tr>
+							{@ range(cfg.time.start, cfg.time.end-1, 1800)}
+							<th style="text-align:center;background-color:#F3F3F3" data-time="{=date('H:i:00',.value_)}"  colSpan="1" >
+								{=date('H:i',.value_)}
+							</th>
+							{/}
+						</tr>
+					</table>
+				</div>
+			</td>
+		</tr>
+	</thead>
+	<tbody>
+		{? count(cfg.type)}
+		<tr>
+			<th class="center calendar_label" style="padding:0px;vertical-align: top;">
+				{@ cfg.type}
+				<div class="calendar-row {.key_} xLabel">
+					<table class="table" style="box-sizing: border-box">
+						<thead>
+							<tr>
+								<th>{.value_} <span id="cnt_type_{.key_}" style="font-size:9px"></span></th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				{/}
+			</th>
+
+			<td style="padding:0px;vertical-align:top" id="timezone_wrap">
+				{@ cfg.type}
+				<div class="calendar-row {.key_}" id="row_{.key_}">
+					<div class="calendar-row-basic bg" id="{.key_}">
+						<table class="table striped">
+							<tbody>
+								<tr>
+									{@ (range(cfg.time.start, cfg.time.end-1, 1800))}
+
+									<!-- 	$cls = (date('i', $t)=='30')?'hour':'minute'; -->
+
+									<td class="{? date('i', ..value_)=='30'}hour{:}minute{/}  dropzone " data-time="{=date('H:i:00',..value_)}" data-col="{..index_}" data-row="{.key_}">&nbsp;</td>
+									{/}
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="calendar-row-basic skeleton" id="skeleton_{.key_}">
+					</div>
+				</div>
+				{/}
+			</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="2">예약유형을 등록하세요.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+</div>
+
+<form id="FrmSms" method="post" action="/sms/popup" target="sms_popup">
+	<input type="hidden" name="sms_resource" value="appointment" />
+	<input type="hidden" name="sms[]" value="" />
+</form>
+
+<textarea id="tmpl_popover" style="display:none">
+<div style="width:260px">
+	<dl class="inline">
+		<dt>챠트번호</dt>
+		<dd style="color:red">${\chart_no}</dd>
+		<dt>환자명</dt>
+		<dd>${\name} ${\patient_no} {if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i>{elseif sex=='M'} <i class="fa fa-1 fa-male f-blue"></i>{/if} <button type="button" class="btn btn-xs btn-theme" onclick="window.open('/patient/info/${\patient_no}')" style="height:17px;padding:0px 2px;vertical-align: -1px">환자정보바로가기</button></dd>
+		<dt>환자레벨</dt>
+		<dd>${\grade.code}{if grade_type!='N'}-${\grade_type}{/if}</dd>
+		<dt>휴대폰/메신저</dt>
+		<dd>${HmisCommon.isStrNull(mobile)} / ${HmisCommon.isStrNull(messenger)}</dd>
+		<dt>생년월일</dt>
+		<dd>${HmisCommon.isStrNull(birth)}</dd>
+		<dt>유입경로</dt>
+		<dd>${HmisCommon.isStrNull(path)}</dd>
+		<dt style="float:none">환자특이사항</dt>
+		<dd style="margin-left:20px">${HmisCommon.isStrNull(patient_comment)}</dd>
+	</dl>
+	<div class="dashed" style="margin:10px 0px"></div>
+	<dl class="inline">
+		<dt>담당의사</dt>
+		<dd>${HmisCommon.isStrNull(doctor_name)}</dd>
+		<dt>담당실장</dt>
+		<dd>${HmisCommon.isStrNull(manager_team_name)} - ${HmisCommon.isStrNull(manager_name)}</dd>
+		<dt>접수자</dt>
+		<dd>${HmisCommon.isStrNull(acceptor_name)}</dd>
+		<dt style="float:none">진료항목</dt>
+		<dd style="margin-left:20px">
+			${\treat_info}
+		</dd>
+		<dt style="float:none">진료특이사항</dt>
+		<dd style="margin-left:20px">${HmisCommon.isStrNull(comment)}</dd>
+	</dl>
+</div>
+</textarea>
+
+<script type="text/javascript">
+var ScheduleList = {
+	date:"{cfg.search_date}",
+	colCnt:25,
+	minTime:"{C.APPOINTMENT_START}",
+	maxTime:"{C.APPOINTMENT_END}",
+	segments:[],
+	segments_filtered:[],
+	droped:false,
+	copied:'',
+	status:'{=json_encode(cfg.status)}',
+	cell:$('td.dropzone').first().outerWidth(),
+	appointment_no:'',
+	init: function() {
+		this.loadSchedule();
+		setInterval(ScheduleList.loadSchedule, 10000);
+
+		$('td.dropzone').on('mouseover', function() {
+			// $('div.popover').remove();
+		});
+
+		var datepicker_option2 = $.extend(false, datepicker_option, {showOn:'button',buttonImageOnly:true, buttonImage:"/images/layout/calendar_border.png"});
+
+		$("#datepicker").datepicker(datepicker_option2);
+		$('#datepicker').on('change', function() {
+			//console.log(this.value);
+			ScheduleList.loadSchedule({appointment_date:this.value});
+			var date_time = this.value;
+			$('.btn-group .btn').each(function(i, d){
+				$(this).removeClass('active');
+				if($(this).children().val() == date_time){
+					$(this).addClass('active');
+				}
+			});
+		})
+
+		this.popover = TrimPath.parseDOMTemplate('tmpl_popover');
+	},
+	createContextMenu: function() {
+		if($('.context-menu-list').length>0) return false;
+		var status = JSON.parse(this.status);
+		var status_item = {};
+		$.each(status, function(i,e) {
+
+			if(e.code == '07-016') { //회복상태인경우 회복실번호 지정 by 2016-12-27
+				var room_items = {'07-016#1':{name:'회복실1'}, '07-016#2':{name:'회복실2'}, '07-016#3':{name:'회복실3'}, '07-016#4':{name:'회복실4'}, '07-016#다':{name:'다인실'}};
+				status_item[e.code] = {name:e.title, items:room_items}
+			}
+			else if(e.code == '07-023') {
+				var room_items = {'07-023#1':{name:'수술실1'}, '07-023#2':{name:'수술실2'}, '07-023#3':{name:'수술실3'}, '07-023#4':{name:'수술실4'}};
+				status_item[e.code] = {name:e.title, items:room_items}
+			}
+			else {
+				status_item[e.code] = {name:e.title}
+			}
+		});
+		var me = this;
+
+		$.contextMenu({
+			selector: 'div.appointment',
+			events:{
+				show: function() {
+					var e = $(this);
+					me.appointment_no = e.data('no');
+				}
+			},
+			callback: function(key, options) {
+				var e = $(this);
+				switch(key) {
+					case 'info':
+						if(e.data('patient_no') == null) {
+							HmisAlert.alert('환자정보가 정확하지 않습니다.');
+						}
+						else {
+							window.open("/patient/info/"+e.data('patient_no'));
+						}
+					break;
+					case 'edit':
+						Schedule.openAppointment(e);
+					break;
+					case 'copy':
+						me.copied = e.data('no');
+					break;
+					case 'delete':
+						me.remove(e.data('no'));
+					break;
+					case 'sms':
+						open_sms();
+						$('#FrmSms input[name="sms[]"]').val(e.data('no'));
+						$('#FrmSms').submit();
+					break;
+					default:
+						me.modifyStatus(key);
+					break;
+				}
+			},
+			items: {
+				"info": {name:"<i class='fa fa-1 fa-user' style='color:#42A5F5'></i>&nbsp;&nbsp;환자정보"},
+				"status": {
+					name:"<i class='fa fa-1 fa-exchange f-orange'></i>&nbsp;&nbsp;상태변경",
+					items:status_item
+				},
+				"edit": {name: "<i class='fa fa-1 fa-pencil' style='color:#FFC000'></i>&nbsp;&nbsp;수정하기"},
+				"copy": {name: "<i class='fa fa-1 fa-copy f-green'></i>&nbsp;&nbsp;복사하기"},
+				"sms": {name: "<i class='fa fa-1 fa-envelope-o f-purple'></i>&nbsp;&nbsp;문자보내기"},
+				{? auth.appointment_delete}
+				"sep1": "---------",
+				"delete": {name: "<i class='fa fa-1 fa-times f-red'></i>&nbsp;&nbsp;삭제하기"}
+				{/}
+			}
+		});
+
+		$('div.appointment[data-auth="false"]').contextMenu(false);
+
+		$.contextMenu({
+			selector: 'td.dropzone',
+			events: {
+				show:function() {
+					$(this).css({
+						'backgroundColor':'#E2F0D2'
+					});
+					// $('div.popover').remove();
+				},
+				hide: function() {
+					$(this).removeAttr('style');
+				}
+			},
+			callback: function(key, options) {
+				var e = $(this);
+
+				switch(key) {
+					case 'paste':
+						if(me.copied > 0) {
+							me.copy({
+								'type_code':e.data('row'),
+								'time_start':e.data('time')
+							});
+						}
+						else {
+							HmisAlert.alert('복사된 예약정보가 없습니다.');
+						}
+					break;
+				}
+			},
+			items: {
+				"paste": {name: "<i class='fa fa-1 fa-paste f-blue'></i>&nbsp;&nbsp;붙여넣기", disabled:false}
+			}
+		});
+	},
+	//일정데이터 로드
+	loadSchedule: function(search) {
+		Schedule.setSearch(search);
+
+		var me = ScheduleList;
+		$.ajax({
+			url:'/treat/schedule_appointment',
+			data:{
+				search:{
+					appointment_date:Schedule.search.appointment_date
+				}
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				$('#search_date').html(r.data.date);
+				if(r.success) {
+					me.createSegs(r.data.appointment);
+				}
+				else {
+					me.createSegs([]);
+				}
+
+				//시간백그라운드 업데이트
+				$('th, td').removeClass('now');
+				$('td[data-time="'+r.data.hour+'"], th[data-time="'+r.data.hour+'"]').addClass('now');
+			},
+			error: function() {
+
+			}
+		})
+	},
+	//일정 데이터 필터
+	filterSchedule: function(search) {
+		Schedule.setSearch(search);
+		// this.segments_filtered = this.segments;
+		var segs = this.segments;
+		var search = Schedule.search;
+		var filtered = [];
+		var search_or = ['name','mobile','messenger'];
+		$.each(segs, function(i,seg) {
+			var valid = true;
+			$.each(search, function(field, value) {
+				if(!value) return true;
+				if(field == 'or') {
+					var or_valid = false;
+					$.each(search_or, function(or_i,or_field){
+						if(or_valid) return true;
+						if((seg[or_field] && seg[or_field].indexOf(value)>-1)) or_valid = true;
+					})
+					valid = (!or_valid)?false:valid;
+				}
+				else {
+					if(seg[field] == null) return true;
+					if(seg[field].indexOf(value) < 0) valid = false;
+				}
+
+			});
+			if(valid) filtered.push(seg);
+		})
+
+		this.segments_filtered = filtered;
+		this.render();
+	},
+	buildFilter: function(e, field, value, group) {
+		var i = $(e).find('i');
+		// return false;
+		var search = {}
+		if(value == Schedule.search[field]) {
+			search[field] = '';
+			i.removeClass('fa-check');
+		}
+		else {
+			if(group) $('#'+group+'_wrap i').removeClass('fa-check');
+			search[field] = value;
+			i.addClass('fa-check');
+		}
+
+		ScheduleList.filterSchedule(search);
+	},
+	buildStatus: function(e, code) {
+		var i = $(e).find('i');
+		if(code == Schedule.search.status_code) {
+			ScheduleList.filterSchedule({status_code:''});
+			i.removeClass('fa-check');
+		}
+		else {
+			$('#status_wrap i').removeClass('fa-check');
+			ScheduleList.filterSchedule({status_code:code});
+			i.addClass('fa-check');
+		}
+	},
+	buildDoctor: function(e, code) {
+		var i = $(e).find('i');
+		if(code == Schedule.search.doctor_id) {
+			ScheduleList.filterSchedule({doctor_id:''});
+			i.removeClass('fa-check');
+		}
+		else {
+			$('#doctor_wrap i').removeClass('fa-check');
+			ScheduleList.filterSchedule({doctor_id:code});
+			i.addClass('fa-check');
+		}
+	},
+
+	//상태수정
+	modifyStatus: function( status) {
+		var no = this.appointment_no;
+		$.ajax({
+			url:'/treat_proc/status_appointment',
+			data:{
+				appointment_no:no,
+				status_code:status
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					ScheduleList.loadSchedule();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	copy: function(data) {
+		var me = this;
+		$.extend(data, {appointment_date:Schedule.search.appointment_date});
+		$.ajax({
+			url:'/treat_proc/copy_appointment',
+			data:{
+				from:this.copied,
+				to:data
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					me.loadSchedule();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		});
+	},
+	remove: function(no) {
+		var me = this;
+		HmisAlert.confirm('이 예약건을 삭제하시겠습니까?', function(r) {
+			if(!r) return false;
+			$.ajax({
+				url:'/treat_proc/remove_appointment',
+				data:{
+					appointment_no:no
+				},
+				dataType:'json',
+				type:'POST',
+				success: function(r) {
+					if(r.success) {
+						me.loadSchedule();
+					}
+					else {
+						HmisAlert.alert(r.msg);
+					}
+				}
+			})
+		});
+
+	},
+	save: function(data) {
+
+		$.ajax({
+			url:'/treat_proc/modify_appointment',
+			data:{
+				appointment_no:data.no,
+				type_code:data.row,
+				min_time:this.minTime,
+				col_start:data.colStart,
+				col_span:data.colSpan
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					ScheduleList.loadSchedule();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+
+			}
+		})
+	},
+	interact: function() {
+		var me = this;
+		$(".appointment").draggable({
+			containment:'#timezone_wrap',
+			cursor: "move",
+			helper:'original',
+			opacity: 0.35,
+			drag: function() {
+				$('div.popover').remove();
+			},
+			stop: function(e, ui) {
+				var $this = $(this);
+			}
+		})
+		.resizable({
+			containment:'#timezone_wrap',
+			grid:me.cell,
+			maxHeight:39,
+			handles: 'e',
+			stop: function(event, ui) {
+				HmisAlert.confirm('변경사항을 적용하시겠습니까?', function(r) {
+					var el = ui.element;
+					if(r) {
+						var gap = (ui.size.width-ui.originalSize.width)/me.cell;
+						el.data('colEnd',el.data('colEnd')+gap);
+						el.data('colSpan',el.data('colSpan')+gap);
+					}
+
+					me.save(el.data());
+					me.setSegs();
+					me.render();
+				});
+
+
+			}
+		});
+
+		$('.dropzone').droppable({
+			accept:'.appointment',
+			tolerance:'size',
+			// greedy:true,
+			drop: function(event, ui) {
+				var drag = ui.draggable;
+				drag.css({
+					top:0,
+					left:0
+				});
+
+				$(this).removeAttr('style');
+
+
+				if(me.droped) return false;
+				me.droped = true;
+
+				var zone = drag.data();
+
+
+				var colStart = $(this).data('col');
+				var colEnd = $(this).data('col')+drag.data('colSpan')-1;
+				var colSpan = drag.data('colSpan');
+
+				if(colEnd > me.colCnt) {
+					colEnd =  me.colCnt;
+					colSpan = colEnd-colStart+1;
+				}
+				drag.data({
+					colStart:colStart,
+					colEnd:colEnd,
+					colSpan:colSpan,
+					row:$(this).data('row')
+				});
+
+				me.setSegs();
+				me.render();
+
+				HmisAlert.confirm('변경사항을 적용하시겠습니까?', function(r) {
+					if(r) {
+						me.save(zone);
+					}
+					else {
+						me.loadSchedule();
+					}
+
+					me.droped = false;
+				});
+				return false;
+			},
+			over: function(event, ui) {
+				$(this).css({
+					opacity:0.3,
+					'backgroundColor':'#E3E3E3'
+				});
+			},
+			out: function() {
+				$(this).css({
+					'backgroundColor':'transparent'
+				})
+			}
+		});
+
+		$('td.dropzone').unbind('dblclick.appointment').bind('dblclick.appointment', function() {
+			$("div.popover").remove();
+			Schedule.openAppointment(this);
+		})
+	},
+	//예약데이터 포맷팅
+	createSegs: function(appointment) {
+
+		var segs = [];
+		var status = {}; //예약상태
+		var visit = {};
+		var type = {}; //예약유형수
+		var doctor = {}; //예약담당의사수
+		var cnt = {first:0, surgery:0}; //초진상담(first), 수술(surgery)
+		var minTime = moment(Schedule.search.appointment_date+' '+this.minTime);
+		$.each(appointment, function(i, e) {
+			var colStart =  moment(e.start).diff(minTime, 'minutes')/30;
+			var colEnd = moment(e.end).diff(minTime, 'minutes')/30;
+			var seg = $.extend(e,{
+				colStart:colStart,
+				colEnd:colEnd,
+				colSpan:colEnd-colStart+1
+			});
+
+			//예약유형수
+			if(type[e.row]) type[e.row]++;
+			else type[e.row]=1;
+
+			//예약상태수
+			if(status[e.status_code]) status[e.status_code]++;
+			else status[e.status_code]=1;
+
+			//의사별예약수
+			if(doctor[e.doctor_id]) doctor[e.doctor_id]++;
+			else doctor[e.doctor_id]=1;
+
+			//초진상담 & 수술수
+			seg.group = '';
+			if(e.status_code !='07-012') { //취소제외
+				if(e.row=='06-040') { //초진상담
+					cnt.first++;
+					seg.group = 'first';
+				}
+				else if(e.row.match('06-029|06-031|06-032|06-033')) { //수술
+					cnt.surgery++;
+					seg.group = 'surgery';
+				}
+			}
+
+			segs.push(seg);
+
+		});
+		this.segments = segs;
+
+		this.filterSchedule();
+
+		$('span[id^="cnt_type"]').html('[0]'); //기존 상태갯수 초기화
+		$.each(type, function(i,e) {
+			var el = $('#cnt_type_'+i);
+			el.html('[<span class="f-red f-10">'+e+'</span>]');
+		});
+
+		$('#status_wrap span[id^="cnt"]').html(''); //기존 상태갯수 초기화
+		$.each(status, function(i,e) {
+			$('#cnt_'+i).html(e);
+		});
+
+		$('#doctor_wrap span[id^="cnt"]').html(''); //기존 상태갯수 초기화
+		$.each(doctor, function(i,e) {
+			$('#cnt_'+i).html(e);
+		});
+
+		$('#cnt_first, #cnt_surgery').html('0');
+		$('#cnt_first').html(cnt.first); //초진수
+		$('#cnt_surgery').html(cnt.surgery); //수술수
+
+	},
+	setSegs: function() {
+		var segs = [];
+		var me = this;
+		$.each($('.appointment'), function(i,e) {
+			segs.push($(e).data());
+		});
+
+		$(".appointment").draggable("destroy");
+		$(".appointment").resizable("destroy");
+		me.segments_filtered = segs;
+	},
+	removePopover: function(e) {
+		$(e).parents('.popover').popover('destroy');
+		// $(e).popover('destroy');
+	},
+	render: function(){
+		var segs = this.segments_filtered;
+		var colCnt = this.colCnt;
+		var endCol;
+		var me = this;
+
+		$.each($('div.bg'), function(idx, row) {
+			var row_id = row.id;
+			var tableEl = $('<table class="table"></table>');
+			var segCols = me.fillGrid(segs, row_id);
+
+			$.each(segCols, function(i, e) {
+				endCol=-1;
+				var trEl = $('<tr />');
+				for(col=0; col<=colCnt; col++) {
+					if(col<=endCol) continue;
+					var seg = e[col];
+					if(seg) {
+
+						var tdEl = $('<td></td>');
+						var divEl =  $('<div class="appointment" data-auth="'+seg.auth.manage+'"></div>');
+
+
+						divEl.on('dblclick.appointment',function() {
+							$("div.popover").remove();
+							Schedule.openAppointment(this);
+						}).on('click.appointment',function() {
+
+							var e = $(this);
+							if ($('#popover_'+e.data('no')).length > 0)  {
+								var pop = $('#popover_'+e.data('no')).parents('div.popover');
+								// console.log(pop);
+								pop.popover('destroy');
+							}
+							else {
+								var data = e.data('popover');
+								var content = me.popover.process(data);
+								var btn = '<div style="float:right"><i class="fa fa-1 fa-times f-theme link" id="popover_'+e.data("no")+'" onclick="ScheduleList.removePopover(this)"></i></div>';
+								e.popover({title:data.title+btn, content:content, html:true, container:'body', placement:'left', trigger:'manual'}).popover('toggle');
+								$("div.popover").draggable();
+							}
+						});
+
+						divEl.html(seg.grade+' ' +seg.name+'<br />'+seg.treat);
+						divEl.addClass('type-'+seg.status_code);
+						divEl.data(seg);
+						tdEl.append(divEl);
+						// colSpan = seg.colSpan;
+						tdEl.attr("colSpan", seg.colSpan);
+						endCol = seg.colEnd;
+					}
+					else {
+						var tdEl = $('<td></td>');
+					}
+					trEl.append(tdEl);
+				}
+				tableEl.append(trEl);
+			})
+			$('#skeleton_'+row_id).find('table').remove();
+			$('#skeleton_'+row_id).append(tableEl);
+			var height = $('#skeleton_'+row_id).find('table').height();
+			$('.calendar-row.'+row_id).height(height);
+		});
+		// $("div.popover").remove();
+		this.createContextMenu();
+		this.interact();
+	},
+	sortSeg: function(segs) {
+		var sort = [];
+		for (var seg in segs) {
+			sort.push([segs[seg], segs[seg].col])
+		}
+
+		sort.sort(function(a, b) {return a[1] - b[1]})
+
+		var sort_segs = [];
+		$.each(sort, function(i,e) {
+			sort_segs.push(e[0]);
+		});
+		return sort_segs;
+		// return segs;
+
+	},
+	inRowMax:0,
+	fillCheck: function(colStart, colEnd, grid) {
+		var fill;
+		var writableRow = -1;
+		
+		for(var row=0;row<=this.inRowMax; row++) {
+			fill = false;
+
+			for(var col=colStart;col<=colEnd;col++) {
+				fill = (grid[row][col])?true:fill;
+			}
+			if(!fill && writableRow < 0) {
+				writableRow = row
+			}
+		}
+
+		return (writableRow>-1)?writableRow:++this.inRowMax;
+		// return ++this.inRowMax;
+	},
+	fillGrid : function(segs, rowIdx) {
+		var segCols = [[]];
+		var i;
+		var row = 0;
+		var grid = [[]];
+		this.inRowMax = 0;
+		var segs = this.sortSeg(segs);
+
+		if (typeof(segs)=='object') {
+			for (i = 0; i < segs.length; i++) {
+				if(segs[i].row!=rowIdx) continue;
+				var colStart = segs[i].colStart;
+				var colEnd = segs[i].colEnd;
+				if(colStart > colEnd) colEnd = colStart;
+				row  = this.fillCheck(colStart, colEnd, grid);
+				if(typeof(grid[row]) == 'undefined') grid[row] = [];
+				if(typeof(segCols[row]) == 'undefined') segCols[row] = [];
+				for(var c=colStart; c<=colEnd; c++) {
+					grid[row][c] = true;
+				}
+				segCols[row][colStart] = segs[i];
+			}
+			segCols.push([]);
+		}
+		else {
+			segCols = [];
+		}
+
+		return segCols;
+	}
+}
+
+$(function() {
+	ScheduleList.init();
+})
+</script>

@@ -1,0 +1,135 @@
+<!-- 입출금예상안 포맷 -->
+<table id="format_2" class="basic-table tbl-center" style="margin-top:5px;margin-bottom:0px">
+	<colgroup>
+		<col width="10%" />
+		<col width="10%" />
+		<col width="10%" />
+		<col width="12%" />
+		<col width="10%" />
+		<col width="20%" />
+	</colgroup>
+	<tbody >
+		<tr>
+			<th>지출예상일</th>
+			<th>담당자</th>
+			<th>거래처</th>
+			<th>적요</th>
+			<th>금액</th>
+			<th>비고</th>
+		</tr>
+		<? 
+		$total = 0;
+		foreach($settle_expense as $idx=>$data) {
+			$total+=$data['expense_price'];
+		?>
+		<tr id="tr_<?=$idx?>">
+			<td>
+				<input type='text' class='datepicker' name='expense_start_date[]' value="<?=substr($data['expense_start_date'],0,10)?>">
+			</td>
+			<td>
+				<input type='text' style='width:95%;' name='expense_charger[]' value='<?=$data['expense_charger']?>'>	
+			</td>
+			<td>
+				<input type='text' style='width:95%;' name='expense_customer[]' value='<?=$data['expense_customer']?>'>			
+			</td>
+			<td><input type='text' style='width:95%;' name='expense_desc[]' value='<?=$data['expense_desc']?>'></td>
+			<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price_<?=$idx?>' value='<?=$data['expense_price']?>'></td>
+			<td>
+				<input type='text' style='width:80%;' name='expense_etc[]' value='<?=$data['expense_etc']?>'>
+				<? if($idx > 0) {?>
+				<span class='badge lg red' onClick="SettleFormat.remove('tr_<?=$idx?>')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+				<? } else {?>
+				<span class='badge lg green' onClick='SettleFormat.add();' style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-plus"></i></span>
+				<? }?>
+			</td>
+		</tr>	
+		<? } ?>
+		<tr id="tr_total">
+			<td colspan=4 style="text-align:center;">합계</td>
+			<td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_price" value="<?=number_format($total)?>"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+
+
+<!-- 추가템플릿:S -->
+<textarea id="tmpl_format" style="display:none;">
+	<tr id='${id}' class="tr_row">
+		<td>
+			<input type='text' name='expense_start_date[]' class='datepicker'>
+		</td>
+		<td>
+			<input type='text' style='width:95%;' name='expense_charger[]' value=''>
+		</td>
+		<td><input type='text' style='width:95%;' name='expense_customer[]'  value=''></td>
+		<td><input type='text' style='width:95%;' name='expense_desc[]' value=''></td>
+		<td>
+			<input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price_${idx}' value=''>
+		</td>
+		<td>
+			<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''>
+			<span class='badge lg red' onClick="SettleFormat.remove('${id}')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+		</td>
+	</tr>
+</textarea>
+<!-- 추가템플릿:E -->
+
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var SettleFormat = {
+	max:'<?=count($settle_expense)?>',
+	settle_no:'<?=$settle_no?>',
+	init:function() {
+		this.createDatePicker();
+		this.createNumber();
+		if(!this.settle_no) {
+			$("#title").val("");
+			CKEDITOR.instances['content'].setData("다음의 내용으로 금액을 영수(청구) 하오니 검토 후 재가바랍니다.<br/>< 다 음 >");
+		}
+		
+	},
+	createNumber : function(id) {
+		var me = this;
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );			
+			me.calculateTotal();
+		})
+		
+	},
+	createDatePicker : function(){
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	add : function() {
+		var data = {
+			'id':'tr_'+this.max,
+			'idx':this.max
+		}
+
+		var result = TrimPath.processDOMTemplate("tmpl_format", data);
+		$('#tr_total').before(result);
+		this.createDatePicker();
+		this.createNumber();
+		this.max++;
+	},
+	remove :function(id) {
+		$('#'+id).remove();
+		this.calculateTotal();
+	},
+	calculateTotal : function() {
+		var total_price = 0;
+		$("input:enabled[id^=expense_price]" ).each(function() {
+			if( this.value ){
+				total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+			}
+		});
+			    
+		$( "input:enabled[id=total_price]" ).val(total_price.number_format(0));
+	}
+};
+
+$(function(){
+	SettleFormat.init();	
+});
+</script>

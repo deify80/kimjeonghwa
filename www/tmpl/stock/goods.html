@@ -1,0 +1,392 @@
+<h3 class="area-title">물품 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="{cfg.group}" />
+<input type="hidden" name="limit" value="" />
+<input type="hidden" name="type" value="goods" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>등록일자</th>
+			<td colspan="3">
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="GoodsList.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="GoodsList.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="GoodsList.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="GoodsList.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="GoodsList.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="GoodsList.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<th>분류</th>
+			<td>
+				<select name="classify_code" onchange="GoodsList.loadItem(this.value)" data-role="search">
+					<option value="">::분류선택::</option>
+					{@ cfg.classify}
+					<option value="{.key_}" {? rs.classify_code==.key_}selected{/} >{.name}</option>
+					{/}
+				</select>
+				<select name="item_code" id="sb_search_item" style="display:none"  data-role="search">
+					<option value="">::항목 선택::</option>
+				</select>
+			</td>
+			<th>품목명</th>
+			<td><input type="text" name="goods_name" style="width:100%"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="GoodsList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="GoodsList.reset()">처음으로</button>
+</div>
+</form>
+
+
+<table  class="table">
+	<colgroup>
+		<col width="500px"><!-- 번호 -->
+		<col/><!-- 선택 -->
+	</colgroup>
+	<tr>
+		<td>
+			<table class="table table-bordered table-list table-striped table-hover">
+				<thead id="price_list">
+				</thead>
+				<!-- <colgroup>
+					<col width="100px">번호
+					<col width="100px">선택
+					<col width="100px">항목
+					<col width="100px">분류
+					<col width="100px">단위
+				</colgroup>
+				<thead>
+					<tr style="background-color:#b6b6b6">
+						<th></th>
+						<th>합계</th>
+						<th>성형외과</th>
+						<th>피부과</th>
+						<th>기타</th>
+					</tr>
+					<tr>
+						<th>총 입고액</th>
+						<td>1</td>
+						<td>2</td>
+						<td>3</td>
+						<td>4</td>
+					</tr>
+					<tr>
+						<th>총 사용액</th>
+						<td>1</td>
+						<td>2</td>
+						<td>3</td>
+						<td>4</td>
+					</tr>
+					<tr>
+						<th>총 재고액</th>
+						<td>1</td>
+						<td>2</td>
+						<td>3</td>
+						<td>4</td>
+					</tr>
+				</thead> -->
+			</table>
+		</td>
+	</tr>
+</table>
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	물품 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 물품수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 물품수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="GoodsList.openInput()"><i class="fa fa-pencil fa-1"></i> 물품등록</button>
+		{? auth.goods_down}
+		<span class="split">|</span>
+		<button class="btn btn-flat-purple" onclick="GoodsList.excel()"><i class="fa fa-file-excel-o fa-1"></i> Excel</button>
+		{/}
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="120px"><!-- 항목 -->
+		<col width="120px"><!-- 분류 -->
+		<col width="120px"><!-- 물품코드 -->
+		<col ><!-- 품목명 -->
+		<col width="80px"><!-- 단위 -->
+		<col width="120px"><!-- 단가 -->
+		<col width="80px"><!-- 현황 -->
+		<col width="80px"><!-- 수량 -->
+		<col width="100px"><!-- 현재고 -->
+		<col width="100px"><!-- 최소보유수량 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>분류</th>
+			<th>항목</th>
+			<th>물품코드</th>
+			<th>물품명</th>
+			<th>단위</th>
+			<th>단가</th>
+			<th>현황</th>
+			<th>수량</th>
+			<th>현재고</th>
+			<th>최소보유수량</th>
+		</tr>
+	</thead>
+	<tbody id="goods_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${\no}"><span class="lbl"></span></td>
+		<td><span data-toggle="tooltip" title="${\classify_code}">${\classify_name}</span></td>
+		<td><span data-toggle="tooltip" title="${\item_code}">${\item_name}</span></td>
+		<td>${\goods_code}</td>
+		<td class="left"><a href="javascript:;" onclick="GoodsList.openInput('${\no}')" class="link">${\goods_name}</a></td>
+		<td>${\unit}</td>
+		<td>${HmisCommon.numberFormat(unit_price)}</td>
+		<td>{if inout.kind=='in'} <span class="label label-normal">입고</span> {elseif inout.kind == 'out'} <span class="label label-error">출고</span> {\else} - {/if}</td>
+		<td>{if inout.qty > 0 } ${\inout.qty} {\else} - {/if}</td>
+		<td>${\qty_stock}</td>
+		<td>${\qty_min}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="GoodsList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="GoodsList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="GoodsList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var GoodsList = {
+	page:1,
+	group_code:"{cfg.group}",
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+
+		$('[data-role="search"]').on('change.search',function() {
+			GoodsList.load(1);
+		});
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	openInput: function(goods_no) {
+		var title = (goods_no)?'물품 정보 수정':'새 물품 등록';
+		var modal = new HmisModal('goods_input', {width:800, top:200});
+		modal.callback = function() {
+			//GoodsList.load(1);			// 20170327 kruddo : 수정/닫기/삭제 후 1페이지 이동 막음
+			GoodsList.reload();
+		};
+		modal.open(title,'/stock/goods_input',{goods_no:goods_no, group_code:this.group_code});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		$.ajax({
+			url:'/stock/goods_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#goods_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					me.priceList(r.data.price_list);
+				}
+				else {
+					target.append('<tr><td colspan="11">검색된 물품정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	loadItem: function(classify_code) {
+		var sb_search_item = $('#sb_search_item');
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:this.group_code+'_'+classify_code,
+				is_use:'Y'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_search_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						sb_search_item.append('<option value="'+e.code+'" '+selected+'>'+e.name+'</option>');
+					});
+					sb_search_item.css('display','');
+				}
+				else {
+					sb_search_item.val('').css('display','none');
+				}
+			}
+		});
+	},
+	excel: function() {
+		var limit = $('#cnt_search').html().replace(/[^0-9]/gi,'');
+		$('#FrmGoodsSearch input[name="limit"]').val(limit);
+
+		var search = $('#FrmGoodsSearch').serialize();
+
+		if(limit > 500) {
+			HmisAlert.confirm("엑셀변환데이터가 500건 이상으로 다운로드 시간이 1분이상 소요될수 있습니다.<br />다운로드받으시겠습니까?", function(r) {
+				if(r) {
+					document.location.href = '/stock/excel?'+search;
+				}
+			});
+		}
+		else {
+			document.location.href = '/stock/excel?'+search;
+		}
+	},
+
+	priceList:function(list){
+		//console.log(list);
+
+		var target = $('#price_list');
+		target.empty();
+
+		var html = '';
+		html += '<tr>';
+		html += '<th></th>';
+		$.each(list, function(i,e){
+			html += '<th>'+e.name;
+			html += '</th>';
+		});
+		html += '</tr>';
+
+		html += '<tr>';
+		html += '<th>총 입고액</th>';
+		$.each(list, function(i,e){
+			var inprice = 0;
+			if(e.in != undefined)			inprice = e.in;
+
+			html += '<td>'+inprice.format();
+			html += '</td>';
+		});
+		html += '</tr>';
+
+		html += '<tr>';
+		html += '<th>총 사용액</th>';
+		$.each(list, function(i,e){
+			var saleprice = 0;
+			var outprice = 0;
+
+			if(e.sale != undefined)		saleprice = e.sale;
+			if(e.out != undefined)		outprice = e.out;
+
+			html += '<td>'+(saleprice+outprice).format();
+			html += '</td>';
+		});
+		html += '</tr>';
+
+		html += '<tr>';
+		html += '<th>총 재고액</th>';
+		$.each(list, function(i,e){
+			var inprice = outprice = saleprice = 0;
+			if(e.in != undefined)		inprice = e.in;
+			if(e.sale != undefined)		saleprice = e.sale;
+			if(e.out != undefined)		outprice = e.out;
+
+			html += '<td>'+(inprice-(outprice+saleprice)).format();
+			html += '</td>';
+		});
+		html += '</tr>';
+
+		target.append(html);
+
+	}
+
+	/*
+	<tr style="background-color:#b6b6b6">
+		<th></th>
+		<th>합계</th>
+		<th>성형외과</th>
+		<th>피부과</th>
+		<th>기타</th>
+	</tr>
+	*/
+
+}
+
+// 숫자 타입에서 쓸 수 있도록 format() 함수 추가
+Number.prototype.format = function(){
+    if(this==0) return 0;
+
+    var reg = /(^[+-]?\d+)(\d{3})/;
+    var n = (this + '');
+
+    while (reg.test(n)) n = n.replace(reg, '$1' + ',' + '$2');
+
+    return n;
+};
+
+
+$(function() {
+	GoodsList.init();
+})
+</script>

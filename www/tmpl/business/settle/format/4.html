@@ -1,0 +1,310 @@
+<!-- 일일매출보고 포맷 -->
+<script type="text/javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var SettleFormat = {
+	max:'<?=count($settle_expense)?>',
+	settle_no:'<?=$settle_no?>',
+	init:function() {
+		HmisCommon.createDatepicker();
+		this.createNumber();
+		if(!this.settle_no) {
+			$("#title").val("<?=date('Y.m.d')?>  <?=$this->session->userdata(ss_team_name)?> 일일매출보고 ");
+			CKEDITOR.instances['content'].setData("다음의 내용으로 매출 보고드리니 검토 후 재가바랍니다.<br/>< 다 음 >");
+		}
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+			if(e.data('idx')>-1) {
+				me.calculatePrice(e.data('group'),e.data('idx'));
+			}
+			else {
+				me.calculateTotal(e.data('group'));	
+			}
+			
+		})
+	},
+	add : function() {
+		var data = {
+			'id':'tr_'+this.max,
+			'index':this.max
+		}
+		var result = TrimPath.processDOMTemplate("tmpl_format", data);
+		$('#tr_total').before(result);
+		HmisCommon.createDatepicker();
+		this.createNumber();
+		this.max++;
+	},
+	remove :function(id) {
+		$('#'+id).remove();
+		this.calculateTotal();
+	},
+	calculatePrice : function(group, idx) {
+		var sum = 0;
+		$.each($('input[data-group="'+group+'"][data-idx="'+idx+'"]'), function(i,e){
+			var price = $(e).val().replace(/,/gi,'');
+			if ($.isNumeric(price)) {
+				sum+=parseInt(price);
+			}
+		});
+
+		$('#expense_'+group+'_price_'+idx).val(HmisCommon.numberFormat(sum));
+		this.calculateTotal(group);
+	},
+	calculateTotal : function(group) {
+		var total_price = 0;
+		$("input:enabled[id^=expense_"+group+"_price]" ).each(function() {
+			if( this.value ){
+				total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+			}
+		});
+		
+		$("#total_"+group+"_price").val(total_price.number_format(0));
+
+		var sum_price = parseInt($('#total_receipt_price').val().replace(/,/gi,'')) + parseInt($('#total_expect_price').val().replace(/,/gi,''));
+		$('#sum_price').html(HmisCommon.numberFormat(sum_price));	
+	},
+	selectTeam : function(idx, team_no, sub_value) {
+		var selectbox = $('#expense_advice_'+idx);
+		selectbox.find('option').remove();
+		if(!team_no) {
+			selectbox.append('<option value="">-팀원선택-</option>');
+			return false;
+		}
+		var url = "/business/get_user_info_json/";	
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: {
+				what:'team_s',
+				code:team_no
+			},
+				// "what=team_s&code="+$('#team_list_'+type+'_'+idx).val(),
+			dataType: "json",
+			success: function(result_data) {
+				if (result_data != null && result_data != "") {
+					$.each(result_data, function(index, entry){
+						var selected = (sub_value==index)?'selected':'';
+						selectbox.append('<option value="'+index+'" '+selected+'>'+entry+'</option>')
+					});
+
+				}
+			}
+		});
+	}
+};
+
+$(function(){
+	SettleFormat.init();	
+});
+
+</script>
+
+<table id="format_4" class="table table-bordered table-center" style="margin-top:5px;margin-bottom:0px">
+	<colgroup>
+		<col width="100px" /><!-- 상담일 -->
+		<col width="100px" />
+		<col width="80px" /><!-- 이름 -->
+		<col width="80px" /><!-- 담당의 -->
+		<col width="150px" /><!-- 수술내용 -->
+		<col width="110px" />
+		<!-- <col width="80px" /> -->
+		<col width="80px" />
+		<col width="110px" />
+		<col width="80px" />
+		<col width="100px" />
+		<col/>
+	</colgroup>
+	<tbody >
+		<tr>
+			<th>상담일</th>
+			<th>수술일</th>
+			<th>이름</th>
+			<th>담당의</th>
+			<th>수술내용</th>
+			<th colspan="2">총매출</th>
+			<!-- <th>총매출</th> -->
+			<!-- <th>예상매출</th>	 -->
+			<th colspan="2">예치금</th>		
+			<th>상담실장</th>
+			<th>비고</th>
+		</tr>
+		<!-- 누적데이터:S -->
+		<?
+		foreach ($settle_expense_stack as $idx=>$row) {
+			if($row['expense_price'] < 1 && $row['expense_expect_price'] < 1) continue;
+		?>
+		<tr>
+			<td><?=substr($row['expense_start_date'],0,10)?></td>
+			<td><?=substr($row['expense_end_date'],0,10)?></td>
+			<td><?=$row['expense_customer']?></td>
+			<td><?=$settle_expense_doctor[$row['expense_doctor']]?></td>
+			<td><?=$row['expense_desc']?></td>
+			<td>
+				<dl class="inline">
+					<dt style="width:40px">현금</dt><dd style="text-align: left"><?=number_format($row['expense_receipt_money'])?></dd>
+					<dt style="width:40px">카드</dt><dd style="text-align: left"><?=number_format($row['expense_receipt_card'])?></dd>
+					<dt style="width:40px">계좌</dt><dd style="text-align: left"><?=number_format($row['expense_receipt_account'])?></dd>
+				<dl>
+			</td>
+			<td><?=number_format($row['expense_price'])?></td>
+			<!-- <td><?=number_format($row['expense_expect_price'])?></td> -->
+			
+			<td>
+				<dl class="inline">
+					<dt style="width:40px">현금</dt><dd style="text-align: left"><?=number_format($row['expense_deposit_money'])?></dd>
+					<dt style="width:40px">카드</dt><dd style="text-align: left"><?=number_format($row['expense_deposit_card'])?></dd>
+					<dt style="width:40px">계좌</dt><dd style="text-align: left"><?=number_format($row['expense_deposit_account'])?></dd>
+				<dl>
+			</td>
+			<td><?=number_format($row['expense_deposit_price'])?></td>
+			<td><?=$cfg['team'][$row['expense_team']]?><div style="margin-top:5px"><?=$row['advice_name']?></div></td>
+			<td><?=$row['expense_etc']?></td>
+		</tr>
+		<? } ?>
+		<!-- 누적데이터:E -->
+		<? 
+		$total = 0;
+		foreach($settle_expense as $idx=>$data) {
+			$total_receipt_price+=$data['expense_price'];
+			$total_deposit_price+=$data['expense_deposit_price'];
+			$total_expect_price+=$data['expense_expect_price'];
+		?>
+		<tr id="tr_<?=$idx?>">
+			<td><input type='text' class='datepicker' name='expense_start_date[]' value="<?=substr($data['expense_start_date'],0,10)?>" /></td>
+			<td><input type='text' class='datepicker' name='expense_end_date[]' value="<?=substr($data['expense_end_date'],0,10)?>" /></td>
+			<td style="padding:0px 5px">
+				<input type='text' name='expense_customer[]' id='expense_customer[]' value='<?=$data['expense_customer']?>' class="full" />			
+			</td>
+			<td>
+				<select name='expense_doctor[]' id='expense_doctor[]'>
+					<?php 
+					foreach( $settle_expense_doctor as $key => $val){ 
+						$selected = ($data['expense_doctor'] == $key)?'selected':'';
+					?>
+					<option value='<?=$key?>' <?=$selected?>><?=$val?></option>
+					<? } ?>
+				</select>
+			</td>
+			<td><input type='text' style='width:130px' name='expense_desc[]' id='expense_desc[]' value='<?=$data['expense_desc']?>'></td>
+			<!-- 총매출:S -->
+			<td style="padding:5px 0px">
+				현금 <input type='text' class='number' style='width:60%;' name='expense_receipt_money[]' data-idx="<?=$idx?>" data-group="receipt" value='<?=number_format($data['expense_receipt_money'])?>'>
+				<div style="margin:3px 0px">카드 <input type='text' class='number' style='width:60%;' name='expense_receipt_card[]' data-group="receipt" data-idx="<?=$idx?>" value='<?=number_format($data['expense_receipt_card'])?>'></div>
+				계좌 <input type='text' class='number' style='width:60%;' name='expense_receipt_account[]' data-idx="<?=$idx?>" data-group="receipt" value='<?=number_format($data['expense_receipt_account'])?>'>
+			</td>
+			<td><input type='text' class='number full' name='expense_price[]' id='expense_receipt_price_<?=$idx?>'  value='<?=number_format($data['expense_price'])?>' readonly></td>
+			<!-- 총매출:E -->
+
+			<!-- <td><input type="text" name="expense_expect_price[]" id='expense_expect_price_<?=$idx?>'  value="<?=number_format($data['expense_expect_price'])?>" class="number full" data-group="expect"  /></td> --><!-- 예상매출 -->
+			
+			<!-- 예치금:S -->
+			<td style="padding:5px 0px">
+				현금 <input type='text' class='number' style='width:60%;' name='expense_deposit_money[]' data-idx="<?=$idx?>" data-group="deposit" value='<?=number_format($data['expense_deposit_money'])?>'>
+				<div style="margin:3px 0px">카드 <input type='text' class='number' style='width:60%;' name='expense_deposit_card[]' data-group="deposit" data-idx="<?=$idx?>" value='<?=number_format($data['expense_deposit_card'])?>'></div>
+				계좌 <input type='text' class='number' style='width:60%;' name='expense_deposit_account[]' data-idx="<?=$idx?>" data-group="deposit" value='<?=number_format($data['expense_deposit_account'])?>'>
+			</td>
+			<td><input type='text' class='number full' name='expense_deposit_price[]' id='expense_deposit_price_<?=$idx?>' value='<?=number_format($data['expense_deposit_price'])?>' readonly></td>
+			<!-- 예치금:E -->
+			
+			<td>
+				<select name='team_list[]' style="width:80px" onChange="SettleFormat.selectTeam('<?=$idx?>', this.value);">
+					<option value=''>-팀선택-</option>
+					<?php
+					foreach( $team_info as $key => $val ) {
+						$selected = ($data['expense_team'] == $key)?'selected':'';
+					?>
+					<option value='<?=$key?>' <?=$selected?>><?=$val?></option>
+					<? } ?>
+				</select>
+				<div style="margin-top:4px;display:">
+				<select name='expense_advice[]' style="width:80px" id='expense_advice_<?=$idx?>'>
+					<option value=''>-팀원선택-</option>
+				</select>
+				</div>
+				<script type="text/javascript">
+					SettleFormat.selectTeam('<?=$idx?>', '<?=$data['expense_team']?>', "_<?=$data['expense_advice']?>");	
+				</script>
+			</td>
+			<td>
+				<input type='text' style='width:75%;' name='expense_etc[]' id='expense_etc[]' value='<?=$data['expense_etc']?>'>
+				<? if($idx > 0) {?>
+				<span class='badge lg red' onClick="SettleFormat.remove('tr_<?=$idx?>')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+				<? } else {?>
+				<span class='badge lg green' onClick='SettleFormat.add();' style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-plus"></i></span>
+				<? } ?>
+			</td>
+		</tr>	
+		<? } ?>
+		<tr id="tr_total">
+			<th colspan="5" style="text-align:center;">합계</th>
+			<th colspan="2"><input type="text" class='full transparent' readonly id="total_receipt_price" value="<?=number_format($total_receipt_price)?>" /></th>
+			<!-- <th><input type="text" class='full transparent' readonly id="total_expect_price" value="<?=number_format($total_expect_price)?>" /></th> -->
+			<th colspan="2"><input type="hidden" class='full transparent' readonly id="total_deposit_price" value="<?=number_format($total_deposit_price)?>" /></th>
+			<!-- <td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_material" value="<?=number_format($total_material)?>"></td> -->
+			<th colspan="2"><span id="sum_price"><?=number_format($total_receipt_price+$total_expect_price)?></span> 원 (총매출 + 예상매출)</th>
+		</tr>
+	</tbody>
+</table>
+
+
+<!-- 추가템플릿:S -->
+<textarea id="tmpl_format" style="display:none;">
+	<tr id='${id}'>
+		<td><input type='text' class='datepicker' name='expense_start_date[]'  ></td>
+		<td><input type='text' class='datepicker' name='expense_end_date[]'  ></td>
+		<td>
+			<input type='text' class="full" name='expense_customer[]' id='expense_customer[]' value=''>			
+		</td>
+		<td>
+			<select name='expense_doctor[]' id='expense_doctor[]'>
+				<?php foreach( $settle_expense_doctor as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+			</select>
+		</td>
+		<td><input type='text' style='width:130px' name='expense_desc[]' id='expense_desc[]' value=''></td>
+		
+		<!-- 총매출:S -->
+		<td style="padding:5px 0px">
+			현금 <input type='text' class='number' style='width:60%;' name='expense_receipt_money[]' data-idx="${index}" data-group="receipt" value=''>
+			<div style="margin:3px 0px">카드 <input type='text' class='number' style='width:60%;' name='expense_receipt_card[]' data-idx="${index}" data-group="receipt" value=''></div>
+			계좌 <input type='text' class='number' style='width:60%;' name='expense_receipt_account[]' data-idx="${index}" data-group="receipt" value=''>
+		</td>
+		<td><input type='text' class='number full' name='expense_price[]' id='expense_receipt_price_${index}'  value='' readonly></td>
+		<!-- 총매출:E -->
+
+		<!-- <td><input type="text" class="number full" name="expense_expect_price[]"  id='expense_expect_price_${index}' value="" data-group="expect" /></td><!-- 예상매출 --> -->
+		
+		<!-- 예치금:S -->
+		<td style="padding:5px 0px">
+			현금 <input type='text' class='number' style='width:60%;' name='expense_deposit_money[]' data-idx="${index}" data-group="deposit" value=''>
+			<div style="margin:3px 0px">카드 <input type='text' class='number' style='width:60%;' name='expense_deposit_card[]' data-idx="${index}" data-group="deposit" value=''></div>
+			계좌 <input type='text' class='number' style='width:60%;' name='expense_deposit_account[]' data-idx="${index}" data-group="deposit" value=''>
+		</td>
+		<td><input type='text' class='number full'  name='expense_deposit_price[]' id='expense_deposit_price_${index}'  value='' readonly></td>		
+		<!-- 예치금:E -->
+
+		<td>
+			<select name='team_list[]' style="width:80px" onChange='SettleFormat.selectTeam(${index}, this.value);'>
+				<option value=''>-팀선택-</option>
+				<?foreach( $team_info as $key => $val ):?>
+				<option value='<?=$key?>'><?=$val?></option>
+				<?endforeach;?>
+			</select>
+			<div style="margin-top:4px;display:">
+			<select name='expense_advice[]' style="width:80px" id='expense_advice_${index}'>
+				<option value=''>-팀원선택-</option>
+			</select>
+			</div>
+		</td>
+		<td>
+			<input type='text' style='width:75%;' name='expense_etc[]' id='expense_etc[]' value=''>
+			<span class='badge lg red' onClick="SettleFormat.remove('${id}')" style='cursor:pointer;vertical-align: 5px;'><i class="fa fa-minus"></i></span>
+		</td>
+	</tr>
+</textarea>
+<!-- 추가템플릿:E -->
+

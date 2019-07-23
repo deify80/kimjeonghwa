@@ -1,0 +1,117 @@
+<form id="FrmCostMatchInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="group_code" id="group_code" value="{item.group_code}" />
+<input type="hidden" name="code" value="{item.code}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr {? mode == 'update' &&  item.group_code == '01'}style="display:none"{/} >
+			<th>상위분류</th>
+			<td>
+				{? cfg.direct}
+					<input type="hidden" name="parent_code" value="{item.parent_code}" />
+					{cfg.treat_region[item.parent_code]}
+				{:}
+				<select name="parent_code" onchange="CostMatchInput.change(this.value)">
+					<option value="">진료부위추가</option>
+					{@ cfg.treat_region}
+					<option value="{.key_}">{.value_}</option>
+					{/}
+				</select>
+				{/}
+			</td>
+		</tr>
+		
+		<tr>
+			<th>진료<span id="treat_label">부위</span>명</th>
+			<td>
+				<input type="text" name="title" value="{item.title}" class="validate[required] required" style="width:300px" data-errormessage-value-missing="진료명을 입력하세요."/>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{? mode == 'update'}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="CostMatchInput.remove()">삭제</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var CostMatchInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition : "centerRight",
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmCostMatchInput").validationEngine('attach',option);
+	},
+	change : function(v) {
+		if(v) {
+			$('#group_code').val('02');
+			var group_txt = '항목';
+		}
+		else {
+			$('#group_code').val('01');
+			var group_txt = '부위';
+		}
+		
+		$('#treat_label').text(group_txt);
+	},
+	save: function(){
+		var formdata = $('#FrmCostMatchInput').serialize();
+		$.ajax({
+			url:'/treat_proc/save_treat',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					CostTab.loadTab('match');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	remove: function() {
+		var msg = ($('#group_code').val()=='01')?'하위에 포함된 항목이 함께 삭제됩니다.<br />':'';
+		HmisAlert.confirm(msg+'정말 삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/treat_proc/remove_treat',
+					data:{
+						code:'{item.code}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function(){
+							if(r.success) {
+								$('.modal-close').trigger('click');
+								CostTab.loadTab('match');
+							}	
+						})
+						
+					}
+				})
+			}
+		})
+	}
+}
+
+$(function(){
+	CostMatchInput.init();
+})
+</script>

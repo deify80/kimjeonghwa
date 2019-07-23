@@ -1,0 +1,202 @@
+<style>
+#classify_list .fa {
+	color:#E3E3E3;	
+}
+
+#classify_list tr.selected .fa{
+	color:#FF5722;
+}
+
+tr.selected td{
+	background-color:#F5F5F5;	
+}
+
+
+
+tr.selected th {
+}
+
+
+</style>
+<div style="width:400px;float:left;margin-right:10px">
+	<!-- 메뉴:S -->
+	<h3 class="area-title">
+		분류 목록
+		<div class="button-box">
+			<button class="btn btn-flat-blue" onclick="StockSettings.openClassify()"><i class="fa fa-plus fa-1"></i> 분류추가 </button>
+		</div>
+	</h3>
+	<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+		<colgroup>
+			<col width="80px">
+			<col width="80px">
+			<col>
+			<col width="20px">
+		</colgroup>
+		<tbody id="classify_list"></tbody>
+	</table>
+</div>
+<div style="width:1px;float:left;border-right:solid 1px #E3E3E3;min-height:800px;margin-top:15px;"></div>
+<div style="width:778px;float:right;margin-left:10px;">
+	<h3 class="area-title">
+		<span class="f-error" id="classify_name"></span> 의 하위 분류
+		<div class="button-box">
+			<button class="btn btn-flat-purple" onclick="StockSettings.openItem()"><i class="fa fa-plus fa-1"></i> 항목추가</button>
+		</div>
+	</h3>
+	<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+		<colgroup>
+			<col width="80px">
+			<col width="80px">
+			<col>
+		</colgroup>
+		<tbody id="item_list">
+		</tbody>
+	</table>
+</div>
+
+<textarea id="tmpl_calssify" style="display:none">
+	<tr id="classify_${code}" data-code="${code}" data-name="${name}">
+		<td><a href="javascript:;" onclick="StockSettings.openClassify('${no}')" class="link">${code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setUse('${no}', '${is_use}')">
+			{if is_use=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left" style="border-right:0px;cursor:pointer" onclick="StockSettings.loadItem('${code}');">
+			${name}
+		</td>
+		<td style="border-left:0px">
+			<i class="fa fa-chevron-right"></i>
+		</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_item" style="display:none">
+	<tr>
+		<td><a href="javascript:;" onclick="StockSettings.openItem('${no}')" class="link">${code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setUse('${no}', '${is_use}')">
+			{if is_use=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left">
+			${name}
+		</td>
+	</tr>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var StockSettings = {
+	classify_code:'',
+	init: function() {
+		this.loadClassify();
+	},
+	loadClassify: function(classify_code){
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'classify',
+				code_parent:"<?=$cfg['group']?>"
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_calssify');
+				var target = $('#classify_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					classify_code = classify_code || $('#classify_list > tr:first').data('code'); 
+					
+					me.loadItem(classify_code);
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 재고분류가 없습니다.</td></tr>');
+				}
+			}
+		})
+	},
+	openClassify: function(no){
+		var title = (no)?'분류 수정':'분류 추가';
+		var modal = new HmisModal('modal_classify', {width:500, top:200});
+		modal.open(title,'/stock/classify_input', {no:no});
+	},
+	loadItem: function(classify_code){		
+		this.classify_code = classify_code;
+		$('#classify_list > tr').removeClass('selected');
+		$('#classify_'+classify_code).addClass('selected');
+		$('#classify_name').html($('#classify_'+classify_code).data('name'));
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:classify_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_item');
+				var target = $('#item_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 항목이 없습니다.</td></tr>');
+				}
+			}
+		})
+
+	},
+	openItem: function(no) {
+		var title = (no)?'항목 수정':'항목 추가';
+		var modal = new HmisModal('modal_item', {width:500, top:200});
+		modal.open(title,'/stock/item_input', {no:no, code_parent:this.classify_code});
+	},
+	setUse: function(no, is_use) {
+		var me = this;
+		var is_use = (is_use=='Y')?'N':'Y';
+		$.ajax({
+			url:'/stock_proc/category_use',
+			data:{
+				no:no,
+				is_use:is_use
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					me.loadClassify(me.classify_code);
+				}
+			}
+		})
+
+	}
+
+}
+
+$(function(){
+	StockSettings.init();
+})
+</script>

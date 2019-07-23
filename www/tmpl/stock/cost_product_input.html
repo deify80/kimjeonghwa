@@ -1,0 +1,179 @@
+<form id="FrmGoodsSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="000H" />
+<input type="hidden" name="limit" value="" />
+<input type="hidden" name="type" value="goods" />
+
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>상위분류</th>
+			<td colspan="2">
+				<div class="f-bold"><?=$cfg['categories'][$rs['code_parent']]['name']?></div>
+			</td>
+		</tr>
+
+		<tr>
+			<th>품목명</th>
+			<td><input type="text" name="goods_name" style="width:100%"></td>
+			<td><button type="submit" class="btn btn-lg btn-theme" onclick="GoodsList.load(1)"><i class="fa fa-search"></i> 검색</button></td>
+		</tr>
+
+	</tbody>
+</table>
+</form>
+
+<form id="FrmGoodsSave" onsubmit="return false">
+<input type="hidden" name="code_parent" id="code_parent" value="<?=$rs['code_parent']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="40px"><!-- 번호 -->
+		<col width="30px"><!-- 선택 -->
+		<col width="110px"><!-- 항목 -->
+		<col width="110px"><!-- 분류 -->
+		<col ><!-- 품목명 -->
+		<col width="110px"><!-- 단가 -->
+		<col width="70px"><!-- 수량 -->
+		<col width="90px"><!-- 현재고 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>분류</th>
+			<th>항목</th>
+			<th>품목명</th>
+			<th>단가</th>
+			<th>수량</th>
+			<th>현재고</th>
+		</tr>
+	</thead>
+	<tbody id="goods_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_product_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></td>
+		<td><span data-toggle="tooltip" title="${classify_code}">${classify_name}</span></td>
+		<td><span data-toggle="tooltip" title="${item_code}">${item_name}</span></td>
+		<td class="left"><a href="javascript:;" onclick="GoodsList.openInput('${no}')" class="link">${goods_name}</a></td>
+		<td>${HmisCommon.numberFormat(unit_price)}</td>
+		<td>{if inout.qty > 0 } ${inout.qty} {else} - {/if}</td>
+		<td>${qty_stock}</td>
+	</tr>
+</textarea>
+
+
+<textarea id="tmpl_product_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="GoodsList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="GoodsList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="GoodsList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="GoodsList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onClick="GoodsList.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var GoodsList = {
+	page:1,
+	init: function() {
+		this.load(1);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize();
+		$.ajax({
+			url:'/stock/goods_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_product_list');
+				var target = $('#goods_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="8">검색된 물품정보가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_product_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	save:function(){
+		var formdata = $('#FrmGoodsSave').serialize();
+		//alert(formdata);
+
+		$.ajax({
+			url:'/stock_proc/cost_product_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					if($('#code_parent').val().split("_")[0] == "000A"){
+						StockSettings.loadAnesthesiaSub("<?=$rs['code_parent']?>");
+					}
+					else{
+						StockSettings.loadItemSub("<?=$rs['code_parent']?>");
+					}
+					//console.log($('#code_parent').val().split("_")[0]);
+
+					
+					//$('.modal-close').trigger('click');	
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	}
+		
+}
+
+$(function() {
+	GoodsList.init();
+})
+</script>

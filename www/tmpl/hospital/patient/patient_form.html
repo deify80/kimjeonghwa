@@ -1,0 +1,225 @@
+<input type="hidden" id="messenger" value="{patient.messenger}" /><!-- 메신저 중복체크 -->
+<input type="hidden" id="mobile" value="{patient.mobile}" /><!-- 휴대폰번호 중복체크 -->
+<input type="hidden" name="patient_no" value="{patient.no}" /><!-- 환자PK -->
+<input type="hidden" name="cst_seqno" value="{patient.cst_seqno}" /><!-- 상담PK -->
+<input type="hidden" name="auth_update" value="{auth.update}" /><!-- 개인정보수정권한 -->
+<input type="hidden" name="media" value="{patient.media}" /><!-- 개인정보수정권한 -->
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px" />
+		<col />
+		<col style="width:110px" />
+		<col />
+		<col style="width:110px" />
+		<col />
+		<col style="width:110px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>이름</th>
+			<td><input type="text" name="name" class="validate[required] full required" value="{patient.name}" data-errormessage-value-missing="검색을 이용하여 입력하세요." placeholder="" {? !patient.no}readonly{/} /></td>
+			<th>주민등록번호</th>
+			<td>
+		 		<input type="text" name="jumin" class="full" data-mask="jumin" value="{patient.jumin}" />
+			</td>
+			<th>생년월일</th>
+			<td>
+				<input type="text" name="birth" class="full" value="{patient.birth}"  data-mask="date"  />
+			</td>
+			<th>성별</th>
+			<td>
+				<label class="hmis"><input type="radio" name="sex" value="M" class="hmis" {? patient.sex=='M'}checked{/} /><span class="lbl"> 남</span></label>
+				<label class="hmis"><input type="radio" name="sex" value="F" class="hmis" {? patient.sex=='F'}checked{/} /><span class="lbl"> 여</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>메신저</th>
+			<td>
+				<input type="text" name="messenger" value="{patient.messenger}" style="width:120px" class="validate[equals[messenger]] required"  data-errormessage-value-missing="휴대폰번호나 메신저를 입력하세요." data-errormessage-pattern-mismatch="메신저 중복체크가 필요합니다." {? !patient.no}readonly{/} /> <button type="button" class="btn btn-flat-lightgray btn-onlyicon" onclick="PatientInputForm.checkDuplicate('messenger', 'alert')" data-toggle="tooltip" title="중복확인"><i class="fa fa-check fa-1"></i></button>
+			</td>
+			<th>휴대폰번호</th>
+			<td>
+				{? auth.update}
+				<input type="text" name="mobile" value="{patient.mobile}"  style="width:120px" class="validate[equals[mobile]] required" data-mask="mobile"  data-errormessage-value-missing="휴대폰번호나 메신저를 입력하세요." data-errormessage-pattern-mismatch="휴대폰번호 중복체크가 필요합니다." {? !patient.no}readonly{/} /> <button type="button" class="btn btn-flat-lightgray btn-onlyicon" onclick="PatientInputForm.checkDuplicate('mobile', 'alert')" data-toggle="tooltip" title="중복확인"><i class="fa fa-check fa-1"></i></button></td>
+				{:}
+				<div class="minheight">{patient.mobile}</div>
+				{/}
+			<th>유선전화</th>
+			<td>
+				<input type="text" name="tel" value="{patient.tel}" class="full" />
+			</td>
+			<th>이메일</th>
+			<td>
+				<input type="text" name="email" value="{patient.email}" class="validate[custom[email]] full" autocomplete="off" />
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="1">주소</th>
+			<td colspan="3">
+				<input type="text" name="zipcode" id="zipcode" style="width:60px" value="{patient.zipcode}" placeholder="우편번호" /> <button type="button" onclick="HmisCommon.post('zipcode','address')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<input type="text" name="address" id="address" value="{patient.address}" style="width:300px" placeholder="주소" />
+			</td>
+			<th>직업</th>
+			<td>
+				<select name="job_code">
+					<option value="">::직업::</option>
+					{@ cfg.job}
+					<option value="{.key_}" {? patient.job_code==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>직장명</th>
+			<td><input type="text" name="company" class="full" value="{patient.company}" /></td>
+		</tr>
+		<tr>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? patient.doctor_id==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="patient_form_team" class="{? auth.consulting}validate[required] required{/}" onchange="HmisCommon.loadUser(this.value, '', 'patient_form')" data-errormessage-value-missing="상담팀을 선택하세요." >
+					<option value="">::팀::</option>
+					{@ cfg.manager_team}
+					<option value="{.key_}" {? patient.manager_team_code==.key_ }selected{:} {? patient.no>0} disabled {/} {/} >{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="patient_form_user"class="{? auth.consulting}validate[required] required{/}" style="display:none" data-errormessage-value-missing="담당실장을 선택하세요.">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+			<th>유입경로</th>
+			<td>
+				<select name="path_code">
+					<option value="">::유입경로::</option>
+					{@ cfg.path}
+					<option value="{.key_}" {? patient.path_code==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>소개자</th>
+			<td>
+				<input type="hidden" name="introducer_no" id="introducer_no" value="{patient.introducer_no}" />
+				<input type="text" id="introducer_name" value="{patient.introducer_name}" style="width:81px" readonly onclick="PatientInputForm.searchPatient()" />
+				<button type="button" onclick="PatientInputForm.searchPatient()" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<button type="button" onclick="PatientInputForm.removeIntroducer()" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-times fa-1"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<th>선택사항</th>
+			<td colspan="5">
+				<label class="hmis"><input type="checkbox" name="agree_privacy" value="Y" class="hmis" {? patient.agree_privacy=='Y'}checked{/} /><span class="lbl"> 개인정보수집 및 이용동의</span></label>
+				<label class="hmis"><input type="checkbox" name="agree_sms" value="Y" class="hmis" {? patient.agree_sms=='Y'}checked{/}  /><span class="lbl"> SMS수신동의</span></label>
+				<label class="hmis"><input type="checkbox" name="agree_email" value="Y" class="hmis" {? patient.agree_email=='Y'}checked{/}  /><span class="lbl"> 이메일수신동의</span></label>
+				<label class="hmis"><input type="checkbox" name="agree_surgery" value="Y" class="hmis" {? patient.agree_surgery=='Y'}checked{/}  /><span class="lbl"> 수술동의서</span></label>
+				<label class="hmis"><input type="checkbox" name="agree_photo" value="Y" class="hmis" {? patient.agree_photo=='Y'}checked{/}  /><span class="lbl"> 사진활용동의서</span></label>
+			</td>
+			<th>입실상태</th>
+			<td>
+				<input type="text" name="stay_status" value="{patient.stay_status}" class="full" />
+			</td>
+
+		</tr>
+		<tr>
+			<th>진료부위</th>
+			<td colspan="3">
+				<span id="treat_nav">{patient.treat_nav}</span>
+				<input type="hidden" id="treat_cost_no" name="treat_cost_no" value="{patient.treat_cost_no}">
+				<button type="button" onclick="HmisCommon.treat('PatientInputForm.callback','{parient.treat_cost_no}')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<button type="button" onclick="PatientInputForm.resetTreat()" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-times fa-1"></i></button>
+			</td>
+			<th>환자유형</th>
+			<td>
+				<label class="hmis"><input type="radio" name="grade_type" value="N" class="hmis" {? patient.grade_type=='N'}checked{/} /><span class="lbl"> 일반</span></label>
+				<label class="hmis"><input type="radio" name="grade_type" value="C" class="hmis" {? patient.grade_type=='C'}checked{/} /><span class="lbl"> C</span></label>
+				<label class="hmis"><input type="radio" name="grade_type" value="D" class="hmis" {? patient.grade_type=='D'}checked{/} /><span class="lbl"> D</span></label>
+			</td>
+			<td><label class="hmis"><input type="checkbox" name="is_x" value="Y" class="hmis" {? patient.is_x=='Y'}checked{/} /><span class="lbl"> X</span></label></td>
+			<td>
+				<label class="hmis"><input type="radio" name="is_o" value="N" class="hmis" {? patient.is_o=='N'}checked{/} /><span class="lbl" > 일반</span></label>
+				<label class="hmis"><input type="radio" name="is_o" value="M" class="hmis" {? patient.is_o=='M'}checked{/} /><span class="lbl" > M</span></label>
+				<label class="hmis"><input type="radio" name="is_o" value="S" class="hmis" {? patient.is_o=='S'}checked{/} /><span class="lbl" > S</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>특이사항</th>
+			<td colspan="7">
+				<textarea type="text" name="comment" class="hmis" style="height:80px">{patient.comment}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<script type="text/javascript">
+var PatientInputForm = {
+	init: function() {
+		HmisCommon.loadUser('{patient.manager_team_code}', '{patient.manager_id}', 'patient_form');
+		HmisTreat.loadTreatItem("{patient.treat_region_code}","{patient.treat_item_code}", 'patient_form');
+	},
+	callback: function(d) {
+		$('#treat_nav').html(d.nav.join(' &gt '));
+		$('#treat_cost_no').val(d.no);
+	},
+	checkDuplicate : function(field, method) { //회원데이터(메신저, 휴대폰번호)중복체크
+		var el = $('input[name="'+field+'"]');
+		var value = el.val();
+		$.ajax({
+			url:'/patient_proc/check_duplicate',
+			data:{
+				patient_no:"{patient.no}",
+				field:field,
+				value:value
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					el.validationEngine('hide');
+					$('#'+field).val(value);
+					if(method == 'alert') {
+						HmisAlert.alert('입력가능한 환자정보입니다.');
+					}
+				}
+				else {
+					$('#'+field).val('');
+
+					if(method == 'alert') {
+						HmisAlert.alert('이미 존재하는 환자정보입니다.');
+					}
+					else {
+						el.validationEngine('showPrompt','이미 존재하는 환자정보입니다.','','topLeft',true);
+					}
+				}
+			}
+		})
+	},
+	searchPatient: function() {
+		var modal = new HmisModal('patient', {width:400, top:100});
+		modal.callback = function(param) {
+			if(param.no) {
+				$('#introducer_no').val(param.no);
+				$('#introducer_name').val(param.name);
+			}
+		}
+		modal.open('소개자 검색', '/patient/search');
+	},
+	removeIntroducer: function() {
+		$('#introducer_no').val('');
+		$('#introducer_name').val('');
+	},
+	resetTreat: function() {
+		$('#treat_nav').html('미지정');
+		$('#treat_cost_no').val('');
+	}
+}
+
+$(function() {
+	PatientInputForm.init();
+})
+</script>

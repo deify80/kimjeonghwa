@@ -1,0 +1,223 @@
+<script>
+$(document).ready(function() {
+	
+	$("#menu a").eq(<?=$menu_idx?>).addClass("selected");
+	set_list();	
+	
+	
+	$("#bt-new").button("option", "icons", {
+		primary : "ui-icon-document"
+	});
+	
+	
+	open_calendar("#srch_start_date");
+	open_calendar("#srch_end_date");
+	
+	$( ".radio" ).buttonset();
+	
+	$( ".radio" ).change(function() {
+		grid_reload();
+	});
+});	
+
+function set_list() {
+	$("#list").jqGrid(
+			{
+				width : 1200,
+				height : 'auto',
+				url : "/work/biz_log_lists/<?=$work_type?>",
+				datatype : "json",
+				colNames:['번호','구분','지시시항', '등록일', '진행율', '팀명','이름','biz_seqno'],
+				colModel : [ {
+					name : "no",
+					index : "no",
+					width : 10,
+					align : "center",
+					sortable:false					
+				}, {
+					name : "type",
+					index : "type",
+					width : 15,
+					align : "center",
+					sortable:false	
+				}, {
+		
+					name : "owner_command",
+					index : "owner_command",
+					classes: "grid-col",
+					// width : 100,
+					align : "left",
+					sortable:false	
+				}, {
+
+					name : "work_date",
+					index : "work_date",
+					width : 15,
+					align : "center",
+					sortable:false		
+				}, {
+					name : "status",
+					index : "status",
+					width : 10,
+					align : "center",
+					sortable:false		
+				}, {
+					name : "team_code",
+					index : "team_code",
+					width : 13,
+					align : "center",
+					sortable:false		
+				}, {
+					name : "name",
+					index : "name",
+					width : 10,
+					align : "center",
+					sortable:false		
+				
+				}, {
+					name : "biz_seqno",
+					index : "biz_seqno",
+					hidden:true
+				}			
+				],
+				onSelectRow :  function(id) {
+					go_view(id);
+				},	
+				rowNum : 20,
+				rowList : [ 10, 20, 30 ],
+				pager : "#pager",
+				viewrecords : true,
+				sortorder : "desc",
+				caption : "목록"
+			});
+
+	$("#list").jqGrid("navGrid", "#pager", {
+		edit : false,
+		add : false,
+		del : false,
+		search : false
+	});
+	$("#list").jqGrid('inlineNav', "#pager",  { edit: false});	
+		
+}
+
+
+
+function grid_reload() {
+	var data = $("#srch-frm").serialize();
+	var url = "/work/biz_log_lists/<?=$work_type?>/?" + data;
+	
+	$("#list").jqGrid("setGridParam", {
+		url : url,
+		page : 1
+	}).trigger("reloadGrid");
+}
+
+
+
+
+function go_input() {
+	document.location = "/work/biz_log_input/<?=$work_type?>"; 		   
+}
+
+
+function go_view(id) {
+	document.location = "/work/biz_log_view/<?=$work_type?>/"+id; 		   
+}
+
+</script>
+<h3 class="area-title">검색</h3>
+<form id="srch-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="10%" />
+			<col width="20%" />
+			<col width="10%" />
+			<col width="20%" />
+			<col width="10%" />
+			<col width="" />
+		</colgroup>
+		<tbody>
+		<? if ($this->session->userdata( 'ss_duty_code' ) > 7): ?>
+			<tr>
+				<th>부서</th>
+				<td colspan="5">
+					<div class="radio">
+					<input type="radio" id="srch_dept_code" name="srch_dept_code" checked="checked" value=""><label for="srch_dept_code">전체</label>
+					<?php
+					foreach($cfg['dept'] as $i=>$val) {
+						$invalid_dept = array('10','80');
+						if(in_array($i, $invalid_dept)) continue;
+					?>	
+					<input type="radio" id="srch_dept_code<?=$i?>" name="srch_dept_code" value="<?=$i?>"><label for="srch_dept_code<?=$i?>"><?=$val?></label>
+					<? } ?>
+					</div>  
+				</td>
+			</tr>
+			<tr>
+				<th>진행율</th>
+				<td colspan="5">
+					<div class="radio">
+					<input type="radio" id="srch_status" name="srch_status" checked="checked" value=""><label for="srch_status">전체</label>
+					<?php
+					foreach($cfg['work_status'] as $i=>$val) {
+					?>	
+					<input type="radio" id="srch_status<?=$i?>" name="srch_status" value="<?=$i?>"><label for="srch_status<?=$i?>"><?=$val?></label>
+					<? } ?>
+					</div>  
+				</td>
+			</tr>
+			<tr>
+				<th>사업장</th>
+				<td>
+					<select name="srch_biz_idx">
+						<option value="">-전체-</option>
+						<? foreach($this->session->userdata( 'ss_biz_list' ) as $i=>$val) { ?>	
+						<option value="<?=$i?>"><?=$val?></option>
+						<? } ?>
+					</select>
+				</td>
+				<th>팀</th>
+				<td>
+					<select name="srch_team_code">
+						<option value="">-전체-</option>
+						<? foreach($cfg['team_list'] as $i=>$val): ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? endforeach; ?>
+					</select>
+				</td>
+				<th>직책</th>
+				<td>
+					<div class="radio">
+					<input type="radio" id="srch_duty" name="srch_duty" checked="checked" value=""><label for="srch_duty">전체</label>
+					<?php
+					foreach($this->config->item('duty_code') as $i=>$val) {
+						$invalid_dept = array('9','2','1');
+						if(in_array($i, $invalid_dept)) continue;
+					?>	
+					<input type="radio" id="srch_duty<?=$i?>" name="srch_duty" value="<?=$i?>"><label for="srch_duty<?=$i?>"><?=$val?></label>
+					<? } ?>
+					</div>  
+				</td>	
+			</tr>
+			<? endif; ?>
+			<tr>
+				<th>등록기간</th>
+				<td>
+					<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker">
+				</td>	
+								
+				<th>직원명</th>
+				<td colspan="3">
+					<input type="text" name="srch_name">
+					<button class="btn" id="bt-srch" onclick="grid_reload();">검색</button>
+					<button class="btn" id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button></td>					
+			</tr>
+		</tbody>
+	</table>
+</form>
+<div class="tool-box">
+<!-- <button id="bt-new" onClick="go_input();">신규등록</button> -->
+</div>
+<table id="list"></table>
+<div id="pager"></div>

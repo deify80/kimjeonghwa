@@ -1,0 +1,108 @@
+<style>
+.evo-colorind{width:20px !important; height:20px !important}
+</style>
+<form id="FrmGradeInput" onsubmit="return false">
+<input type="hidden" name="no" value="<?=$rs['no']?>" />
+<input type="hidden" name="is_fix" value="<?=$rs['is_fix']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<? if($rs['is_fix']=='N') {?>
+		<tr>
+			
+			<th>레벨명</th>
+			<td>
+				<input type="text" name="name" value="<?=$rs['name']?>" />
+			</td>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="is_use" value="Y" class="hmis" <?=($rs['is_use'] == 'Y')?'checked':''?> ><span class="lbl"> 사용함</span></label>
+				<label class="hmis"><input type="radio" name="is_use" value="N" class="hmis" <?=($rs['is_use'] == 'N')?'checked':''?> ><span class="lbl"> 사용안함</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>레벨 최소금액 </th>
+			<td colspan="3">
+				<input type="text" name="standard" value="<?=$rs['standard']?>" placeholder="0" class="validate[required]" /> 원
+			</td>
+			
+		</tr>
+		<? } ?>
+		<tr>
+			<th>레벨코드(아이콘)</th>
+			<td>
+				<input type="text" name="code" value="<?=$rs['code']?>" />
+			</td>
+			<th>레벨색상</th>
+			<td>
+				<input type="text" name="rgb" value="<?=$rs['rgb']?>"  data-rel="colorpicker" />
+			</td>
+		</tr>
+		<tr>
+			<th>설명</th>
+			<td colspan="3">
+				<textarea name="comment" class="hmis full"><?=$rs['comment']?></textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<link rel="stylesheet" href="/lib/js/colorpicker/evol.colorpicker.min.css?<?=time()?>" />
+<script language="javascript" src="/lib/js/colorpicker/evol.colorpicker.min.js"></script>
+<script type="text/javascript">
+var SettingsGradeInput = {
+	init: function() {
+		this.createColorpicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmGradeInput").validationEngine('attach',option);
+	},
+	createColorpicker: function() {
+		var colorpicker = $('input[data-rel~="colorpicker"]');
+		colorpicker.colorpicker({
+			// showOn:'button',
+			history: false
+		});
+	},
+	save: function() {
+		var formdata = $('#FrmGradeInput').serialize();
+		$.ajax({
+			url:'/patient_proc/save_grade',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					HmisAlert.alert(r.msg, function(){
+						$('.modal-close').trigger('click');	
+					});
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	SettingsGradeInput.init();
+})
+</script>

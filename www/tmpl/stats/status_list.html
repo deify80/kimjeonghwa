@@ -1,0 +1,247 @@
+
+{@ layout.login.info.ss_biz_id == 'ezham_cn'}
+<table class="table table-bordered table-form table-center table-hover" {? output_mode=="EXCEL"}border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" {/}>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>성형외과</th>
+			<th>랜딩(보상)</th>
+			<th>커뮤니티(보상)</th>
+			<th>검색엔진(보상)</th>
+			<th>전화(보상)</th>
+			<th>워킹(보상)</th>
+			<th class="f-notice">소계</th>
+			<th>SNS툴</th>
+			<th>실시간상담</th>
+			<th>기타(지인소개 등)</th>
+			<th class="f-error">총계</th>
+			<th>업무이력</th>
+			<th>공동DB컨택</th>
+		</tr>
+	</thead>
+	<tbody>
+		<?
+		$t = $total_list['ezham_cn'];
+		$total_sub = 0;
+		foreach($team_list as $tc=>$tn) {
+			$rs = $list['ezham_cn'][$tc];
+			$sub = ($rs['L']+$rs['B']+$rs['S']+$rs['T']+$rs['W']);
+			$total_sub += $sub;
+
+			if(empty($rs)) continue;
+		?>
+		<tr>
+			<th><?=($tn)?$tn:'-'?></th>
+			<td><?=if_empty_number($rs['L'])?><?=($rs['compensation']['L']>0)?'('.$rs['compensation']['L'].')':''?></td><!-- 랜딩 -->
+			<td><?=if_empty_number($rs['B'])?><?=($rs['compensation']['B']>0)?'('.$rs['compensation']['B'].')':''?></td><!-- 커뮤니티 -->
+			<td><?=if_empty_number($rs['S'])?><?=($rs['compensation']['S']>0)?'('.$rs['compensation']['S'].')':''?></td><!-- 검색엔진 -->
+			<td><?=if_empty_number($rs['T'])?><?=($rs['compensation']['T']>0)?'('.$rs['compensation']['T'].')':''?></td><!-- 전화 -->
+			<td><?=if_empty_number($rs['W'])?><?=($rs['compensation']['W']>0)?'('.$rs['compensation']['W'].')':''?></td><!-- 워킹 -->
+
+			<td class="f-notice"><?=if_empty_number($sub)?></td>
+			<td><?=if_empty_number($rs['N'])?></td><!-- SNS -->
+			<td><?=if_empty_number($rs['P'])?></td><!-- 실시간상담 -->
+			<td><?=if_empty_number($rs['ETC'])?></td><!-- 기타 -->
+			<td class="f-error"><?=if_empty_number($t['team'][$tc])?></td>
+			<td><?=if_empty_number($work[$tc])?></td>
+			<td><?=if_empty_number($contact[$tc])?></td>
+		</tr>
+		<? } ?>
+		<tr class="dark">
+			<td>합계</td>
+			<td><?=if_empty_number($t['path']['L'])?></td>
+			<td><?=if_empty_number($t['path']['B'])?></td>
+			<td><?=if_empty_number($t['path']['S'])?></td>
+			<td><?=if_empty_number($t['path']['T'])?></td>
+			<td><?=if_empty_number($t['path']['W'])?></td>
+			<td class="f-notice"><?=if_empty_number($total_sub)?></td>
+			<td><?=if_empty_number($t['path']['N'])?></td>
+			<td><?=if_empty_number($t['path']['P'])?></td>
+			<td><?=if_empty_number($t['path']['ETC'])?></td>
+			<td class="f-error"><?=if_empty_number($t['sum'])?></td>
+			<td><?=if_empty_number($work['total'])?></td>
+			<td><?=if_empty_number($contact['total'])?></td>
+		</tr>
+	</tbody>
+</table>
+
+{:}
+<table class="table table-bordered table-form table-center table-hover" <?if($output_mode=="EXCEL") {?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <? } ?>>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>성형외과</th>
+			<th>랜딩(보상)</th>
+			<th>리얼모델(보상)</th>
+			<th>전화(보상)</th>
+			<th>워킹(보상)</th>
+			<th class="f-notice">소계</th>
+			<th>KO(보상)</th>
+			<th>실시간상담</th>
+			<th>온라인상담</th>
+			<th>기타(지인소개 등)</th>
+			<th class="f-error">총계</th>
+			<th>업무이력</th>
+			<th>공동DB컨택</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ rs.team}
+		<tr>
+			<th>{.team_name}</th>
+			<td>{=if_empty_number(.L)} {? .compensation.L > 0 }({.compensation.L}){/}</td><!-- 랜딩 -->
+			<td>{=if_empty_number(.R)} {? .compensation.R > 0 }({.compensation.R}){/}</td><!-- 리얼모델 -->
+			<td>{=if_empty_number(.T)} {? .compensation.T > 0 }({.compensation.T}){/}</td><!-- 전화 -->
+			<td>{=if_empty_number(.W)} {? .compensation.W > 0 }({.compensation.W}){/}</td><!-- 워킹 -->
+			<td class="f-notice">{=if_empty_number(.sub)}</td>
+			<td>{=if_empty_number(.C)} <?=($rs['compensation']['C']>0)?'('.$rs['compensation']['C'].')':''?></td><!-- 카카오톡 -->
+			<td>{=if_empty_number(.P)}</td><!-- 실시간상담 -->
+			<td>{=if_empty_number(.O)}</td><!-- 온라인상담 -->
+			<td>{=if_empty_number(.ETC)}</td><!-- 기타 -->
+			<td class="f-error">{=if_empty_number(.sum)}</td>
+			<td><a href="javascript:;" onclick="StatusMain.goWork('{.key_}')" class="link">{=if_empty_number(.work)}</a></td>
+			<td>{=if_empty_number(.contact)}</td>
+		</tr>
+		{/}
+
+		<tr class="dark">
+			<td>합계</td>
+			<td>{=if_empty_number(total.team.path.L)}</td>
+			<td>{=if_empty_number(total.team.path.R)}</td>
+			<td>{=if_empty_number(total.team.path.T)}</td>
+			<td>{=if_empty_number(total.team.path.W)}</td>
+			<td class="f-notice">{=if_empty_number(total.sub)}</td>
+			<td>{=if_empty_number(total.team.path.C)}</td>
+			<td>{=if_empty_number(total.team.path.P)}</td>
+			<td>{=if_empty_number(total.team.path.O)}</td>
+			<td>{=if_empty_number(total.team.path.ETC)}</td>
+			<td class="f-error">{=if_empty_number(total.sum)}</td>
+			<td>{=if_empty_number(total.work)}</td>
+			<td>{=if_empty_number(total.contact)}</td>
+		</tr>
+	</tbody>
+</table>
+
+{? rs.team_etc}
+<div class="dashed" style="margin:10px 0px"></div>
+<table class="table table-bordered table-form table-center table-hover" <?if($output_mode=="EXCEL") {?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <? } ?>>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr>
+			<th>피부과</th>
+			<th>랜딩(보상)</th>
+			<th>리얼모델(보상)</th>
+			<th>전화(보상)</th>
+			<th>워킹(보상)</th>
+			<th class="f-notice">소계</th>
+			<th>KO(보상)</th>
+			<th>실시간상담</th>
+			<th>온라인상담</th>
+			<th>기타(지인소개 등)</th>
+			<th class="f-error">총계</th>
+			<th>업무이력</th>
+			<th>공동DB컨택</th>
+		</tr>
+	</thead>
+
+	<tbody>
+		{@ rs.team_etc}
+		<tr>
+			<th>{.team_name}</th>
+			<td>{=if_empty_number(.L)} {? .compensation.L > 0 }({.compensation.L}){/}</td><!-- 랜딩 -->
+			<td>{=if_empty_number(.R)} {? .compensation.R > 0 }({.compensation.R}){/}</td><!-- 리얼모델 -->
+			<td>{=if_empty_number(.T)} {? .compensation.T > 0 }({.compensation.T}){/}</td><!-- 전화 -->
+			<td>{=if_empty_number(.W)} {? .compensation.W > 0 }({.compensation.W}){/}</td><!-- 워킹 -->
+			<td class="f-notice">{=if_empty_number(.sub)}</td>
+			<td>{=if_empty_number(.C)} <?=($rs['compensation']['C']>0)?'('.$rs['compensation']['C'].')':''?></td><!-- 카카오톡 -->
+			<td>{=if_empty_number(.P)}</td><!-- 실시간상담 -->
+			<td>{=if_empty_number(.O)}</td><!-- 온라인상담 -->
+			<td>{=if_empty_number(.ETC)}</td><!-- 기타 -->
+			<td class="f-error">{=if_empty_number(.sum)}</td>
+			<td><a href="javascript:;" onclick="StatusMain.goWork('{.key_}')" class="link">{=if_empty_number(.work)}</a></td>
+			<td>{=if_empty_number(.contact)}</td>
+		</tr>
+		{/}
+
+		<tr class="dark">
+			<td>합계</td>
+			<td>{=if_empty_number(total.team_etc.path.L)}</td>
+			<td>{=if_empty_number(total.team_etc.path.R)}</td>
+			<td>{=if_empty_number(total.team_etc.path.T)}</td>
+			<td>{=if_empty_number(total.team_etc.path.W)}</td>
+			<td class="f-notice">{=if_empty_number(total.team_etc.sub)}</td>
+			<td>{=if_empty_number(total.team_etc.path.C)}</td>
+			<td>{=if_empty_number(total.team_etc.path.P)}</td>
+			<td>{=if_empty_number(total.team_etc.path.O)}</td>
+			<td>{=if_empty_number(total.team_etc.path.ETC)}</td>
+			<td class="f-error">{=if_empty_number(total.team_etc.sum)}</td><!-- 총계 -->
+			<td>{=if_empty_number(total.team_etc.work)}</td>
+			<td>{=if_empty_number(total.team_etc.contact)}</td>
+		</tr>
+	</tbody>
+</table>
+{/}
+{/}
+
+
+<div class="dashed" style="margin:10px 0px"></div>
+
+
+<table class="table table-bordered table-form table-center" <?if($output_mode=="EXCEL") {?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <? } ?>>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<thead>
+		<tr {? output_mode=="EXCEL"}style="background-color: #cccccc; height: 30px;"{/} >
+			<th>미디어</th>
+			{@ rs.media}
+			<th>{.key_}</th>
+			{/}
+			<th>합계</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<th>현황</th>
+			{@ rs.media}
+			<td>{=if_empty_number(.value_)}</td>
+
+			{/}
+			<td class="total">{=if_empty_number(total.media)}</td>
+		</tr>
+	</tbody>
+</table>
+
+<table class="table table-bordered table-form table-center  table-hover" <?if($output_mode=="EXCEL") {?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <? } ?>>
+	<colgroup>
+		<col width="120px">
+	</colgroup>
+	<tbody>
+		{@ rs.status}
+		<tr>
+			<th>{.name}</th>
+			{@ .media}
+			<td>{=if_empty_number(..value_)}</td>
+			{/}
+			<td class="total">{=if_empty_number(.total)}</td>
+		</tr>
+		{/}
+
+
+		<tr class="dark">
+			<th>합계1</th>
+			{@ total.status}
+			<td>{=if_empty_number(.value_)}</td>
+			{/}
+			<td class="total">{=if_empty_number(total.status_total)}</td>
+		</tr>
+	</tbody>
+</table>
+
+

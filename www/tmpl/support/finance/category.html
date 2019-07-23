@@ -1,0 +1,248 @@
+<style>
+#classify_list .fa {
+	color:#E3E3E3;	
+}
+
+#classify_list tr.selected .fa{
+	color:#FF5722;
+}
+
+tr.selected td{
+	background-color:#F5F5F5;	
+}
+
+</style>
+
+<!-- 탭:S -->
+<div style="margin-top:20px">
+	<!-- Nav tabs -->
+	<ul class="nav nav-tabs" role="tablist" >
+		<li role="presentation" class="active"><a href="#content" data-tabindex="11" role="tab" data-toggle="tab">입금</a></li>
+		<li role="presentation"><a href="#content" data-tabindex="12" role="tab" data-toggle="tab">출금</a></li>
+	</ul>
+
+	<!-- Tab panes -->
+	<div class="tab-content" style="padding:20px;border:solid 1px #DDDDDD;border-top:none;border-radius: 0px 0px 2px 2px;">
+		<div role="tabpanel" class="tab-pane active" id="tab_contents" >
+			<table class="table table-closely">
+				<colgroup>
+					<col style="width:400px" />
+					<col style="width:20px" />
+					<col />
+				</colgroup>
+				<tr>
+					<td style="vertical-align: top">
+						<h3 class="area-title">
+							분류 목록
+							<div class="button-box">
+								<button class="btn btn-flat-blue" onclick="FinanceSettings.openClassify()"><i class="fa fa-plus fa-1"></i> 분류추가 </button>
+							</div>
+						</h3>
+						<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+							<colgroup>
+								<col width="80px">
+								<col width="80px">
+								<col>
+								<col width="20px">
+							</colgroup>
+							<tbody id="classify_list"></tbody>
+						</table>
+					</td>
+					<td></td>
+					<td style="vertical-align: top">
+						<div id="item_wrap">
+						<h3 class="area-title">
+							<span class="f-error" id="classify_name"></span> 의 하위 분류
+							<div class="button-box">
+								<button class="btn btn-flat-purple" onclick="FinanceSettings.openItem()"><i class="fa fa-plus fa-1"></i> 항목추가</button>
+							</div>
+						</h3>
+						<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+							<colgroup>
+								<col width="80px">
+								<col width="80px">
+								<col>
+							</colgroup>
+							<tbody id="item_list">
+							</tbody>
+						</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+<!-- 탭:E -->
+
+<textarea id="tmpl_classify" style="display:none">
+	<tr id="classify_${\code}" data-code="${\code}" data-name="${\title}" data-use="${\use_flag}">
+		<td><a href="javascript:;" onclick="FinanceSettings.openClassify('${\code}')" class="link">${\code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="FinanceSettings.setUse('${\code}', '${\use_flag}', 'classify')">
+			{if use_flag=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left" style="border-right:0px;cursor:pointer" onclick="FinanceSettings.loadItem('${\code}');">
+			${\title}
+		</td>
+		<td style="border-left:0px">
+			<i class="fa fa-chevron-right"></i>
+		</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_item" style="display:none">
+	<tr>
+		<td><a href="javascript:;" onclick="FinanceSettings.openItem('${\code}')" class="link">${\code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="FinanceSettings.setUse('${\code}', '${\use_flag}','item')">
+			{if use_flag=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left">
+			${\title}
+		</td>
+	</tr>
+</textarea>
+
+<link rel="stylesheet" href="/css/bootstrap.tab.css?<?=time()?>" />
+<script type="text/javascript" src="/js/bootstrap.tab.js"></script>
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var FinanceSettings = {
+	group_code:'',
+	parent_code:'',
+	init: function() {
+		this.initTab();
+		// this.loadClassify();
+	},
+	initTab: function() {
+		var me = this;
+		$('[data-toggle="tab"]').click(function() {
+			me.group_code = $(this).data('tabindex');
+			FinanceSettings.loadClassify();
+		});
+
+		$('[data-toggle="tab"]').first().trigger('click');
+		
+	},
+	loadClassify: function(code){
+		var me = this;
+		$.ajax({
+			url:'/finance/category_list',
+			data:{
+				kind:'classify',
+				group_code:this.group_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_classify');
+				var target = $('#classify_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var parent_code = code || $('#classify_list > tr:first').data('code'); 
+					me.loadItem(parent_code);
+					$('#item_wrap').show();
+				}
+				else {
+					target.append('<tr><td colspan="4">등록된 분류가 없습니다.</td></tr>');
+					$('#item_wrap').hide();
+				}
+			}
+		})
+	},
+	openClassify: function(code){
+		var group_name = (this.group_code=='11')?'입금':'출금';
+		var title = (code)?'분류 수정':group_name+'분류 추가';
+		var modal = new HmisModal('category_input', {width:500, top:200});
+		modal.open(title,'/finance/category_input', {code:code, kind:'classify', group_code:this.group_code});
+	},
+	openItem: function(code) {
+		var title = (code)?'항목 수정':'항목 추가';
+		var modal = new HmisModal('modal_item', {width:500, top:200});
+		modal.open(title,'/finance/category_input', {code:code, kind:'item', group_code:this.group_code, parent_code:this.parent_code});
+	},
+	loadItem: function(parent_code){
+		// console.log(parent_code);
+		this.parent_code = parent_code;
+		$('#classify_list > tr').removeClass('selected');
+		$('#classify_'+parent_code).addClass('selected');
+		$('#classify_name').html($('#classify_'+parent_code).data('name'));
+		var me = this;
+		$.ajax({
+			url:'/finance/category_list',
+			data:{
+				kind:'item',
+				group_code:me.group_code,
+				parent_code:parent_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_item');
+				var target = $('#item_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					var parent_use = $('#classify_'+me.parent_code).data('use');
+					$.each(r.data, function(i,e){
+						if(parent_use == 'N') e.use_flag = 'N';
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 항목이 없습니다.</td></tr>');
+				}
+			}
+		})
+
+	},
+	setUse: function(code, use_flag, group) {
+		if(group == 'item') {
+			var parent_use = $('#classify_'+this.parent_code).data('use');
+			if(parent_use == 'N') {
+				HmisAlert.alert('상위 분류가 사용안함으로 설정되어 있습니다.');
+			}
+		} 
+		
+		var me = this;
+		var use_flag = (use_flag=='Y')?'N':'Y';
+		$.ajax({
+			url:'/finance_proc/category_use',
+			data:{
+				code:code,
+				use_flag:use_flag
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					me.loadClassify(me.parent_code);
+				}
+			}
+		})
+
+	}
+}
+$(function(){
+	FinanceSettings.init();
+})
+</script>

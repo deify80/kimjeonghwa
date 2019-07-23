@@ -1,0 +1,25 @@
+<script>
+	$(document).ready(function() {
+
+		$(".url-list li").bind("click", function() {
+			$(this).siblings().css("font-weight", "normal");
+			$(this).css("font-weight", "bold");
+		});	
+		
+	});
+
+	function set_access(menu_seqno) {
+		$("#access-area").hide();
+		$("#access-area").load("/manage/access_list/"+menu_seqno).fadeIn();
+	}
+</script>
+<div style="width: 400px; float: left;">
+	<h3 class="area-title">메뉴</h3>
+	<ul class="url-list" style="background-color: #f7fbff;padding: 20px;margin-right: 40px;margin-top: 40px;">
+		<? foreach($list as $i): ?>
+		<li><span class="ui-icon ui-icon-document" style="float: left;"></span><a href="#" onClick="set_access('<?=$i->menu_seqno?>');">[<?=$i->main_menu?>] <?=$i->menu_title?></a></li>
+		<? endforeach; ?>
+	</ul>
+</div>
+<div style="float: left;" id="access-area">
+</div>

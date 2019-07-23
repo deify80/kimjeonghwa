@@ -1,0 +1,66 @@
+<form id="FrmPatientAppointmentInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="appointment_no" value="{rs.no}" />
+<input type="hidden" name="referer" value="patient" /> <!-- 회원정보수정안함 -->
+
+{inc.appointment}
+
+<div class="area-button">
+	{? auth.manage || mode =='insert'}
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+</form>
+
+<script type="text/javascript">
+var PatientAppointmentInput = {
+	init: function() {
+
+		HmisCommon.createDatepicker();
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmPatientAppointmentInput").validationEngine('attach',option);
+		HmisCommon.loadUser("{rs.manager_team_code}","{rs.manager_id}", 'appointment');
+		HmisTreat.buildTreat();
+	},
+	save: function() {
+		var me = this;
+
+		var formdata = $('#FrmPatientAppointmentInput').serializeArray();
+
+		var treat = $('#treat_list > span').map(function(){ return $(this).attr('id'); }).get();
+		if(treat.length > 0) {
+			formdata.push({name:'appointment[treat]', value:treat});
+		}
+
+		$.ajax({
+			url:'/treat_proc/save_appointment',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					PatientInfo.load('appointment');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		});
+	}
+}
+
+$(function(){
+	PatientAppointmentInput.init();
+})
+</script>

@@ -1,0 +1,120 @@
+
+.popover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1060;
+	display: none;
+	max-width: 500px;
+	padding: 1px;
+	font-size: 12px;
+	font-weight: normal;
+	line-height: 1.42857143;
+	text-align: left;
+	white-space: normal;
+	background-color: #fff;
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	border: 2px solid #ccc;
+	border-radius: 2px;
+	/*opacity: .8;*/
+}
+.popover.top {
+	margin-top: -10px;
+}
+.popover.right {
+	margin-left: 15px;
+}
+.popover.bottom {
+	margin-top: 10px;
+}
+.popover.left {
+	margin-left: -6px;
+}
+.popover-title {
+	padding: 4px 14px;
+	margin: 0;
+	font-size: 12px;
+	background-color: #f7f7f7;
+	border-bottom: 1px solid #ebebeb;
+	border-radius: 5px 5px 0 0;
+}
+.popover-content {
+	padding: 9px 14px;
+}
+.popover > .arrow,
+.popover > .arrow:after {
+	position: absolute;
+	display: block;
+	width: 0;
+	height: 0;
+	border-color: transparent;
+	border-style: solid;
+}
+.popover > .arrow {
+	border-width: 7px;
+}
+.popover > .arrow:after {
+	content: "";
+	border-width: 6px;
+}
+.popover.top > .arrow {
+	bottom: -7px;
+	left: 50%;
+	margin-left: -7px;
+	border-top-color: #999;
+	border-top-color: rgba(0, 0, 0, .25);
+	border-bottom-width: 0;
+}
+.popover.top > .arrow:after {
+	bottom: 1px;
+	margin-left: -6px;
+	content: " ";
+	border-top-color: #fff;
+	border-bottom-width: 0;
+}
+.popover.right > .arrow {
+	top: 50%;
+	left: -7px;
+	margin-top: 0px;
+	border-right-color: #999;
+	border-right-color: rgba(0, 0, 0, .25);
+	border-left-width: 0;
+}
+.popover.right > .arrow:after {
+	bottom: -6px;
+	left: 1px;
+	content: " ";
+	border-right-color: #fff;
+	border-left-width: 0;
+}
+.popover.bottom > .arrow {
+	top: -7px;
+	left: 50%;
+	margin-left: -7px;
+	border-top-width: 0;
+	border-bottom-color: #999;
+	border-bottom-color: rgba(0, 0, 0, .25);
+}
+.popover.bottom > .arrow:after {
+	top: 1px;
+	margin-left: -6px;
+	content: " ";
+	border-top-width: 0;
+	border-bottom-color: #fff;
+}
+.popover.left > .arrow {
+	top: 50%;
+	right: -7px;
+	margin-top: -7px;
+	border-right-width: 0;
+	border-left-color: #999;
+	border-left-color: rgba(0, 0, 0, .25);
+}
+.popover.left > .arrow:after {
+	right: 1px;
+	bottom: -6px;
+	content: " ";
+	border-right-width: 0;
+	border-left-color: #fff;
+}

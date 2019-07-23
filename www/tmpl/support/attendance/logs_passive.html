@@ -1,0 +1,124 @@
+<div class="alert alert-info">
+	<i class="fa fa-info-circle fa-fw fa-1"></i><strong>기능안내</strong> 
+	<ul>
+		<li>선택날짜에 누락된 근태기록을 등록합니다. </li>
+		<li>야간근무 데이터는 소속팀 설정에 따라 야간근무여부 및 야간근무시간이 계산됩니다.</li>
+	</ul>
+</div>
+
+<form id="FrmLogsPassive">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="100px">
+		<col>
+		<col width="100px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>날짜 선택</th>
+			<td colspan="3">
+				<input type="text" name="date" class="datepicker validate[required]" >
+				<button type="button" class="btn btn-flat-blue" onclick="AttendanceLogsPassive.checkMiss()"><i class="fa fa-check"></i> 근태미등록 직원수 확인</button>
+				<span id="cnt_miss" style="margin-left:5px"></span>
+			</td>
+		</tr>
+		<tr>
+			<th>출근상태</th>
+			<td>
+				<select name="status" onchange="AttendanceLogsPassive.uiStatus()">
+					<? foreach($cfg['status'] as $status_code => $status) {?>
+					<option value="<?=$status_code?>" <?=($rs['status']==$status_code)?'selected':''?> ><?=$status?></option>
+					<? } ?> 
+				</select>
+			</td>
+			<th>출근시각</th>
+			<td>
+				<input type="text" name="time_in" data-mask="time" data-group="work" value="<?=$rs['time_in']?>" style="width:70px" class="center validate[required]" data-errormessage-value-missing="출근시각을 입력하세요." />
+			</td>
+		</tr>
+		<tr>
+			<th>근태상태</th>
+			<td>
+				<label class="hmis"><input type="checkbox" name="is_late" value="Y" class="hmis" <?=($rs['is_late']=='Y')?'checked':''?> data-group="work" /><span class="lbl"> 지각</span></label>
+				<label class="hmis"><input type="checkbox" name="is_earlyleave" value="Y" class="hmis"  <?=($rs['is_earlyleave']=='Y')?'checked':''?> data-group="work" /><span class="lbl"> 조퇴</span></label>
+				<!-- <label class="hmis"><input type="checkbox" name="is_night" value="Y" class="hmis" id="is_night" <?=($rs['is_night']=='Y')?'checked':''?> data-group="work" /><span class="lbl" id="is_night_toolip"> 야간근무</span></label> -->
+			</td>
+			
+			<th>퇴근시각</th>
+			<td>
+				<input type="text" name="time_out" data-mask="time" data-group="work" value="<?=$rs['time_out']?>" style="width:70px" class="center validate[required]" data-errormessage-value-missing="퇴근시각을 입력하세요." />
+				<label class="hmis" style="margin-left:10px"><input type="checkbox" name="is_overnight" value="Y" class="hmis" <?=($rs['is_overnight']=='Y')?'checked':''?> data-group="work" ><span class="lbl"> 익일</span></label>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="AttendanceLogsPassive.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var AttendanceLogsPassive = {
+	init: function() {
+		$('input[data-mask="time"]').mask('99:99:00');
+		HmisCommon.createDatepicker();
+	},
+	uiStatus : function(status_code) {
+		var status_code = $('select[name="status"]').val();
+		if($.inArray(status_code, ['30','31','32','33','34','35']) > -1) {
+			$('input[data-group="work"]').attr('disabled',true);
+		}
+		else {
+			$('input[data-group="work"]').removeAttr('disabled');	
+		}
+	},
+	checkMiss: function() {
+		var date = $('#FrmLogsPassive input[name="date"]').val();
+		
+		if(!date) {
+			alert('날짜를 선택하세요.');
+			return false;
+		}
+
+		$.ajax({
+			url:'/attendance_proc/count_miss',
+			data:{
+				date:date
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				$('#cnt_miss').html(r.data.count+'명');
+			}
+		})
+	},
+	save: function() {
+
+		var valid = $("#FrmLogsPassive").validationEngine('validate', {scroll:false});
+		if(!valid) return false;
+
+		if(!confirm('저장하시겠습니까?')) return false;
+		var formdata = $('#FrmLogsPassive').serialize();
+		$.ajax({
+			url:'/attendance_proc/insert_logs',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				alert(r.msg);
+				$('.modal-close').trigger('click');
+				AttendanceLogs.reload();
+			}
+		});
+	}
+};
+
+$(function(){
+	AttendanceLogsPassive.init();
+});
+</script>

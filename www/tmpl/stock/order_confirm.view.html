@@ -1,0 +1,109 @@
+<div class="classify-box2">
+
+	{@ list}
+	<div>
+		<div class="classify">{.name}</div>
+		<table class="table table-bordered">
+			<colgroup>
+				<col style="width:80px">
+				<col style="width:80px">
+				<col>
+				<col style="width:100px">
+				<col style="width:150px">
+				<col style="width:150px">
+			</colgroup>
+			{@ .children}
+			{@ ..children}
+			{? ...index_==0}
+			<tr>
+				<th rowspan="{..count}" style="background-color:#f5f5f5">{..name}</th>
+				<td>{...goods_code}</td>
+				<td>{...goods_name}</td>
+				<td style="text-align:center">{=number_format(...cnt_order)}{...unit}</td>
+				<td style="text-align:center">
+					{=number_format(...price_sum)}원
+				</td>
+				<td>
+					{...client_name}
+				</td>
+			</tr>
+			{:}
+			<tr>
+				<td>{...goods_code}</td>
+				<td>{...goods_name}</td>
+				<td style="text-align:center">{=number_format(...cnt_order)}{...unit}</td>
+				<td style="text-align:center">
+					{=number_format(...price_sum)}원
+				</td>
+				<td>
+					{...client_name}
+				</td>
+			</tr>
+			{/}
+			{/}
+			{/}
+		</table>
+	</div>
+	{/}
+
+</div>
+<div class="clear"></div>
+
+<table class="table table-bordered">
+	<colgroup>
+		<col style="width:160px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>총금액</th>
+			<td style="color:#FF8000">{=number_format(price_total)}원</td>
+		</tr>
+	</tbody>
+</table>
+
+
+<div class="area-button" style="margin-top:20px">
+	{? in_array(order.status, array('adjust')) && auth.stock_approval //대기상태 && 발주서중간승인자인경우에만 삭제가능}
+	<button type="button" class="btn btn-flat-blue btn-lg" onclick="OrderConfirmView.sign('approval');" >승인</button>
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="OrderConfirmView.sign('disapproval');">반려</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<script type="text/javascript">
+var OrderConfirmView = {
+	act:null,
+	order_no:'{order.no}',
+	init: function() {
+		var me = this;
+	},
+	sign: function(act) {
+		var msg = (act == 'approval')?'승인하시겠습니까?':'반려하시겠습니까?';
+		HmisAlert.confirm(msg, function(r) {
+			if(r) {
+				$.ajax({
+					url:'/stock_proc/order_confirm',
+					data:{
+						order_no:'{order.no}',
+						sign:act
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function() {
+							if(r.success) {
+								$('.modal-close').trigger('click');
+							}
+						})
+					}
+				})
+			}
+		});
+	}
+}
+
+$(function() {
+	OrderConfirmView.init();
+})
+</script>

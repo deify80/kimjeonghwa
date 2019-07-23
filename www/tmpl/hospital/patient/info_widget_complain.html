@@ -1,0 +1,116 @@
+<button type="button" id="compalin_write_btn" class="btn btn-theme" onclick="PatientInfo.modalWidget('{tab}', '컴플레인일지 등록')" ><i class="fa fa-plus fa-1"></i> 컴플레인일지 등록</button>
+<div class="btn-group hmis blue" data-toggle="buttons" style="float:none" id="compalin_write_btngroup">
+	{@ cfg.search}
+	<label class="btn  {? search.method==.key_}active{/}"><input type="radio" name="subject" value="{.key_}" onchange="PatientInfo.searchTab({method:'{.key_}'})"  {? .index_<1}checked{/}>{.value_}</label>
+	{/}
+</div>
+
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col width="50px">
+		<col width="50px">
+		<col width="120px">
+		<col width="150px">
+		<col width="300px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_compalin[]')"><span class="lbl"></span></label></th>
+			<th>컴플레인일자</th>
+			<th>등록자</th>
+			<th>진료부위</th>
+			<th>컴플레인내용</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td><label class="hmis"><input type="checkbox" class="hmis" name="checked_compalin[]" value="{.no}"><span class="lbl"></span></label></td>
+			<td><a href="javascript:;" onclick="WidgetCompalin.modify('{.no}')" class="link">{.date_complain}</a></td>
+			<td>{.writer.team} > {.writer.name}</td>
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" title="{.treat_info}">{.treat_info}</span></td>
+			<td class="left">{.comment}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="6" class="center">등록된 컴플레인일지가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div style="margin-top:7px;position:relative;height:30px">
+	{? auth.delete}
+	<button type="utton" id="compalin_del_btn" onclick="WidgetCompalin.remove()" class="btn btn-flat-orange">삭제</button>
+	{/}
+	<div style="position:absolute;right:0px;bottom:0px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.first}')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.prev}')"><i class="fa fa-angle-left"></i></a></li>
+				{@ paging.block}
+				<li class="{? .equal}active{/}"><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{.num}')">{.num}</a></li>
+				{/}
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.next}')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.loadTab('{tab}','{paging.last}')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var WidgetCompalin = {
+	param:{},
+	init: function() {
+	},
+	reload: function(){
+		PatientInfo.load('compalin', Widgetcompalin.page);
+	},
+	modify: function(no) {
+		PatientInfo.modalWidget('{tab}', '컴플레인일지 수정', {no:no});
+	},
+	remove: function(){
+		var checked = HmisCommon.getChecked('checked_compalin[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 컴플레인을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var complain_no = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/patient_proc/remove_complain',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						complain_no:complain_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							PatientInfo.loadTab('{tab}');
+							PatientInfo.countTab();
+
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})
+			}
+
+		});
+	}
+};
+
+$(function(){
+	WidgetCompalin.init();
+})
+</script>

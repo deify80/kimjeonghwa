@@ -1,0 +1,352 @@
+<form id="FrmGoodsInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="group_code" value="{rs.group_code}" data-group="search_rs" />
+<input type="hidden" name="no" value="{rs.no}" data-group="search_rs" />
+<input type="hidden" name="biz_id" value="{rs.biz_id}" />
+<input type="hidden"  id="goods_code_confirm" value="{rs.goods_code}" />
+<input type="hidden"  id="goods_name_confirm" value="{rs.goods_name}" /><!--{*   *}-->
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+
+		<tr>
+			<th>물품코드</th>
+			<td>
+				<input type="text" name="goods_code" id="input_goods_code" value="{rs.goods_code}" style="width:200px" class="validate[required, equals[goods_code_confirm]] required" data-errormessage-value-missing="물품코드를 입력하세요." data-errormessage-pattern-mismatch="물품코드 중복확인이 필요합니다." />
+				<button type="button" class="btn btn-flat-lightgray btn-onlyicon" onclick="GoodsInput.checkDuplicate('goods_code')" data-toggle="tooltip" title="" data-original-title="중복확인"><i class="fa fa-check fa-1"></i></button>
+			</td>
+			<th>물품명</th>
+			<td>
+				<input type="text" name="goods_name" id="input_goods_name" value="{rs.goods_name}" style="width:200px" class="validate[required, equals[goods_name_confirm]] required" data-errormessage-value-missing="물품명을 입력하세요."  data-errormessage-pattern-mismatch="물품명 중복확인이 필요합니다."/>
+				<button type="button" class="btn btn-flat-lightgray btn-onlyicon" onclick="GoodsInput.checkDuplicate('goods_name')" data-toggle="tooltip" title="" data-original-title="중복확인"><i class="fa fa-check fa-1"></i></button><!--{*  *}-->
+			</td>
+		</tr>
+		{? mode == 'insert'}
+		{:}
+		<!--{*}
+		<tr>
+			<th>물품코드</th>
+			<td>
+				{rs.goods_code}
+			</td>
+			<th>물품명</th>
+			<td>
+				{rs.goods_name}
+			</td>
+		</tr>
+		*}-->
+		{/}
+		<tr>
+			<th>사용팀</th>
+			<td colspan="3">
+				{@ cfg.team}
+					<label class="hmis"><input type="checkbox" name="use_team[]" value="{.key_}" class="hmis validate[minCheckbox[1]]" data-errormessage-range-underflow="사용팀을 선택하세요." {=checked(.key_,rs.use_team_arr)}><span class="lbl"> {.value_}</span></label>
+				{/}
+			</td>
+		</tr>
+		<tr>
+			<th>분류</th>
+			<td colspan="3">
+				<select name="classify_code" onchange="GoodsInput.loadItem(this.value)" class="validate[required] required" data-group="search_rs" data-errormessage-value-missing="분류를 선택하세요.">
+					<option value="">::분류선택::</option>
+					{@ cfg.classify}
+					<option value="{.key_}" {? rs.classify_code == .key_}selected{/} >{.name}</option>
+					{/}
+				</select>
+
+				<select name="item_code" id="sb_item" style="display:none" class="validate[required] required" data-errormessage-value-missing="항목을 선택하세요.">
+					<option value="">::항목선택::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>단가</th>
+			<td>
+				<input type="text" name="unit_price" value="{=number_format(rs.unit_price)}" class="validate[required,custom[numberFormat]] numberformat required"  data-group="search_rs" data-errormessage-value-missing="단가를 입력하세요."/>
+				<label class="hmis">
+					<input type="checkbox" name="unit_price_vat" value="Y" class="hmis" {=checked('Y',rs.unit_price_vat)}>
+					<span class="lbl"> VAT포함</span>
+				</label>
+			</td>
+			<th>단위</th>
+			<td><input type="text" name="unit" value="{rs.unit}" class="validate[required] required" data-group="search_rs" data-errormessage-value-missing="단위를 입력하세요."/></td>
+		</tr>
+		<tr>
+			<th>용량 / 사이즈</th>
+			<td colspan="3"><input type="text" name="volume" value="{rs.volume}" class="validate[required] required" data-group="search_rs" data-errormessage-value-missing="용량/사이즈를 입력하세요."/></td>
+		</tr>
+		<tr>
+			<th>거래처</th>
+			<td colspan="3">
+				<select name="client_no">
+					{@ cfg.client}
+					<option value="{.no}" {=checked(.no, rs.client_no,'selected')}>{.client_name}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>메모</th>
+			<td colspan="3">
+				<textarea name="comment" class="hmis" style="height:50px" data-group="search_rs">{rs.comment}</textarea>
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+
+<div class="dashed" style="margin:10px 0px"></div>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>사업부</th>
+			<th>현(초기) 재고 수량</th>
+			<th>최소 보유 수량</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ cfg.biz}
+		<tr>
+			<th>{.value_}</th>
+			<td class="center">
+
+				{? is_null(rs.qty[.key_].qty_first) }
+					<input type="text" name="biz[{.key_}][qty_first]" id="qty_stock_{.key_}" class="validate[required,custom[numberFormat]] center numberformat" value="0" onFocus="this.select()" />
+				{:}
+					<input type="text" name="biz[{.key_}][qty_first]" id="qty_stock_{.key_}" value="{rs.qty[.key_].qty_first}" class="center disabled"  readonly />
+				{/}
+
+			</td>
+			<td class="center">
+				<input type="text" name="biz[{.key_}][qty_min]" value="{=number_format(rs.qty[.key_].qty_min)}" class="validate[required,custom[numberFormat]] center numberformat" onFocus="this.select()" />
+			</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{? mode == 'update' && auth.goods_delete}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="GoodsInput.remove()">삭제</button>
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var GoodsInput = {
+	group_code:"{rs.group_code}",
+	item_code : "{rs.item_code}",
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmGoodsInput").validationEngine('attach',option);
+
+		$('#FrmGoodsInput select[name="classify_code"]').trigger('change');
+
+		$("input.numberformat").unbind('keyup.numberformat').bind('keyup.numberformat', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+		})
+
+
+		$('#search_goods_name').autocomplete({
+			// minLength: 2,
+			select: function(event, ui) {
+				if(ui.item.goods_no > 0) {
+					me.selectGoods(ui.item.goods_no);
+					$('#FrmGoodsInput input[name="goods_name"]').validationEngine('hide');
+				}
+
+				$(this).val('');
+
+				return false;
+			},
+			source:function(request, response) {
+				$.ajax({
+					url: "/stock/goods_list",
+					data:{
+						goods_name:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.goods_name,
+									value: v.goods_name,
+									goods_no:v.no
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 물품이 없습니다.',
+								value:'',
+								goods_no:''
+							}]);
+						}
+
+					}
+				})
+			}
+		});
+	},
+	selectGoods: function(goods_no) {
+		var me = this;
+		$.ajax({
+			url:'/stock/goods_info',
+			data:{
+				no:goods_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$.each(r.data, function(i,v) {
+						switch (i) {
+							case 'stock':
+								$.each(v, function(biz_id, qty) {
+									$('[name="biz['+biz_id+'][qty_first]"]').val(qty.qty_first);
+									$('[name="biz['+biz_id+'][qty_min]"]').val(qty.qty_min);
+								})
+							break;
+							case 'item_code':
+								me.item_code=v;
+							default:
+								$('[name="'+i+'"][data-group="search_rs"]').val(v);
+							break;
+						}
+					});
+
+					$('select[name="classify_code"]').trigger('change');
+				}
+			}
+		})
+	},
+	save: function() {
+		// if(!confirm('저장하시겠습니까?')) return false;
+		var formdata = $('#FrmGoodsInput').serialize();
+		$.ajax({
+			url:'/stock_proc/goods_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+
+					$('.modal-close').trigger('click');
+				}
+				else {
+					alert(r.msg);
+				}
+			}
+		})
+	},
+	remove: function() {
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/stock_proc/goods_remove',
+					data:{
+						goods_no:'{rs.no}'
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg, function() {
+							if(r.success) {
+								$('.modal-close').trigger('click');
+							}
+						})
+					}
+				})
+			}
+		});
+	},
+	loadItem: function(classify_code) {
+
+		var sb_item = $('#sb_item');
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:this.group_code+'_'+classify_code,
+				is_use:'Y'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (e.code == me.item_code)?'selected':'';
+						sb_item.append('<option value="'+e.code+'" '+selected+'>'+e.name+'</option>');
+					});
+					sb_item.css('display','');
+				}
+				else {
+					sb_item.val('').css('display','none');
+				}
+			}
+		});
+	},
+	setDisable: function(biz_id, val) {
+		var el = $('#qty_stock_'+biz_id);
+		if(val ===true) {
+			el.removeAttr('readonly');
+			el.removeClass('disabled');
+		}
+		else {
+			el.attr('readonly');
+			el.addClass('disabled');
+		}
+	},
+	checkDuplicate: function(target_id) {
+		var val = $('#input_'+target_id).val();
+
+		var formdata = $('#FrmGoodsInput').serializeArray();
+		formdata.push({'name':'target_id','value':target_id});
+
+		$.ajax({
+			url:'/stock_proc/goods_duplicate',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				alert(r.msg);
+				if(r.success) var confirm = r.data.confirm;
+				else var confirm = '';
+
+				$('#'+target_id+'_confirm').val(confirm);
+			}
+		});
+	}
+}
+
+$(function() {
+	GoodsInput.init();
+})
+</script>

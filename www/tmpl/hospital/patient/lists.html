@@ -1,0 +1,343 @@
+<h3 class="area-title">환자 검색</h3>
+<form id="FrmPatientSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>예약일</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e"> 
+				<ul class="btn-group btn-group-xs">
+					<li onclick="PatientList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>','sdate_s','sdate_e');"><a href="javascript:;">오늘</a></li>
+					<li onclick="PatientList.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>','sdate_s','sdate_e');"><a href="javascript:;">이번주</a></li>
+					<li onclick="PatientList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>','sdate_s','sdate_e');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			<th>등록일</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s2" value=""> ~ <input type="text" class="datepicker" name="date_e" value="" id="sdate_e2"> 
+				<ul class="btn-group btn-group-xs">
+					<li onclick="PatientList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>','sdate_s2','sdate_e2');"><a href="javascript:;">오늘</a></li>
+					<li onclick="PatientList.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>','sdate_s2','sdate_e2');"><a href="javascript:;">이번주</a></li>
+					<li onclick="PatientList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>','sdate_s2','sdate_e2');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					<? foreach($cfg['doctor'] as $doctor_id => $doctor_name){?>
+					<option value="<?=$doctor_id?>"><?=$doctor_name?></option>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>진료정보</th>
+			<td>
+				<select name="treat_region_code" onchange="PatientList.loadTreatItem(this.value)">
+					<option value="">::진료부위::</option>
+					<? foreach($cfg['treat_region'] as $region_code => $region_name){?>
+					<option value="<?=$region_code?>"><?=$region_name?></option>
+					<? } ?>
+				</select>
+				<select name="treat_item_code" id="scsb_treat_item" style="display:none">
+					<option value="">::진료항목::</option>
+				</select>
+			</td>
+			<th>등급</th>
+			<td>
+				<select name="grade_code" id="sb_item">
+					<option value="">::등급::</option>
+				</select>
+			</td>
+			<th>유입경로</th>
+			<td>
+				<select name="path_code">
+					<option value="">::유입경로::</option>
+					<? foreach($cfg['path'] as $path_code => $path_name){?>
+					<option value="<?=$path_code?>"><?=$path_name?></option>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>담당자</th>
+			<td>
+				<select name="manager_team_code" id="scsb_team" onchange="PatientList.loadUser(this.value)">
+					<option value="">::팀::</option>
+					<? foreach($cfg['team'] as $team_code => $team_name){?>
+					<option value="<?=$team_code?>"><?=$team_name?></option>
+					<? } ?>
+				</select>
+
+				<select name="manager_id" id="scsb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+			<th>성별</th>
+			<td>
+				<label class="hmis"><input type="radio" name="sex" value="all" class="hmis" checked><span class="lbl"> 전체</span></label>
+				<label class="hmis"><input type="radio" name="sex" value="M" class="hmis"><span class="lbl"> 남</span></label>
+				<label class="hmis"><input type="radio" name="sex" value="F" class="hmis"><span class="lbl"> 여</span></label>
+			</td>
+			
+			<th>검색</th>
+			<td>
+				<input type="text" name="word" class="full" placeholder="환자명 or 휴대폰번호 or 차트번호" >
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="PatientList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="PatientList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	환자 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 환자수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 환자수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onclick="PatientList.openInput()"><i class="fa fa-user-plus fa-1"></i> 환자등록</button>
+		<!-- <span class="split">|</span> -->
+		<button type="button" class="btn btn-flat-orange" onclick="PatientList.remove()"><i class="fa fa-user-times fa-1"></i> 삭제</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="120px"><!-- 차트번호 -->
+		<col width="100px"><!-- 이름 -->
+		<col width="150px"><!-- 생년월일 -->
+		<col width="70px"><!-- 성별 -->
+		<col width="120px"><!-- 연락처 -->
+		<col style="width:100px"><!-- 진료부위 -->
+		<col><!-- 진료항목 -->
+		<col width="100px"><!-- 담당의사 -->
+		<col width="100px"><!-- 담당자 -->
+		<col width="120px"><!-- 예약일자 -->
+		<col width="100px"><!-- 등록일자 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>차트번호</th>
+			<th>이름</th>
+			<th>생년월일</th>
+			<th>성별</th>
+			<th>연락처</th>
+			<th>진료부위</th>
+			<th>진료항목</th>
+			<th>담당의사</th>
+			<th>담당자</th>
+			<th>예약일자</th>
+			<th>등록일자</th>
+		</th>
+	</thead>
+	<tbody id="patient_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></td>
+		<td>${chart_no}</td>
+		<td><a href="/patient/info/${no}" class="link">${name}</a></td>
+		<td>{if birth == '0000-00-00'} <span class="f-null">미입력</span> {else} ${birth} (${age}) {/if}</td>
+		<td>{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {else} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td>${mobile}</td>
+		<td>${HmisCommon.isStrNull(treat_region_name)}</td>
+		<td><div class="ellipsis" data-rel="tooltip" title="${treat_item_name}">${HmisCommon.isStrNull(treat_item_name)}</div></td>
+		<td>${doctor_name}</td>
+		<td>${manager_name}</td>
+		<td>{if appointment_count > 0} ${appointment_last} <span class="badge red" data-rel="tooltip" title="예약횟수">${appointment_count}</span> {else} <span class="f-null">예약없음</span> {/if}</td>
+		<td>${date_insert}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="PatientList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="PatientList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="PatientList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="PatientList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var PatientList = {
+	page:1,
+	init : function() {
+		this.load();
+		HmisCommon.createDatepicker();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+	},
+	openInput: function(goods_no) {
+		var title = '환자 등록';
+		var modal = new HmisModal('patient_new', {width:900, top:200, close:function(){PatientList.load('1');}});
+		modal.callback = this.reload;
+		modal.open(title,'/patient/input',{goods_no:goods_no, group_code:this.group_code});
+	},
+	reload: function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmPatientSearch').serialize();
+		
+		$.ajax({
+			url:'/patient/patient_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#patient_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="13">검색된 환자정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-rel="tooltip"]').tooltip();
+			}
+		})
+	},
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 환자를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var patients = checked.map(function () {return this.value;}).get();
+				
+				$.ajax({
+					url:'/patient_proc/remove_patient',
+					data:{
+						patient_no:patients
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							me.reload();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})	
+			}
+			
+		});
+	},
+	reset: function(){
+		$('#scsb_treat_item').css('display','none');
+		$('#scsb_user').css('display','none');
+		HmisCommon.formReset('FrmPatientSearch');
+		this.load();
+	},
+	loadUser: function(team_code){
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');	
+				}
+			}
+		});
+	},
+	loadTreatItem: function(region_code) {
+		
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');	
+				}
+			}
+		});
+	}
+}
+
+$(function(){
+	PatientList.init();
+})
+</script>

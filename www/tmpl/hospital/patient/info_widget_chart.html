@@ -1,0 +1,276 @@
+<style>
+ul.chart {
+	margin-top:5px;
+}
+
+.chart>li {
+	float: left;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	margin: 10px 10px 0px 0px;
+
+	width:100px;
+	height:170px;
+}
+
+.chart > li > a >img {
+	width:100px;
+	height:150px;
+	border: 2px solid #616161;
+	border-radius: 2px;
+}
+
+.chart>li>.tools {
+	width: auto;
+	height: 25px;
+	left: 0;
+	right: 0;
+	top: auto;
+	position:absolute;
+	padding-top:4px;
+	bottom: -30px;
+	opacity: .8;
+	background-color: #414141;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.chart li > div.tag {
+	position: absolute;
+	top:2px;
+	left:2px;
+	opacity: .8;
+	color:#FFFFFF;
+	padding:2px 4px 3px 2px;
+	border-bottom-right-radius: 3px;
+	/*border-top-left-radius: 2px;*/
+}
+
+.tag-1, .tag-4 {background-color:#03A9F4;}
+.tag-2, .tag-5 {background-color:#E84E40;}
+.tag-3, .tag-6 {background-color:#9C27B0;}
+.tag-7, .tag-11 {background-color:#FFC000;}
+.tag-8 {background-color:#008000;}
+.tag-9 {background-color:#FF8080;}
+.tag-10 {background-color:#800000;}
+
+ul.chart-checkup {
+	margin-top:0px;
+}
+
+.chart-checkup > li {
+	margin: 10px;
+}
+
+
+
+
+</style>
+
+<button type="button" class="btn btn-theme" onclick="PatientInfo.modalWidget('chart_{search.kind}', '차트 등록', {kind:'{search.kind}'})" ><i class="fa fa-plus fa-1"></i> 차트등록</button>
+<div class="btn-group hmis blue" data-toggle="buttons" style="vertical-align: -6px">
+	{@ cfg.search}
+	<label class="btn  {? search.subject==.key_ }active{/}"><input type="radio" name="subject" value="{.key_}" onchange="PatientInfo.searchTab({subject:'{.key_}', kind:'{search.kind}'})"  {? .index_<1}checked{/}>{.value_}</label>
+	{/}
+</div>
+
+{? kind == 'checkup'}
+
+	{? count(charts)>0 }
+	<table class="table table-bordered table-closely" style="margin-top:10px">
+		<tbody>
+			<tr>
+				<td style="vertical-align: top">
+
+					<div style="margin:10px 0 0 10px;clear:both"><span class="label label-normal" title="수술전" data-toggle="tooltip">before</span></div>
+
+					<ul class="chart chart_before chart-checkup">
+						{@ charts.before}
+						<li data-no="{.no}">
+							<div class="tag tag-{.subject_idx}">{.subject}</div>
+
+							<a href="{.file_path}" data-rel="colorbox" title="{.subject} : {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+
+							{? auth.delete}
+							<div class="tools">
+								<a href="javascript:;" onclick="PatientChart.remove('{.no}')">
+									<i class="fa fa-times fa11-1" style="font-size:18px;color:#FFA726"></i>
+								</a>
+							</div>
+							{/}
+							<div style="text-align:center;width:100%;height:20px;padding-top:3px;bottom:0px;font-size:11px;position:absolute;z-index:100;background-color:#FFFFFF"><b>{=substr(.date_chart,2,8)}</b></div>
+						</li>
+						{/}
+					</ul>
+
+				</td>
+				<td style="vertical-align: top">
+
+					<div style="margin:10px 0 0 10px;clear:both"><span class="label label-error" title="수술후" data-toggle="tooltip">after</span></div>
+					<ul class="chart chart_after chart-checkup">
+						{@ charts.after}
+						<li data-no="{.no}" >
+							<div class="tag tag-{.subject_idx}">{.subject}</div>
+							<a href="{.file_path}" data-rel="colorbox" title="{.subject} : {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+							{? auth.delete}
+							<div class="tools">
+								<a href="javascript:;" onclick="PatientChart.remove('{.no}')">
+									<i class="fa fa-times" style="font-size:18px;color:#FFA726"></i>
+								</a>
+							</div>
+							{/}
+							<div style="text-align:center;width:100%;height:20px;padding-top:3px;bottom:0px;font-size:11px;position:absolute;z-index:100;background-color:#FFFFFF"><b>{=substr(.date_chart,2,8)}</b></div>
+						</li>
+						{/}
+					</ul>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	{:}
+	<div class="well" style="margin-top:10px">등록된 차트가 없습니다.</div>
+	{/}
+
+{: kind =='normal'}
+<table class="table table-closely" style="margin:0px">
+	<tbody>
+		<tr>
+			<td>
+				{? count(charts)>0 }
+				<ul class="chart">
+					{@ charts}
+					<li data-no="{.no}">
+						<div class="tag tag-{.subject_idx}">{.subject}</div>
+						<?
+							$file_name = split('-', str_replace('.', '-', {.file_name}));
+
+							if($file_name[count($file_name)-1] == 'mp4'){
+						?>
+								<a href="#" data-rel="colorbox" title="{.subject} - {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+						<?
+							}
+							else{
+						?>
+								<a href="{.file_path}" data-rel="colorbox" title="{.subject} - {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+						<?	}	?>
+
+						{? auth.delete}
+						<div class="tools">
+							<a href="javascript:;" onclick="PatientChart.remove('{.no}')">
+								<i class="fa fa-times fa11-1" style="font-size:18px;color:#FFA726"></i>
+							</a>
+						</div>
+						{/}
+						<div style="text-align:center;width:100%;height:20px;padding-top:3px;bottom:0px;font-size:11px;position:absolute;z-index:100;background-color:#FFFFFF"><b>{=substr(.date_chart,2,8)}</b></div>
+					</li>
+					{/}
+				</ul>
+				{:}
+				<div class="well" style="margin-top:10px">등록된 차트가 없습니다.</div>
+				{/}
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+{: kind =='cst'}
+<table class="table table-closely" style="margin:0px">
+	<tbody>
+		<tr>
+			<td>
+				{? count(charts)>0 }
+				<ul class="chart">
+					{@ charts}
+					<li data-no="{.no}">
+						<div class="tag tag-{.subject_idx}">{.subject}</div>
+						<?
+							$file_name = split('-', str_replace('.', '-', {.file_name}));
+
+							if($file_name[count($file_name)-1] == 'mp4'){
+						?>
+								<a href="#" data-rel="colorbox" title="{.subject} - {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+						<?
+							}
+							else{
+						?>
+								<a href="{.file_path}" data-rel="colorbox" title="{.subject} - {.date_chart}" class=""><img src="{.file_path_thumbnail}" data-no="{.no}" /></a>
+						<?	}	?>
+
+						{? auth.delete}
+						<div class="tools">
+							<a href="javascript:;" onclick="PatientChart.remove('{.no}')">
+								<i class="fa fa-times fa11-1" style="font-size:18px;color:#FFA726"></i>
+							</a>
+						</div>
+						{/}
+						<div style="text-align:center;width:100%;height:20px;padding-top:3px;bottom:0px;font-size:11px;position:absolute;z-index:100;background-color:#FFFFFF"><b>{=substr(.date_chart,2,8)}</b></div>
+					</li>
+					{/}
+				</ul>
+				{:}
+				<div class="well" style="margin-top:10px">등록된 차트가 없습니다.</div>
+				{/}
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+{/}
+
+
+
+<script type="text/javascript">
+var PatientChart = {
+	init: function() {
+		$('ul.chart > li').on("mouseenter.chart", function(e) {
+			$(this).find('.tools').animate({bottom:20}, 200);
+		});
+
+		$('ul.chart > li').on("mouseleave.chart", this.listenerMouseleave);
+		PatientInfo.createColorbox('chart');
+
+		PatientInfo.createColorbox('chart_before');
+		PatientInfo.createColorbox('chart_after');
+
+	},
+
+	listenerMouseleave: function() {
+		$(this).find('.tools').animate({bottom:-30}, 200);
+	},
+	remove: function(no) {
+		$('ul.chart > li[data-no="'+no+'"]').off('mouseleave.chart');
+		HmisAlert.confirm('해당 차트를 정말 삭제하시겠습니까?',function(r) {
+			if(r) {
+				$.ajax({
+					url:'/patient_proc/remove_patient_chart',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						chart_no:no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							PatientInfo.loadTab('chart_{search.kind}');
+							PatientInfo.countTab()
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+			else {
+				$('ul.chart > li[data-no="'+no+'"]').on('mouseleave.chart', PatientChart.listenerMouseleave);
+				$('ul.chart > li[data-no="'+no+'"]').trigger('mouseleave');
+			}
+
+		})
+	}
+};
+
+$(function() {
+	PatientChart.init();
+})
+</script>

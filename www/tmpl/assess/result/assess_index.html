@@ -1,0 +1,283 @@
+<h3 class="area-title">성과관리 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col width="280px">
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td>
+
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="syear" value="" checked  > 전체
+					</label>
+					<label class="btn">
+						<input type="radio" name="syear" value="2015" > 2015
+					</label>
+					<label class="btn">
+						<input type="radio" name="syear" value="2016" > 2016
+					</label>
+				</div>
+		
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="firsthalf" value="" checked  > 전체
+					</label>							
+					<label class="btn">
+						<input type="radio" name="firsthalf" value="상"  > 상
+					</label>
+					<label class="btn">
+						<input type="radio" name="firsthalf" value="하" > 하
+					</label>
+				</div>
+			</td>
+			<th>사업장</th>
+			<td>
+				<select name="biz_info" id="biz_info" onchange="InoutList.load()">
+					<option value="">-사업장-</option>
+					<? foreach(  $this->session->userdata( 'ss_my_biz_list' ) as $i=>$val){ ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>부서명</th>
+			<td>
+				<select name="dept_info" onchange="InoutList.load()">
+					<option value="">::분류선택::</option>
+					<? foreach($dept_info as $cc=>$cv) {?>
+					<option value="<?=$cc?>" ><?=$cv?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>팀명</th>
+			<td>
+				<select name="team_info" onchange="InoutList.load()">
+					<option value="">::분류선택::</option>
+					<? foreach($team_info as $cc=>$cv) {?>
+					<option value="<?=$cc?>" ><?=$cv?></option>
+					<? } ?>
+				</select>
+			</td>		
+		</tr>
+		<tr>
+			<th>직급</th>
+			<td>
+				<select name="position_list" onchange="InoutList.load()">
+					<option value="">::분류선택::</option>
+					<? foreach($position_list as $cc=>$cv) {?>
+					<option value="<?=$cc?>" ><?=$cv?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>직급</th>
+			<td>
+				<select name="duty_list" onchange="InoutList.load()">
+					<option value="">::분류선택::</option>
+					<? foreach($duty_list as $cc=>$cv) {?>
+					<option value="<?=$cc?>" ><?=$cv?></option>
+					<? } ?>
+				</select>
+			</td>
+
+			<th>직원명</th>
+			<td colspan="3"><input type="text" name="goods_name" style="width:120px;"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="InoutList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="InoutList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	성과관리 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">Total <span id="cnt_search" class="f-bold  f-error">0</span>개 <!--span class="split">|</span> 총 Total <span id="cnt_total"class="f-bold">0</span>개</span--> 
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px">
+		<col width="80px">
+		<col width="70px">
+		<col >
+		<col width="80px">
+		<col width="105px">
+		<col width="100px">
+		<col width="100px">		
+		<col width="70px">		
+		<col width="60px">		
+		<col width="210px">		
+		<col width="210px">		
+		<col width="140px">		
+		<col width="60px">			
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>등록일자</th>
+			<th>구분</th>
+			<th>ID</th>
+			<th>이름</th>
+			<th>사업장</th>
+			<th>부서명</th>
+			<th>팀명</th>
+			<th>직급</th>
+			<th>직책</th>
+			<th>성과평가</th>
+			<th>역량평가</th>
+			<th>다면평가</th>
+			<th>등급<br>(총점)</th>
+	</thead>
+	<tbody id="team_list">
+	</tbody>
+</table>
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td>${date}</td>
+		<td>${syear}-${firsthalf}</td>
+		<td>${user_id}</td>				
+		<td>${name}</td>
+		<td>${biz_list_name}</td>
+		<td>${dept_name}</td>
+		<td>${team_name}</td>
+		<td>${position_name}</td>
+		<td>${duty_name}</td>
+		<td> 진행율 : ${progress_sum},평가 : ${result_princ_val}
+			{if is_result=='Y'} 
+				<button type="button" class="btn btn-flat-blue btn-xs" onclick="InoutList.openInputinfo1('${no}')"><i class="fa fa-check"></i> 보기</button>
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}
+		</td>
+		<td>진행율 : ${b_user_princ_sum},평가 : ${competency_princ_val}
+			{if is_cocy=='Y'} 
+				<button type="button" class="btn btn-flat-blue btn-xs" onclick="InoutList.openInputinfo2('${no}')"><i class="fa fa-check"></i> 보기</button>
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}
+		</td>
+		<td>평가: ${c_greetings_princ}
+			{if is_ifs=='Y'} 
+				{if greetings_check=='Y'} 
+					<button type="button" class="btn btn-flat-orange btn-xs"  onclick="InoutList.openInputinfo3('${no}')"><i class="fa fa-check "></i> 평가중</button>	
+				{elseif}
+					<button type="button" class="btn btn-flat-blue btn-xs"  onclick="InoutList.openInputinfo3('${no}')"><i class="fa fa-check "></i> 보기</button>	
+				{/if}
+			{elseif}
+				<button type="button" class="btn btn-flat-orange btn-xs" >사용안함</button>				
+			{/if}
+
+		</td>
+		<td>${total_princ} (${ratingval})</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="InoutList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="InoutList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="InoutList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="InoutList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/jquery.MultiFile.pack.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script src="/js/bootstrap.button.js"></script>	
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var InoutList = {
+	page:1,
+	init: function() {
+		this.load(1);
+		HmisCommon.createDatepicker();
+		$('input:radio[name="syear"]').on('change',function() {
+			InoutList.load(1);
+		});
+		$('input:radio[name="firsthalf"]').on('change',function() {
+			InoutList.load(1);
+		});
+	},
+	reset: function() {
+		$('#FrmGoodsSearch')[0].reset();
+		this.load(1);
+	},
+	openInputinfo1: function(inout_no) {
+		var title = (inout_no)?'성과평가':'성과평가';
+		var modal = new HmisModal('inout_input', {width:1024, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'one'});
+	},
+	openInputinfo2: function(inout_no) {
+		var title = (inout_no)?'역량평가':'역량평가';
+		var modal = new HmisModal('inout_input', {width:1024, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'two'});
+	},
+	openInputinfo3: function(inout_no) {
+		var title = (inout_no)?'다면평가':'다면평가';
+		var modal = new HmisModal('inout_input', {width:624, top:200});
+		modal.open(title,'/assessment/assess_view_list',{inout_no:inout_no,modes:'three'});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmGoodsSearch').serialize()+"&page="+p+"&limit=15"; 
+		
+		$.ajax({
+			url:'/assessment/assess_select_list',
+			data:search,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#team_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);					
+				}
+				else {
+					target.append('<tr><td colspan="14">내역이 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				me.page = p;
+
+//				$('[data-role="tooltip"]').tooltip();
+			}
+		})
+	}
+}
+
+$(function() {
+	InoutList.init();
+})
+</script>

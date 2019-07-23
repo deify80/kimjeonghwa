@@ -1,0 +1,716 @@
+<style>
+{@ cfg.crm_status}
+.label.type-{.code} {
+	background-color:{.etc.bg};
+	border-color:{.etc.bg};
+	color:{.etc.font};
+}
+{/}
+
+.now {background-color:#FFF3E0 ;}
+th.now {color:#F44336;}
+.calendar-row:nth-child(even) th, .calendar-row:nth-child(even) {background-color:#FBFBFB;}
+</style>
+
+<h3 class="area-title">
+	<div>검색</div>
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="DBList.input()"><i class="fa fa-1 fa-pencil"></i> 신규등록</button>
+		<button type="button" class="btn btn-pink" onClick="DBList.duplicate()"><i class="fa fa-1 fa-search"></i> 중복검색</button>
+		{? auth.db_share }
+		<button type="button" class="btn btn-flat-purple" onClick="open_ing();" ><i class="fa fa-1 fa-tasks"></i> DB 분배 현황</button>
+		{/}
+	</div>
+</h3>
+
+<form id="FrmDBSearch" onsubmit="return false">
+	<table class="table table-bordered table-form">
+		<colgroup>
+			<col style="width:100px" />
+			<col />
+			<col style="width:100px" />
+			<col />
+			<col style="width:100px" />
+			<col />
+		</colgroup>
+		<tbody>
+			<!-- 20170202 kruddo : 팀별 현황 추가 -->
+			{? session.dept != 90}
+			<tr>
+				<th>팀</th>
+				<td colspan="5">
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn {? !search.team_code || search.team_code=='all' }active{/}"><input type="radio" name="team_code_search" value="all" {? !search.team_code || search.team_code=='all' }checked{/} data-role="search" />전체</label>
+						{@ cfg.team_list}
+						<label class="btn {? search.team_code==.key_}active{/}"><input type="radio" name="team_code_search" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label>
+						{/}
+					</div>
+
+					<div class="btn-group hmis orange" data-toggle="buttons" id="charge_user_id" style="display:none">
+						<label class="btn {? search.charge_user_id =='alll'}active{/}"><input type="radio" name="charge_user_id" value="alll"  data-role="search" {? search.charge_user_id =='alll'}checked{/}  /><span>전체</span></label>
+					</div>
+				</td>
+			</tr>
+			{:}
+			<tr>
+				<th>상담실장</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+						<label class="btn {? !search.team_code}active{/}"><input type="radio" name="charge_user_id" value="" {? !search.team_code}checked{/} data-role="search" />전체</label>
+						{@ cfg.team_member}
+						<label class="btn {? search.team_code==.key_}active{/}"><input type="radio" name="charge_user_id" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label>
+						{/}
+					</div>
+				</td>
+			</tr>
+			{/}
+			<!-- 20170202 kruddo : 팀별 현황 추가 -->
+
+			<tr>
+				<th>접수일자</th>
+				<td>
+					<input type="text" name="date_s" id="sdate_s" class="datepicker"> ~ <input type="text" name="date_e" id="sdate_e" class="datepicker">
+					<ul class="btn-group btn-group-xs">
+						<li onclick="DBList.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">오늘</a></li>
+						<li onclick="DBList.setDate('{cfg.date.weekday}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번주</a></li>
+						<li onclick="DBList.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번달</a></li>
+					</ul>
+				</td>
+
+				<th>미디어</th>
+				<td>
+					<select name="media" data-role="search">
+						<option value="">-전체-</option>
+						{@ cfg.media}
+						<option value="{.value_}">{.value_}</option>
+						{/}
+					</select>
+				</td>
+				<th>분배여부</th>
+				<td>
+					<div class="btn-group hmis blue" data-toggle="buttons">
+						<label class="btn active"><input type="radio" name="db_status" value="all" checked data-role="search">전체</label>
+						{@ cfg.db_status}
+						<label class="btn"><input type="radio" name="db_status" value="{.key_}" data-role="search" />{.value_}</label>
+						{/}
+					</div>
+
+					<div id="area_assign_type" class="btn-group hmis orange" data-toggle="buttons" style="display:none">
+						<label class="btn active"><input type="radio" name="assign_type" value="all" checked data-role="search" />전체</label>
+						<label class="btn"><input type="radio" name="assign_type" value="O" data-role="search" data-role="search"  />자동</label>
+						<label class="btn"><input type="radio" name="assign_type" value="F" data-role="search" data-role="search"  />직접</label>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>상태</th>
+				<td>
+					<select name="cst_status" data-role="search">
+						<option value="" {? !search.cst_status }selected{/}>-전체-</option>
+						{@ cfg.cst_status}
+						<option value="{.key_}" {? search.cst_status==.key_ }selected{/}>{.value_}</option>
+						{/}
+					</select>
+				</td>
+				<th>상담항목</th>
+				<td {? !auth.ex_path}colspan="3"{/}>
+					<select name="category" style="width: 150px;" data-role="search">
+						<option value="">-전체-</option>
+						{@ cfg.category}
+						<option value="{.key_}">{.value_}</option>
+						{/}
+					</select>
+				</td>
+				{? auth.ex_path}
+				<th>유입경로</th>
+				<td>
+					<select name="path" style="width: 140px;" data-role="search">
+						<option value="">-전체-</option>
+						{@ cfg.path}
+						<option value="{.key_}">{.value_}</option>
+						{/}
+					</select>
+				</td>
+				{/}
+			</tr>
+			<tr>
+				<th>등록자</th>
+				<td>
+
+					<select name="reg_id[]" id="sb_dept" onchange="DBList.loadTeam(this.value)" style="vertical-align: bottom" autocomplete="off" data-role="search" data-default="all">
+						<option value="all">전체 부서</option>
+						{@ cfg.dept}
+						<option value="{.key_}">{.value_}</option>
+						{/}
+					</select>
+					<select name="reg_id[]" id="sb_team" onchange="DBList.loadUser(this.value)" style="display:none;vertical-align: bottom" autocomplete="off" data-role="search">
+						<option value="all">전체 팀</option>
+					</select>
+					<select name="reg_id[]" id="sb_user" style="display:none;vertical-align: bottom" autocomplete="off" data-role="search">
+						<option value="all">전체 직원</option>
+					</select>
+				</td>
+				<th>검색어</th>
+				<td colspan="3"><input type="text" name="word" class="full" placeholder="고객명 or 메신저 or 연락처 or 등록자아이디" ></td>
+			</tr>
+		</tbody>
+	</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="DBList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button type="button" class="btn btn-lg btn-gray" onclick="DBList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<form id="FrmAssign">
+<h3 class="area-title">
+	DB 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">
+		오늘 DB수 <span id="cnt_today" class="f-bold  f-error">0</span>개
+		<span class="split">|</span>
+		검색된 DB수 <span id="cnt_search" class="f-bold  f-blue">0</span>개
+		<span class="split">|</span>
+		총 DB수 <span id="cnt_total"class="f-bold">0</span>개
+	</span>
+
+	{? auth.auth_db_share_tools}
+	<div class="button-box">
+		<label class="hmis" style="margin-right:5px"><input type="checkbox" name="compensation" id="compensation" value="Y" class="hmis" /><span class="lbl"> 보상</span></label>
+		<span id="compensation_reason" style="display:none"><input type="text" name="compensation_reason" value="" placeholder="보상사유" style="width:200px" /></span>
+		<select name="team_code" id="team_code">
+			<option value="">:: 분배팀 선택 ::</option>
+			{@ cfg.team}
+			<option value="{.key_}">{.value_}</option>
+			{/}
+		</select>
+		<button type="button" class="btn btn-lightgray" onClick="DBList.assign('F');"><i class="fa fa-1 fa-send" style="color:#2080D0"></i> 직접 분배</button>
+		<span class="split">|</span>
+
+		<button type="button" class="btn btn-lightgray"  onClick="DBList.hold()"><i class="fa fa-1 fa-times" style="color:#000"></i> DB 보류</button>
+		<span class="split">|</span>
+
+		<!-- 자동분배:S -->
+		<button type="button" class="btn btn-lightgray" onClick="DBList.assign('O');"><i class="fa fa-1 fa-recycle" style="color:red"></i>자동 분배</button>
+		<div class="onoffswitch" style="float:right;margin-left:5px">
+			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="auto_switch" {? auto=='on'}checked{/} />
+				<label class="onoffswitch-label" for="auto_switch">
+				<span class="onoffswitch-inner"></span>
+				<span class="onoffswitch-switch"></span>
+			</label>
+		</div>
+		<!-- 자동분배:E -->
+	</div>
+	{/}
+</h3>
+
+
+<table class="table table-responsive table-bordered table-list table-striped table-hover">
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'chk[]')"><span class="lbl"></span></label></th>
+			<th>분배상태</th>
+			<th>상담상태</th>
+			<th>CRM상태</th>
+			<th>접수일자</th>
+			<th>고객명</th>
+			<th class="visible-lg">성별</th>
+			<th>연락처</th>
+			<th>메신저</th>
+			<th>상담항목</th>
+			<th>등록자</th>
+
+			{? auth.ex_path}
+			<th>상담팀</th>
+			<th>유입경로</th>
+			{/}
+			{? auth.web_check}
+			<th class="visible-lg">유입구분</th>
+			{/}
+			{? auth.m_check}
+			<th>미디어</th>
+			{/}
+		</tr>
+	</thead>
+	<tbody id="db_list">
+	</tbody>
+</table>
+</form>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\db_no}" data-grant="${\grant_view}" data-dbstatus="${\db_status}" data-tel="${\tel_org}">
+	<!-- <tr data-no="${db_seqno}"> -->
+		<td data-link="no">${\idx}</td>
+		<td data-link="no"><input type="checkbox" class="hmis" name="chk[]" value="${\db_seqno}" {if db_status>0}disabled{/if}><span class="lbl"></span></td>
+		<td><span class="label label-xs status-${\db_status}">${\db_status_txt}</span></td>
+
+		<td><span class="label label-xs status-${\cst_status}">${\cst_status_text}</span></td>
+		<td>{if crm_status}<span class="label label-xs type-${\crm_status}">${\crm_status_txt}</span>{\else}${HmisCommon.isStrNull(crm_status)}{/if}</td>
+		<td>${\date_insert}</td>
+		<td {if other_cnt > 0} class="f-error" {/if} >${\name}</td>
+		<td class="visible-lg">{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {elseif sex == 'M'} <i class="fa fa-1 fa-male f-blue"></i> {\else} <span class="f-null">미입력</span>{/if}</td>
+		<td>${\tel}</td>
+		<td>${HmisCommon.isStrNull(messenger)}</td>
+		<td><div class="ellipsis" data-toggle="tooltip" title="${\category}">${\category}</div></td>
+		<td>{if reg_user_name}${\reg_user_name}(${\reg_user_id}){\else}-{/if}</td>
+		{? auth.ex_path}
+		<td data-link="team_code">
+			{if team_code}
+			<select onchange="DBList.changeTeam(this, '${\db_seqno}')" data-default="${\team_code}">
+			{@ cfg.team}
+				<option value="{.key_}" {if team_code=='{.key_}'}selected{/if}>{.value_}</option>
+			{/}
+			</select>
+			{/if}
+
+		</td>
+		<td>${\path_txt}</td>
+		{/}
+		{? auth.web_check}
+		<td class="visible-lg">${\type}</td>
+		{/}
+		{? auth.m_check}
+		<td>${\media}</td>
+		{/}
+
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="DBList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="DBList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="DBList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="DBList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="DBList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+
+<link rel="stylesheet" type="text/css" href="/css/onoffswitch.css">
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var auto;
+var DBList = {
+	interval:1000*10,
+	init: function() {
+
+		$('#auto_switch').on('change', function() {
+			DBList.autoSwitch(this.checked);
+		})
+
+		DBList.autoAssignStart();
+
+
+		$('#compensation').on('click',function(){
+			$('#compensation_reason').css('display',(this.checked)?'':'none');
+		});
+
+		this.load();
+
+		$('[data-role="search"]').change(function() {
+			if(this.name == 'db_status') {
+				if(this.value == 1) $('#area_assign_type').css('display','');
+				else $('#area_assign_type').css('display','none');
+			}
+			if(this.name == 'team_code_search') {
+				DBList.loadUserSearch(this.value);
+			}
+			DBList.load(1);
+		});
+
+		DBList.loadUserSearch('{search.team_code_search}');
+		this.createDatepicker();
+	},
+	changeTeam: function(el, db_seqno) {
+		HmisAlert.confirm('상담팀을 변경하시겠습니까?', function(r){
+			if(r) {
+				$.ajax({
+					url:'/db_proc/change_team',
+					data:{
+						team_code:$(el).val(),
+						db_seqno:db_seqno
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg);
+						if(!r.success) {
+							var origin = $(el).data('default');
+							$(el).val(origin);
+						}
+					}
+				})
+			}
+			else {
+				var origin = $(el).data('default');
+				$(el).val(origin);
+			}
+		});
+	},
+	createDatepicker: function() {
+		$(".datepicker").datepicker(datepicker_option);
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load(1);
+	},
+	reset: function(){
+		$('#sb_team').hide();
+		$('#sb_user').hide();
+		$('#charge_user_id').hide();
+		HmisCommon.formReset('FrmDBSearch');
+		this.load();
+	},
+	autoSwitch: function(v) {
+		var me = this;
+		$.ajax({
+			url:'/db_proc/auto_switch',
+			data:{
+				'switch':(v)?'on':'off'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					if(v) {
+						me.autoAssignStart();
+					}
+					else {
+						me.autoAssignStop();
+					}
+				}
+			}
+		})
+	},
+	autoAssign: function() {
+		$.ajax({
+			url:'/db_proc/auto_assign',
+			data:{},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				//console.log(r.data);
+				if(typeof(r.data.switch) != 'undefined') {				// 20170302 kruddo : r.data.switch undefied 인 경우 스크립트 에러 발생 예외처리
+					if(r.data.switch == 'off') {
+						$('#auto_switch').removeAttr('checked');
+						//DBList.autoAssignStop();
+					}
+				}
+				else {
+					//자동켜짐 감지
+					$('#auto_switch').prop('checked', true);
+				}
+			},
+			complete: function(r) {
+				DBList.reload();
+			}
+
+		})
+		// console.log('assign');
+	},
+	autoAssignStart: function() {
+		// this.autoAssign();
+		auto = setInterval(this.autoAssign, this.interval);
+	},
+	autoAssignStop: function() {
+		clearInterval(auto);
+	},
+	input: function() {
+		var title = 'DB 등록';
+		var modal = new HmisModal('dbinput', {width:800, top:200});
+		modal.callback = this.reload;
+		modal.open(title,'/db/input',{type:'db'});
+	},
+	duplicate: function() {
+		var title = '고객검색';
+		var modal = new HmisModal('dbsearch', {width:500, top:200});
+		// modal.callback = this.reload;
+		modal.open(title,'/db/search');
+	},
+	reload: function() {
+		DBList.load(DBList.page);
+	},
+	load: function(page) {
+		HmisLoading.show('#db_list');
+
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmDBSearch').serialize();
+
+		$.ajax({
+			url:'/db/lists',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#db_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+
+				}
+				else {
+					target.append('<tr><td colspan="16">검색된 DB정보가 없습니다.</td></tr>');
+				}
+
+				me.createClick();			// 20170215 kruddo : 클릭하면 고객 상세 정보 보기로 이동
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+
+
+
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				$('#cnt_today').html(HmisCommon.numberFormat(r.data.count.today));
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+			},
+			// 20170202 kruddo : 등록자 검색 > 상담실 > 상담6팀 검색 오류 이지만 이전 데이터 초기화 하지 못해 추가
+			error:function(){
+				var target = $('#db_list');
+				target.empty();
+				target.append('<tr><td colspan="16">검색된 DB정보가 없습니다.</td></tr>');
+			},
+			// 20170202 kruddo : 등록자 검색 > 상담실 > 상담6팀 검색 오류 이지만 이전 데이터 초기화 하지 못해 추가
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	assign: function(assign_type) {
+		var checked = HmisCommon.getChecked('chk[]');
+		if (checked.length<1) {
+			HmisAlert.alert('분배할 DB를 선택하세요.');
+			return false;
+		}
+
+
+		if (assign_type == "F" && $("#team_code").val() == "") {
+			HmisAlert.alert("분배할 팀을 선택해주세요.");
+			return;
+		}
+
+		var msg = checked.length+"개의 DB가 선택되었습니다.<br />";
+		msg += (assign_type == "F")?"선택한 팀으로 DB를 분배하시겠습니까?":"선택한 DB를 자동분배하시겠습니까?";
+		HmisAlert.confirm(msg, function(r) {
+			if(r) {
+				var formdata = $('#FrmAssign').serializeArray();
+				formdata.push({name:'assign_type', value:assign_type});
+				$.ajax({
+					type : "POST",
+					dataType:'json',
+					url : "/db_proc/do_assign",
+					data : formdata,
+					success : function(r) {
+						HmisAlert.alert("총 "+r.success_total+"건 분배되었습니다.", function() {
+							DBList.reload();
+						});
+
+						// $("#msg-area").html("총 "+obj.success_total+"건 분배 완료했습니다.");
+					}
+				});
+			}
+		});
+	},
+	hold: function() {
+		var checked = HmisCommon.getChecked('chk[]');
+		if (checked.length<1) {
+			HmisAlert.alert('보류처리할 DB를 선택하세요.');
+			return false;
+		}
+
+		HmisAlert.confirm(checked.length+"개의 DB를 보류처리하시겠습니까?", function(r) {
+			if(r) {
+				var formdata = $('#FrmAssign').serialize();
+				var url = "/db_proc/do_off";
+				$.ajax({
+					type : "POST",
+					url : "/db_proc/do_off",
+					dataType:'json',
+					data : formdata,
+					success : function(r) {
+						HmisAlert.alert("보류처리되었습니다.", function() {
+							DBList.reload();
+						});
+					}
+				});
+			}
+		})
+	},
+	loadTeam : function(dept_no) {
+		var sb_team = $('#sb_team');
+		var sb_user = $('#sb_user');
+		if(dept_no == 'all') {
+			sb_team.val('all').css('display','none');
+			sb_user.val('all').css('display','none');
+			return false;
+		}
+		else {
+			dept_code = dept_no;
+		}
+
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_team.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');
+				}
+				else {
+					sb_team.val('all').css('display','none');
+				}
+				sb_user.val('all').css('display','none');
+			}
+		});
+	},
+	loadUser : function(team_no) {
+		team_no = team_no || $('#sb_team').val();
+		var team_code = (team_no=='all')?'':team_no;
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				key:'user_id',
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('all');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	// 20170131 kruddo : 팀 선택 시 팀 내 상담원 목록
+	loadUserSearch: function(team_code) {
+		var sb_team = $('#charge_user_id');
+		if(team_code == 'alll' || !team_code) {
+			sb_team.hide();
+			return false;
+		}
+		sb_team.find('label:gt(0)').remove();
+
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				dept_code:'90',
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success){
+					var charge_user_id = '{search.charge_user_id}';
+
+					$.each(r.data, function(i,e){
+						var checked = (charge_user_id==i)?'checked':'';
+						var active = (charge_user_id==i)?'active':'';
+						var label = '<label class="btn '+active+'" data-id="'+i+'"><input type="radio" name="charge_user_id" value="'+i+'"  onchange="DBList.load(1)"  '+checked+'/><span>'+e+'</span></label>'
+						sb_team.append(label);
+					});
+					if(team_code == 'alll' ) {
+						sb_team.hide();
+					}
+					else {
+						sb_team.show();
+						if(sb_team.find('label.active').length<1) {
+							sb_team.find('label:eq(0)').trigger('click');
+						}
+						else {
+							sb_team.find('label[data-id="'+charge_user_id+'"]').trigger('click');
+						}
+
+					}
+				}
+			}
+		});
+	},
+	// 20170131 kruddo :  팀 선택 시 팀 내 상담원 목록
+
+	// 20170215 kruddo : 클릭하면 고객 상세 정보 보기로 이동
+	createClick: function() {
+		$('#db_list > tr > td[data-link!="no"][data-link!="team_code"]').on('click',function(event) {
+			var parent = $(this).parents();
+
+			if(parent.data('dbstatus')==8){
+				DBList.duplicateList(parent.data('tel'));
+				return false;
+			}
+
+			if(parent.data('no') == '') {
+				HmisAlert.alert('고객상세정보가 없습니다.');
+				return false;
+			}
+			//alert(parent.data('no'));
+			if(parent.data('grant') != 'Y') {
+				HmisAlert.alert('선택한 DB에 접근할 권한이 없습니다.');
+				return false;
+			}
+			// document.location.reload();
+			document.location.href = "/consulting/input/"+parent.data('no');
+		})
+	},
+	// 20170215 kruddo : 클릭하면 고객 상세 정보 보기로 이동
+
+	// 20170321 kruddo : 중복 고객 클릭 하면 중복 목록 팝업
+	duplicateList: function(tel) {
+		var title = '중복 명단';
+		var modal = new HmisModal('duplicatelist', {width:1000, top:200});
+		// modal.callback = this.reload;
+		var formdata = new Array();
+		formdata.push({name:"tel", value:tel});
+		modal.open(title,'/db/duplicate_list', formdata);
+	},
+	// 20170321 kruddo : 중복 고객 클릭 하면 중복 목록 팝업
+
+
+}
+
+$(function(){
+	DBList.init();
+
+});
+</script>

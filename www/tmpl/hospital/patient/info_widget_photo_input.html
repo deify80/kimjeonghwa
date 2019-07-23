@@ -1,0 +1,116 @@
+<form id="FrmPatientPhotoInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="kind" value="{kind}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		{? kind == 'normal'}
+		<tr>
+			<th>구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="times" value="1" class="hmis" checked><span class="lbl"> 전(Before)</span></label>
+				<label class="hmis"><input type="radio" name="times" value="2" class="hmis"><span class="lbl"> 후(After)</span></label>
+			</td>
+		</tr>
+		{:}
+		<input type="text" name="times" value="1" />
+		{/}
+		<tr>
+			<th>촬영일</th>
+			<td>
+				<input type="text" name="date_photo" value="{rs.date_photo}" class="datepicker lg"  />
+			</td>
+		</tr>
+		<tr>
+			<th>사진등록</th>
+			<td>
+				<div class="file_div">
+					<button type="button" class="btn btn-flat-blue"><i class="fa fa-photo fa-1"></i> 사진 찾기</button>
+					<input type="file" name="photo[]" id="attach_photo" class="multi file_hidden" value="" style="width:100px" multiple>
+				</div>
+				<div id="attach_photo_list" class="file_list" style="margin-bottom:0px">
+					<div id="photo_file_msg" style="color:#A2A2A2"></div>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" onclick="PatientPhotoInput.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+<script type="text/javascript">
+var PatientPhotoInput = {
+	photoCount:0,
+	init: function() {
+		HmisCommon.createDatepicker();
+		this.createFile();
+	},
+	createFile : function() {
+		this.msgFile();
+		var me = this;
+		$('#attach_photo').MultiFile({
+			accept: 'gif|jpg|png|bmp|jpeg',
+			list: '#attach_photo_list',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				duplicate:'이미 등록된 파일입니다.'
+			},
+			afterFileAppend: function() {
+				me.msgFile();
+			},
+			afterFileRemove: function() {
+				me.msgFile();
+			}
+		});
+	},
+	msgFile : function() {
+		this.photoCount = $('#attach_photo_list > div.MultiFile-label').length;
+		if(this.photoCount<1) {
+			$('#photo_file_msg').html('파일을 첨부해 주세요.');
+		}
+		if(this.photoCount>0) {
+			$('#photo_file_msg').html('');
+		}
+	},
+	save: function() {
+		if(this.photoCount<1) {
+			HmisAlert.alert('사진을 선택하세요.');
+			return false;
+		}
+
+		var options = {
+			url:'/patient_proc/save_patient_photo',
+			type:'POST',
+			dataType:'json',
+			success : function(r) {
+				if(r.success){
+					$('.modal-close').trigger('click');
+					PatientInfo.loadTab('photo_{kind}');
+					PatientInfo.countTab();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			},
+			beforeSubmit: function() {
+				$('#FrmPatientPhotoInput button[type="submit"]').attr('disabled', true);
+				$('#FrmPatientPhotoInput button[type="submit"]').html('<img src="/images/common/loading.gif" style="vertical-align:middle"/> 저장중..');
+			}
+		}
+		$('#FrmPatientPhotoInput').ajaxSubmit(options)
+	}
+}
+
+$(function(){
+	PatientPhotoInput.init();
+})
+</script>

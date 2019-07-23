@@ -1,0 +1,314 @@
+<script type="text/javascript">
+var WorkComplain = {
+	init: function() {
+		HmisCommon.createDatepicker();
+		set_list();
+	},
+	addOpen: function(seqno) {
+		var modal = new HmisModal('modify', {width:700, top:200});
+		modal.open('컴플레인 작성','/work/complain_input/', {seqno:seqno});
+	}, 
+	print: function() {
+		window.print();
+		// var html = document.body.innerHTML;
+		// document.body.innerHTML = $('#list').html();
+		// window.print();
+		// document.body.innerHTML = html;
+	}
+}
+
+$(document).ready(function() {
+	
+
+	WorkComplain.init();
+
+	
+	$("#bt-new").button("option", "icons", {
+		primary : "ui-icon-circle-plus"
+	});
+	
+	$( ".radio" ).buttonset();
+	
+	$("#input-area").dialog({
+		autoOpen : false,
+		width : 750,
+		height : 450,
+		resizable : false,
+		modal : true,
+		show : {
+			effect : "blind"
+		},
+		buttons : {
+			"닫기" : function() {
+				$(this).dialog("close");
+			}
+		}
+	});
+	
+
+	
+	$( "input[name=srch_team_code], [data-role='reload']" ).change(function() {
+		grid_reload();
+	});
+
+	
+});	
+
+
+function open_new(seqno) {
+	var modal = new HmisModal('modify', {width:700, top:200});
+	modal.open('컴플레인 작성','/work/complain_input/', {seqno:seqno});
+
+	// $( "#input-area" ).load( "/work/complain_input/"+seqno);
+	// $( "#input-area" ).dialog("open");
+}
+
+
+function set_list() {
+	$("#list").jqGrid({
+		width : 1200,
+		height : 'auto',
+		url : "/work/complain_lists",
+		datatype : "json",
+		colNames:['번호','등록일자', '발생일자', '구분', '고객명', '팀', '담당자', '담당의', '컴플레인 내용', '후속대책', '비고'],
+		colModel : [ {
+			name : "no",
+			index : "no",
+			width : 15,
+			align : "center",
+			sortable:false					
+		}, {
+			name : "reg_date",
+			index : "reg_date",
+			width : 30,
+			align : "center",
+			sortable:false	
+		}, {
+			name : "complain_date",
+			index : "complain_date",
+			width : 35,
+			align : "center",
+			sortable:false						
+		}, {
+			name : 'complain_type',
+			index : "complain_date",
+			width : 25,
+			align : "center",
+			sortable:false
+		}, {
+			name : "name",
+			index : "name",
+			width : 25,
+			align : "center",
+			sortable:false		
+		}, {
+			name : "team_name",
+			index : "team_name",
+			width : 25,
+			align : "center",
+			sortable:false			
+		}, {
+			name : "complain_charger_name",
+			index : "complain_charger_name",
+			width : 20,
+			align : "center",
+			sortable:false		
+		}, {
+			name : "doctor",
+			index : "doctor",
+			width : 20,
+			align : "center",
+			sortable:false		
+		}, {
+			name : "complain",
+			index : "complain",
+			width : 110,
+			align : "left",
+			sortable:false		
+		}, {
+			name : "measure",
+			index : "measure",
+			width : 100,
+			align : "left",
+			sortable:false		
+		},{
+			name:'act',
+			index:'act', 
+			width:10,
+			align : "center",
+			classes:'grid-col-last'
+		}],
+		onSelectRow :  function(id) {
+			open_new(id);
+		},	
+		gridComplete: function(){
+			var ids = $("#list").jqGrid('getDataIDs');
+			for(var i=0;i < ids.length;i++){
+				var id = ids[i];
+				be = "<span class='ui-icon ui-icon-zoomin' onclick=\"open_new('"+id+"') \"></span>";
+				$("#list").jqGrid('setRowData',ids[i],{act:be});
+			}	
+		},
+		rowNum : 20,
+		rowList : [ 10, 20, 30 ],
+		pager : "#pager",
+		viewrecords : true,
+		sortorder : "desc"
+		// caption : "목록"
+	});
+
+	$("#list").jqGrid("navGrid", "#pager", {
+		edit : false,
+		add : false,
+		del : false,
+		search : false
+	});
+
+	
+	$("#list").jqGrid("navGrid", "#pager").navButtonAdd("#pager",{
+		   caption:"EXCEL", 
+		   buttonicon:"ui-icon-document", 
+		   onClickButton: function(){ 
+		      output_excel();
+		   }, 
+		   position:"last"
+	});
+}
+
+
+
+function grid_reload() {
+	var data = $("#srch-frm").serialize();
+	var url = "/work/complain_lists?" + data;
+	
+	$("#list").jqGrid("setGridParam", {
+		url : url,
+		page : 1
+	}).trigger("reloadGrid");
+}
+
+
+function output_excel(){        
+	
+	$("#srch-frm input[name='rows']").val($("#list").jqGrid("getGridParam", "records"));
+	$("#srch-frm input[name='sidx']").val($("#list").jqGrid("getGridParam", "sortname"));
+	$("#srch-frm input[name='sord']").val($("#list").jqGrid("getGridParam", "sortorder"));
+
+	var data = $("#srch-frm").serialize();
+	var url = "/work/excel_lists/complain?" + data;
+	
+    $("#srch-frm").attr("action", url);
+    $("#srch-frm").attr("target", "excel-frm");
+    $("#srch-frm").attr("method", "GET");
+    $("#srch-frm").submit();
+
+}
+</script>
+<div id="input-area" title="컴플레인 일지"></div>
+<h3 class="area-title">검색
+	<div class="button-box">
+		<button type="button" class="btn btn-theme" onClick="WorkComplain.addOpen();"><i class="fa fa-pencil fa-1"></i> 신규등록</button>
+	</div>
+</h3>
+<form id="srch-frm" onsubmit="return false"> 
+<input type="hidden" name="rows">
+<input type="hidden" name="page" value="1">
+<input type="hidden" name="sidx">
+<input type="hidden" name="sord">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="8%" />
+		<col width="" />
+		<col width="8%" />
+		<col width="16%" />
+		<col width="8%" />
+		<col width="16%" />
+		<col width="8%" />
+		<col width="16%" />
+	</colgroup>
+	<tbody>			
+		<tr>
+			<? if ($this->session->userdata( 'ss_dept_code' ) != '90'): ?>
+			<th>팀</th>
+			<td colspan="7">
+				<div class="radio">
+				<input type="radio" id="radio0" name="srch_team_code" checked="checked" value=""><label for="radio0">전체</label>
+				<? foreach($team_list as $i=>$val): ?>
+				<input type="radio" id="radio<?=$i?>" name="srch_team_code" value="<?=$i?>"><label for="radio<?=$i?>"><?=$val?></label>
+				<? endforeach; ?>
+				</div>
+			</td>
+		</tr>
+		<? endif; ?>
+		<tr>
+			<th>발생기간</th>
+			<td>
+				<input type="text" name="srch_start_date" id="srch_start_date" size="10" class="datepicker"> ~ <input type="text" name="srch_end_date" id="srch_end_date" size="10" class="datepicker">
+			</td>	
+			<th>구분</th>
+			<td>
+				<select name="srch_complain_type" data-role='reload'>
+					<option value="">-전체-</option>
+					<? foreach($complain_type as $i=>$val): ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+			</td>					
+			<th>담당자</th>
+			<td>
+				<select name="srch_complain_charger_id" data-role='reload'>
+					<option value="">-선택-</option>
+					<? foreach($user_list as $i=>$val): ?>
+					<option value="<?=$i?>"><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+			</td>	
+			<th>담당의</th>
+			<td>
+				<select name="srch_doctor" style="width:120px;" data-role='reload'>
+					<option value="">-전체-</option>
+					<? foreach($doctor_list as $i=>$val): ?>
+					<option value="<?=$val?>"><?=$val?></option>
+					<? endforeach; ?>
+				</select>
+			</td>				
+		</tr>	
+		<tr>					
+			<th>등록일</th>
+			<td>
+				<input type="text" name="srch_reg_date_s" class="datepicker"> ~ <input type="text" name="srch_reg_date_e" class="datepicker">
+			</td>
+			<th>고객명</th>
+			<td>
+				<input type="text" name="srch_name" size="15">
+			</td>	
+			<th>내용</th>
+			<td colspan="3">
+				<input type="text" name="srch_complain" style="width:100%">
+				<!-- <button id="bt-srch" onclick="grid_reload();">검색</button>
+				<button id="bt-reset" onclick="$('#srch-frm')[0].reset();grid_reload();">초기화</button> -->
+			</td>					
+		</tr>			
+	</tbody>
+</table>
+
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="grid_reload()"><i class="fa fa-search"></i> 검색</button>
+	<button type="button" class="btn btn-lg btn-gray" onclick="$('#srch-frm')[0].reset();grid_reload();">처음으로</button>
+</div>
+
+</form>
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title"  style="float:none">
+	목록
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onclick="WorkComplain.print()"><i class="fa fa-print fa-1"></i> 프린트</button>
+	</div>
+</h3>
+<table id="list"></table>
+<div id="pager"></div>
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>

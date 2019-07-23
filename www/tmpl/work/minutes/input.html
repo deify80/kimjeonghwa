@@ -1,0 +1,302 @@
+<style>
+#attendee_list span.label-default {margin:0px 5px 0px 0px;}
+</style>
+
+<form id="FrmMinutesInput" onsubmit="return false">
+<input type="hidden" name="mode" value="<?=$mode?>" />
+<input type="hidden" name="minutes_no" value="<?=$rs['no']?>" />
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>회의일시</th>
+			<td >
+				<input type="text" name="minutes_date" value="<?=$rs['minutes_date']?>" class="datepicker" /> <input type="text" name="minute_time_start" data-mask="time" value="<?=$rs['time_start']?>" style="width:70px" class="center" /> ~ <input type="text" name="minute_time_end" data-mask="time"  value="<?=$rs['time_end']?>" style="width:70px" class="center" />
+			</td>
+			<th>작성자</th>
+			<td>
+				<?=$rs['writer_name']?><input type="hidden" name="writer_id" value="<?=$rs['writer_id']?>" />
+			</td>
+		</tr>
+		<tr>
+			<th>회의구분</th>
+			<td >
+				<select name="type" class="validate[required]">
+					<option value="">::회의구분::</option>
+					<option value="1" <?=($rs['type_code']=='1')?'selected':''?>>간부회의</option>
+					<option value="2" <?=($rs['type_code']=='2')?'selected':''?>>팀장회의</option>
+				</select>
+			</td>
+			<th>회의장소</th>
+			<td>
+				<select name="room_code" onchange="MinutesInput.bulidRoom(this.value)">
+					<option value="">::회의실선택::</option>
+					<? foreach($cfg['room'] as $room_code => $room_name) {?>
+					<option value="<?=$room_code?>" <?=($rs['room_code']==$room_code)?'selected':''?>><?=$room_name?></option>
+					<? } ?>
+					<option value="etc" <?=($rs['room_code']=='etc')?'selected':''?>>기타</option>
+				</select>
+				<input type="text" name="room_etc" id="room_etc" style="display:none" class="" value="<?=$rs['room_etc']?>" />
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="2">참석자</th>
+			<td colspan="3">
+				<input type="text" id="search_user" class="search" style="width:200px" autocomplete="off" />
+			</td>
+		</tr>
+		<tr>
+			<td colspan="3">
+				<div id="attendee_notice" class="minheight">참석자를 선택하세요.</div>
+				<div id="attendee_list">
+					<? foreach($rs['attendees_list'] as $id=>$info) {?>
+					<span class="label label-default" data-id="<?=$id?>"><?=$info['label']?> <i class="fa fa-times fa-1 link" onclick="MinutesInput.removeAttendee(this)"></i></span>
+					<? } ?>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>주요안건</th>
+			<td colspan="3">
+				<textarea name="issues" class="validate[required] required hmis"><?=$rs['issues']?></textarea>
+			</td>
+		</tr>
+		
+		<tr>
+			<th rowspan="2">참석자의견</th>
+			<td colspan="3">
+				<select style="vertical-align: -1px;" id="sb_attendee">
+					<option value="">::참석자::</option>
+					<? foreach($rs['attendees_list'] as $id=>$user) {?>
+					<option value="<?=$id?>"><?=$user['name']?></option>
+					<? } ?>
+				</select>
+				<input type="text" id="opinion" placeholder="의견" style="width:600px"/>
+				<button type="button" onclick="MinutesInput.addOpinion()" class="btn btn-onlyicon"><i class="fa fa-plus fa-1 f-blue"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="3" id="opinion_list">
+				<div class="minheight">참석자 의견이 없습니다.</div>
+				<? foreach($rs['opinion_list'] as $id => $opinion) { ?>
+				<dl class="inline" style="margin:3px 0px" id="dl_<?=$id?>">
+					<dt style="width:79px;text-align:center"><?=$opinion['name']?></dt>
+					<dd><input type="text" value="<?=$opinion['opinion']?>" name="opinion[<?=$id?>]" placeholder="의견" style="width:600px"/> <button type="button" onclick="MinutesInput.removeOpinion('dl_<?=$id?>')" class="btn btn-onlyicon"><i class="fa fa-minus fa-1 f-error "></i></button></dd>
+				</dl>
+				<? } ?>
+			</td>
+		</tr>
+		<tr>
+			<th>채택사항</th>
+			<td colspan="3">
+				<textarea name="opinion_adopt" class="hmis" style="height:110px" data-group="search_rs"><?=$rs['opinion_adopt']?></textarea>
+			</td>
+		</tr>
+		
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+
+
+<textarea id="tmpl_opinion" style="display:none">
+	<dl class="inline" style="margin:3px 0px" id="dl_${id}">
+		<dt style="width:79px;text-align:center">${name}</dt>
+		<dd><input type="text" value="${opinion}" name="opinion[${id}]" placeholder="의견" style="width:600px"/> <button type="button" onclick="MinutesInput.removeOpinion('dl_${id}')" class="btn btn-onlyicon"><i class="fa fa-minus fa-1 f-error"></i></button></dd>
+	</dl>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var MinutesInput = {
+
+	init: function() {
+		HmisCommon.createDatepicker();
+		$('input[data-mask="time"]').mask('99:99');
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			// promptPosition : "centerRight",
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmMinutesInput").validationEngine('attach',option);
+		this.bulidRoom();
+		$('#search_user').autocomplete({
+			// minLength: 2,
+			select: function(event, ui) {
+				if(ui.item.rs.no > 0) {
+					me.addAttendee(ui.item);
+				}
+				$(this).val('');
+				return false;
+			},
+			focus: function (event, ui) {
+				event.preventDefault(); 
+			},
+			source:function(request, response) {
+				$.ajax({
+					url: "/work_proc/search_user",
+					data:{
+						name:request.term
+					},
+					dataType: "json",
+					type:'POST',
+					success: function (r) {
+						if(r.success) {
+							response($.map(r.data, function(v,i){
+								return {
+									label: v.label,
+									value: v.name,
+									rs:v
+								};
+							}));
+						}
+						else {
+							response([{
+								label:'"'+request.term+'" 으로 검색된 직원이 없습니다.',
+								value:'',
+								no:''
+							}]);
+						}
+						
+					}
+				})
+			}
+		}).on('keypress',function(e){
+			if(e.keyCode === 13) {
+				e.preventDefault();
+			}
+		});
+
+		this.tmpl_opinion = TrimPath.parseDOMTemplate('tmpl_opinion');
+		this.buildAttendee();
+	},
+
+	bulidRoom: function(v){
+		var v = v || $('select[name="room_code"]').val();
+		if(v == 'etc') {
+			$('#room_etc').css('display','');
+		}
+		else {
+			$('#room_etc').css('display','none');
+		}
+	},
+	buildAttendee: function() {
+		var target = $('#attendee_list');
+		if(target.find('span.label').length>0) {
+			$('#attendee_notice').css('display','none');
+		}
+		else {
+			$('#attendee_notice').css('display','');
+		}
+	},
+	addAttendee: function(v) {
+		var target = $('#attendee_list');
+		if(target.find('span[data-id="'+v.rs.user_id+'"]').length > 0) {
+			HmisAlert.alert("이미 추가된 참석자입니다.");
+			return false;
+		}
+
+		var span = $('<span class="label label-default" data-id="'+v.rs.user_id+'">'+v.label+' <i class="fa fa-times fa-1 link"></i></span>');
+		span.find('i.fa-times').on('click', function(){
+			MinutesInput.removeAttendee(this);
+		});
+
+		target.append(span);
+		this.buildAttendee();
+
+		$('#sb_attendee').append('<option value="'+v.rs.user_id+'">'+v.rs.name+'</option>');
+
+		
+	},
+	removeAttendee: function(el) {
+		var el = $(el) || $(this);
+		
+		var span = el.parent('span');
+		var id = span.data('id');
+		span.remove();
+		$('#sb_attendee').find('option[value="'+id+'"]').remove();
+		$('dl#dl_'+id).remove();
+
+		MinutesInput.buildAttendee();
+		MinutesInput.buildOpinion();
+	},
+	addOpinion: function(){
+		var attendee = $('#sb_attendee').val();
+		var opinion = $('#opinion').val();
+
+		if(!attendee) {
+			HmisAlert.alert('참석자를 선택하세요.');
+			return false;
+		}
+
+		if(!opinion) {
+			HmisAlert.alert('의견을 입력하세요.');
+			return false;	
+		}
+
+		var data = {
+			id:attendee,
+			name:$('#sb_attendee option:selected').text(),
+			opinion:opinion
+		}
+
+		$('#opinion_list').find('div.minheight').remove();
+		$('#opinion_list').append(this.tmpl_opinion.process(data));
+
+		$('#sb_attendee').val('');
+		$('#opinion').val('');
+	},
+	removeOpinion: function(dl_id){
+		$('#'+dl_id).remove();
+		this.buildOpinion();
+	},
+	buildOpinion: function() {
+		if($('#opinion_list').find('dl').length<1) {
+			$('#opinion_list').empty().append('<div class="minheight">참석자 의견이 없습니다.</div>');
+		}
+	},
+	save: function() {
+		if($('div#attendee_list>span').length <1) {
+			HmisAlert.alert("참석자를 1명이상 선택하세요.");
+			return false;
+		}
+
+		var formdata = $('#FrmMinutesInput').serializeArray();
+		var attendee = $('div#attendee_list>span').map(function(){ return $(this).data('id'); }).get();
+		
+		formdata.push({name:'attendees', value:attendee});
+		$.ajax({
+			url:'/work_proc/save_minutes',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('.modal-close').trigger('click');	
+					Minutes.reload();
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	MinutesInput.init();	
+});
+</script>

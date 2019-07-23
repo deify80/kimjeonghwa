@@ -1,0 +1,239 @@
+<!-- 대표님 전용 상담팀 보고서 -->
+<h3 class="area-title">보고서 검색</h3>
+<form id="FrmCeoFinanceSearch" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="page" value="{page}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>발생일자</th>
+			<td colspan="3">
+				<select name="plan_date[year]" data-role="search" data-default="{=date('Y')}">
+					{@ range(date('Y')-2, date('Y')+5)}
+					<option value="{.value_}" {? search.plan_date.year==.value_}selected{/}>{.value_}년</option>
+					{/}
+				</select>
+
+				<select name="plan_date[month]" data-role="search" data-default="{=date('m')}">
+					{@ range(1,12)}
+					<option value="{=str_pad(.value_,2,'0',C.STR_PAD_LEFT)}" {? search.plan_date.month==str_pad(.value_,2,'0',C.STR_PAD_LEFT)}selected{/}>{.value_}월</option>
+					{/}
+				</select>
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="{search.plan_date.day}">
+					<label class="btn {? search.plan_date.day == 'all'}active{/}">
+						<input type="radio" name="plan_date[day]" value="all" data-role="search" {? search.plan_date.day == 'all'}checked{/} />
+						<span  data-toggle="tooltip">전체</span>
+					</label>
+					{@ cfg.days}
+					<label class="btn {? search.plan_date.day == .key_}active{/}">
+						<input type="radio" name="plan_date[day]" value="{.key_}" data-role="search" {? search.plan_date.day == .key_}checked{/} />
+						<span class="f-days-{.w}" title="{.w_name}" data-toggle="tooltip">{.key_}</span>
+					</label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>계좌명</th>
+			<td>
+				<select name="account_seqno" data-role="search" data-default="all">
+					<option value="all">::계좌선택::</option>
+					{@ cfg.account}
+					<option value="{.account_seqno}" {? search.account_seqno===.account_seqno}selected{/}>{.account_name}</option>
+					{/}
+				</select>
+			</td>
+			<th>처리방식</th>
+			<td>
+				<select name="process_category"  data-role="search" data-default="all">
+					<option value="all">::처리방식::</option>
+					{@ cfg.process}
+					<option value="{.key_}" {? search.process_category==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>검색</th>
+			<td colspan="3">
+				<input type="text" name="word" class="full" placeholder="거래처 or 상세내역" value="{search.word}" />
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="CeoFinance.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="CeoFinance.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<div class="row" style="margin-top:10px">
+	<div class="main-box infographic-box colored" style="background-color: #29B6F6">
+		<div class="headline"> <i class="fa fa-plus-square"></i> 총 입금액</div>
+		<span class="value" id="sum_in">0</span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #FF7043;">
+		<div class="headline"> <i class="fa fa-minus-square"></i>  총 출금액</div>
+		<span class="value" id="sum_out">0</span>
+	</div>
+
+	<div class="main-box infographic-box colored" style="background-color: #8BC34A;">
+		<div class="headline"> <i class="fa fa-krw"></i> 현재잔액</div>
+		<span class="value" id="sum_total">0</span>
+	</div>
+
+</div>
+
+<h3 class="area-title">
+	<?=$report['name']?> 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 문서 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 문서수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+	</div>
+</h3>
+<table class="table table-responsive table-bordered table-list table-striped table-hover">
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th>등록일자</th>
+			<th>발생일자</th>
+			<th>계좌명</th>
+			<th>구분</th>
+			<th>은행명</th>
+			<th>계좌번호</th>
+			<th>거래처</th>
+			<th>통화</th>
+			<th>입/출금액</th>
+			<th>처리방식</th>
+			<th>거래상세내역</th>
+		</tr>
+	</thead>
+	<tbody id="finance_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination"></div>
+<!-- 페이징:E -->
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${\idx}</td>
+		<td><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${\seqno}"><span class="lbl"></span></label></td>
+		<td>${\reg_date}</td>
+		<td>${\plan_date}</td>
+		<td>${\account.account_name}</td>
+		<td>${\account.account_type_txt}</td>
+		<td>${\account.bank_name}</td>
+		<td>${\account.account_no}</td>
+		<td>${\trade_customer}</td>
+		<td>${\account.currency_txt}</td>
+		<td>{if statement_type=='I'} <span class="f-blue">+${\amount} </span>  {\else} <span class="f-error"> ${\amount} </span> {/if}</td>
+		<td>${\process_category_txt}</td>
+		<td>${\info}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="CeoFinance.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="CeoFinance.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="CeoFinance.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="CeoFinance.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="CeoFinance.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var CeoFinance = {
+	page:1,
+	init: function() {
+		this.load($('input[name="page"]').val());
+
+		$('[data-role="search"]').on('change',function() {
+			CeoFinance.setPage(1);
+			CeoFinance.load();
+		});
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	reload: function(){
+		CeoFinance.load(CeoFinance.page);
+	},
+	load: function(page) {
+		var p = page || this.page;
+		CeoFinance.setPage(p);
+
+		var me = this;
+		var search = $('#FrmCeoFinanceSearch').serialize();
+		HmisLoading.show('#finance_list');
+		$.ajax({
+			url:'/report/lists_finance_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#finance_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);	
+				}
+				else {
+					target.append('<tr><td colspan="13">검색된 보고서가 없습니다.</td></tr>');
+				}
+
+				var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+				$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				
+				var sum_total = parseInt(r.data.sum.sum_in)+parseInt(r.data.sum.sum_out);
+				$('#sum_in').html(HmisCommon.numberFormat(r.data.sum.sum_in));
+				$('#sum_out').html(HmisCommon.numberFormat(r.data.sum.sum_out));
+				$('#sum_total').html(HmisCommon.numberFormat(sum_total));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmCeoFinanceSearch');
+		this.load(1);
+	}
+}
+
+$(function() {
+	CeoFinance.init();
+})
+</script>

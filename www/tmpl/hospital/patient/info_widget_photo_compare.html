@@ -1,0 +1,24 @@
+<style>
+.compare {vertical-align: top;}
+</style>
+<div style="width:100%;text-align:center;">
+{@ photo}
+<span class="compare">
+	<img src="{.value_}" />
+</span>
+{/}
+</div>
+
+<script type="text/javascript">
+var PhotoCompare = {
+	init: function() {
+		$.each($('span.compare > img'), function(i,e) {
+			$(e).css({'width':'49%', 'vertical-align':'top', 'margin-top':'5px'});
+		});
+	}
+}
+
+$(function() {
+	PhotoCompare.init();
+})
+</script>

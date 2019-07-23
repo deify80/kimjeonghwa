@@ -1,0 +1,106 @@
+<form id="FrmSettingsHoliday">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>설정년월</th>
+			<td>
+				<select name="year" onchange="SettingsHoliday.load()">
+					{@ cfg.year}
+					<option value="{.value_}" {? date('Y')==.value_}selected{/}>{.value_}년</option>
+					{/}
+				</select>
+				<select name="month" onchange="SettingsHoliday.load()">
+					{@ cfg.month}
+					<option value="{=str_pad(.value_, 2,'0', C.STR_PAD_LEFT)}" {? date('n')==.value_}selected{/}>{=str_pad(.value_, 2,'0', C.STR_PAD_LEFT)}월</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div class="dashed" style="margin:10px 0px"></div>
+<table class="table table-bordered table-center table-form">
+	<thead>
+		<tr>
+			<th class="f-error">일</th>
+			<th>월</th>
+			<th>화</th>
+			<th>수</th>
+			<th>목</th>
+			<th>금</th>
+			<th class="f-blue">토</th>
+		</tr>
+	</thead>
+	<tbody id="holiday_list">
+		
+	</tbody>
+</table>
+
+</form>
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="SettingsHoliday.save();">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<textarea id="tmpl_holiday" style="display:none">
+<td>${\d}일</td>
+</textarea>
+
+<script type="text/javascript">
+var SettingsHoliday = {
+	init: function() {
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmSettingsHoliday').serialize();
+		$.ajax({
+			url:'/treat/settings_holiday_list',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var target = $('#holiday_list');
+				target.empty();
+				var tr = '';
+				$.each(r.data, function(i,e){
+					if(i%7==0) tr = $('<tr />');
+					if(e.d) {
+						var checked = (e.is_holiday=='Y')?'checked':'';
+						tr.append('<td><label class="hmis"><input type="checkbox" class="hmis" name="holiday[]" value="'+e.d+'" '+checked+' /><span class="lbl"> '+e.d+'</span></label></td>');	
+					}
+					else tr.append('<td></td>');
+					
+					if(i%7==6) target.append(tr);
+				});
+			}
+		})
+	},
+	save: function() {
+		var formdata = $('#FrmSettingsHoliday').serialize();
+		$.ajax({
+			url:'/treat_proc/save_settings_holiday',
+			data:formdata, 
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				
+				HmisAlert.alert(r.msg, function() {
+					if(r.success) {
+						$('.modal-close').trigger('click');
+						Schedule.load();
+					}
+				})
+			}
+		})
+	}
+};
+
+$(function() {
+	SettingsHoliday.init();
+})
+</script>

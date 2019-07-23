@@ -1,0 +1,94 @@
+@charset "utf-8";
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css?);
+@import url(font-awesome.min.css?20150902);
+@import url(layout.css?20180716);
+@import url(layout-bootstrap.css?20180716);
+
+.status-0 {background-color:#FF5722;}
+.status-1 {background-color:#8BC34A;}
+.status-2 {background-color:#800080;}
+.status-8 {background-color:#C3C3C3;}
+.status-9 {background-color:#8D6E63;}
+
+/* 수술완료(99), 수술예정(98) */
+.status-99,  .status-98 {background-color:#FF8000;}
+/* 수술취소(90), 내원취소(50) */
+.status-90, .status-50{}
+/* 내원상담(52), 내원예약(51) */
+.status-52 {background-color: #009688;}
+.status-51 {background-color: #03A9F4;}
+/* 진행중(11), 예치금(13) */
+.status-11, .status-13 {background-color: #8BC34A;}
+/* 부재 */
+.status-21, .status-22, .status-23 {background-color:#A1887F;}
+/* 종료 */
+.status-00, .status-09 {background-color:#414141;}
+
+.clear {clear:both;}
+
+.text-left {text-align:left;}
+@font-face {
+	font-family: ngeot;
+	src: url(/lib/fonts/NanumGothic.eot);
+}
+
+@font-face {
+	font-family: ngeotBold;
+	src: url(/lib/fonts/NanumGothicExtraBold.eot);
+}
+
+@font-face {
+	font-family: ngttf;
+	src: url(/lib/fonts/NanumGothic.ttf);
+}
+
+@font-face {
+	font-family: ngttfBold;
+	src: url(/lib/fonts/NanumGothicExtraBold.ttf);
+}
+
+
+.classify-box2 .classify {
+	background-color: #3A3633;
+	color: #fff;
+	font-size: 13px;
+	padding: 8px;
+	margin-top: 15px;
+	font-weight: 700;
+}
+
+.classify-box2.count-0 {
+	margin-left:-13px;
+}
+
+.classify-box2.count-0 > div {
+	float:left;
+	margin-left:13px;
+	width:572px;
+}
+
+.btn-up {
+	width:20px;
+	padding:0px;
+	box-sizing: border-box;
+	padding:1px 0px 4px 2px;
+}
+
+.btn-down {
+	width:20px;
+	padding:0px;
+	box-sizing: border-box;
+	padding:2px 0px 3px 2px;
+}
+
+.btn-up:hover, .btn-down:hover {
+	background-color:#FF5722;
+	border:#FF5722;
+}
+
+.btn-up:hover i, .btn-down:hover i {
+	color:#FFF !important;
+}
+
+.abs {position:absolute;}
+.rel {position:relative;}

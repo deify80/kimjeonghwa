@@ -1,0 +1,49 @@
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col style="width:50px" /><!-- 번호 -->
+		<!-- <col style="width:50px" /> --><!-- 선택 -->
+		<col style="width:100px" /><!-- 예약일자 -->
+		<col style="width:100px" /><!-- 예약시간 -->
+		<col style="width:80px" /><!-- 예약유형 -->
+		<col style="width:80px" /><!-- 예약상태 -->
+		<col style="width:80px" /><!-- 담당실장 -->
+		<col style="width:80px" /><!-- 담당의사 -->
+		<col style="width:200px" /><!-- 진료부위 -->
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<!-- <th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_appointment[]')"><span class="lbl"></span></label></th> -->
+			<th>예약일자</th>
+			<th>예약시간</th>
+			<th>예약유형</th>
+			<th>예약상태</th>
+			<th>담당실장</th>
+			<th>담당의사</th>
+			<th>진료부위</th>
+			<th>메모</th>
+		</tr>
+	</thead>
+	<tbody id="appointment_list">
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<!-- <td><label class="hmis"><input type="checkbox" class="hmis" name="checked_appointment[]" value="{.no}"><span class="lbl"></span></label></td> -->
+			<td>{.appointment_date}</td>
+			<td>{.appointment_time}</td>
+			<td>{.type_text}</td>
+			<td>{.status_text}</td>
+			<td>{.manager_name}</td>
+			<td>{.doctor_name}</td>
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" title="{.treat_info}">{.treat_info}</span></td>
+			<td class="left"><div class="ellipsis">{.comment}</div></td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="9" class="center">등록된 예약내역이 없습니다.</td>
+		</tr>
+		{/}
+
+	</tbody>
+</table>

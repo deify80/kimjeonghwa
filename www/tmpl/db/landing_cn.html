@@ -1,0 +1,172 @@
+<h3 class="area-title">랜딩 검색</h3>
+<form id="FrmLandingSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="<?=$cfg['group']?>" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>항목</th>
+			<td>
+				<select name="category_code" >
+					<option value="">::항목선택::</option>
+					<? foreach($cfg['category'] as $category_code => $category_name) {?>
+					<option value="<?=$category_code?>"><?=$category_name?></option>
+					<? } ?>
+				</select>
+			</td>
+			<th>검색</th>
+			<td><input type="text" name="search" class="full" placeholder="제목"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="LandingList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="LandingList.reset()">처음으로</button>
+</div>
+</form>
+
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	랜딩 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 랜딩수 <span id="cnt_search" class="f-bold  f-error">0</span>개 <span class="split">|</span> 총 랜딩수 <span id="cnt_total"class="f-bold">0</span>개</span>
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="LandingList.openInput()"><i class="fa fa-pencil fa-1"></i> 신규랜딩등록</button>
+	</div>
+</h3>
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="150px"><!-- 항목 -->
+		<col /><!-- 제목 -->
+		<col width="100px">
+		<col width="150px">
+		<col width="100px">
+		<col width="150px">
+		
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></th>
+			<th>항목</th>
+			<th>제목</th>
+			<th>웹랜딩 코드</th>
+			<th>웹랜딩 템플릿</th>
+			<th>모바일랜딩코드</th>
+			<th>모바일랜딩템플릿</th>			
+		</th>
+	</thead>
+	<tbody id="landing_list">
+		<tr>
+			<td colspan="8"><img src="/images/common/loading.gif" style="vertical-align:middle;margin-right:5px" /> 로딩중입니다.</td>
+		</tr>
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>${idx}</td>
+		<td><input type="checkbox" class="hmis" name="checked[]" value="${no}"><span class="lbl"></span></td>
+		<td>${category_text}</td>
+		<td class="left"><a href="javascript:;" onclick="LandingList.openInput('${no}')" class="link">${title}</a></td>
+
+		<td><a href="javascript:;" onclick="window.open('${landing_web}')" class="link" data-toggle="tooltip" title="웹랜딩페이지 바로 가기">W${code}</a></td>
+		<td>${tmpl_web}</td>
+		<td><a href="javascript:;" onclick="window.open('${landing_mobile}')" class="link" data-toggle="tooltip" title="모바일랜딩페이지 바로 가기">M${code}</a></td>
+		<td>${tmpl_mobile}</td>
+		
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="LandingList.load(${first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="LandingList.load(${prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="LandingList.load(${p.num})">${p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="LandingList.load(${next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="LandingList.load(${last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var LandingList = {
+	page:1,
+	init: function() {
+		this.load(1);
+	},
+	reset: function() {
+		$('#FrmLandingSearch')[0].reset();
+		this.load(1);
+	},
+	openInput: function(landing_no) {
+		var title = (landing_no)?'랜딩 정보 수정':'신규 랜딩 등록';
+		var modal = new HmisModal('landing_input', {width:800, top:200});
+		modal.callback = function() { LandingList.reload(); }
+		modal.open(title,'/db/landing_cn_input',{landing_no:landing_no});
+	},
+	reload : function() {
+		this.load(this.page);
+	},
+	load: function(page) {
+		var p = page || 1;
+		var me = this;
+		var search = $('#FrmLandingSearch').serialize();
+		
+		$.ajax({
+			url:'/db/landing_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#landing_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					target.append('<tr><td colspan="11">검색된 랜딩정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	}
+}
+
+$(function() {
+	LandingList.init();
+})
+</script>

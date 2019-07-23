@@ -1,0 +1,91 @@
+<div class="area-body" style="width:">
+<h3 class="area-title">검색</h3>
+<form id="FrmConsultingSearch">
+<input type="hidden" name="srch_path_txt" id="srch_path_txt" value="">
+<input type="hidden" name="srch_media_txt" id="srch_media_txt" value="">
+
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>분배일자</th>
+			<td colspan="3">
+				<input type="text" name="srch_start_date" id="sdate_s"  class="datepicker lg" value="<?=date('Y-m-d')?>" data-default='<?=$cfg["date"]["cur_month"]?>' /> ~ <input type="text" name="srch_end_date" id="sdate_e"  class="datepicker lg" value="<?=date('Y-m-d')?>"data-default='<?=$cfg["date"]["cur_month_end"]?>'  />
+				<!-- <input type="text" name="srch_start_date" id="sdate_s"  class="datepicker lg" value="<?=date('2017-01-16')?>" data-default="{=date('Y-m-d')}" /> ~ <input type="text" name="srch_end_date" id="sdate_e"  class="datepicker lg" value="<?=date('2017-01-17')?>"data-default="{=date('Y-m-d')}"  /> -->
+				<ul class="btn-group btn-group-xs">
+					<li onclick="ConsultingTeamMain.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"><a href="javascript:;">오늘</a></li>
+					<li onclick="ConsultingTeamMain.setDate('<?=$cfg['date']['weekday_db']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번주</a></li>
+					<li onclick="ConsultingTeamMain.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"><a href="javascript:;">이번달</a></li>
+					<li onclick="ConsultingTeamMain.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"><a href="javascript:;">어제</a></li>
+					<li onclick="ConsultingTeamMain.setDate('<?=$cfg['date']['pre_week_start_db']?>','<?=$cfg['date']['pre_week_end_db']?>');"><a href="javascript:;">지난주</a></li>
+					<li onclick="ConsultingTeamMain.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="ConsultingTeamMain.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="ConsultingTeamMain.reset()">처음으로</button>
+</div>
+
+
+<!-- 신규/기존 상담팀 실적:S -->
+<div id="list-area" style="padding: 0;margin: 0;"></div>
+<!-- 신규/기존 상담팀 실적:S -->
+
+
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var ConsultingTeamMain = {
+
+	init: function() {
+		var me = this;
+
+		me.setDate('<?=$cfg["date"]["cur_month"]?>','<?=$cfg["date"]["cur_month_end"]?>');
+		
+		$('[data-role="search"]').on('change.search',function() {
+			ConsultingTeamMain.load();
+		});
+
+		HmisCommon.createDatepicker();
+		this.load();
+	},
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmConsultingSearch').serializeArray();
+		$('#list-area').load('/stats/consulting_team_lists', formdata);
+	},
+	reset: function() {
+		HmisCommon.formReset('FrmConsultingSearch');
+		this.load();
+	},
+	excel: function() {
+		var formdata = $('#FrmConsultingSearch').serialize();
+		document.location.href="/stats/consulting_team_lists?mode=excel&"+formdata;
+	},
+
+	
+}
+
+$(function(){
+	ConsultingTeamMain.init();
+});
+
+
+</script>
+</div>

@@ -1,0 +1,104 @@
+<h3 class="area-title">분배현황</h3>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<? foreach($this->config->item('path') as $i=>$val) {
+			if(empty($list[$i])) continue;
+		?>
+		<tr>
+			<th><?=$val?></th>
+			<td style="line-height:1.5em">
+			<? foreach($list[$i] as $j) { ?>
+				<? if($j->turn_status == "Y") {?>
+				<strong class="f-error"><?=$j->team_name;?></strong>
+				<? } else { ?>
+				<span style="margin-right: 5px;"><?=$j->team_name;?></span>
+				<? } ?>
+			<? } ?>
+			</td>
+		</tr>
+		<? } ?>
+	</tbody>
+</table>
+<h3 class="area-title">공동 DB 컨택 현황</h3>
+<table class="table table-bordered table-form">
+	<thead>
+		<tr>
+			<? foreach($team_list as $i=>$val): ?>		
+			<th><?=$val?></th>
+			<? endforeach; ?>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<? foreach($team_list as $i=>$val): ?>		
+			<td class="center-top">
+				<ul style="margin: 2px;">
+					<? foreach($contact_list[$i] as $j): ?>
+					<li style="padding: 2px;"><?=$j->name?> <span class="badge"><?=$j->total?></span></li>
+					<? endforeach; ?>
+				</ul>
+			</td>
+			<? endforeach; ?>
+		</tr>
+	</tbody>
+</table>
+	
+	
+	<!-- 
+	<table class="basic-table">
+		<thead>
+			<tr>
+				<th>박혜정팀</th>
+				<th>김남희팀</th>
+				<th>김아름팀</th>
+				<th>박혜정팀</th>
+				<th>김남희팀</th>
+				<th>김아름팀</th>
+				<th>박혜정팀</th>
+				<th>김남희팀</th>
+				<th>김아름팀</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center-top">
+					<ul style="margin: 2px;">
+						<li>박혜정 1</li>
+						<li>박혜정 2</li>
+						<li>박혜정 2</li>
+						<li>박혜정 2</li>
+						<li>박혜정 2</li>
+					</ul>
+				</td>
+				<td class="center-top"></td>
+				<td class="center-top">
+					<ul style="margin: 2px;">
+						<li>박혜정 1</li>
+						<li>박혜정 2</li>
+						<li>박혜정 2</li>
+					</ul>
+				</td>
+				<td class="center-top"></td>
+				<td class="center-top"></td>
+				<td class="center-top"></td>
+				<td class="center-top"></td>
+				<td class="center-top"></td>
+				<td class="center-top">
+					<ul style="margin: 2px;">
+						<li>박혜정 1</li>
+						<li>박혜정 2</li>
+					</ul>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	 -->
+
+	
+<div class="area-button">
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>

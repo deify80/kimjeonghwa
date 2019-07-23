@@ -1,0 +1,54 @@
+<form id="FrmSalesSetTeam">
+<input type="hidden" name="pack" value="stats" />
+<input type="hidden" name="field" value="team" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>팀명</th>
+			<th>팀원수</th>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach($cfg['team'] as $tc=>$tn){?>
+		<tr>
+			<th><?=$tn?></th>
+			<td><input type="text" name="value[<?=$tc?>]" value="<?=$set[$tc]?>"> 명</td>
+		</tr>
+		<? } ?>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button type="button" class="btn btn-theme btn-lg" onclick="SalesSetTeam.save()">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<script type="text/javascript">
+var SalesSetTeam = {
+	init: function() {
+
+	},
+	save: function() {
+		var formdata = $('#FrmSalesSetTeam').serialize();
+		$.ajax({
+			url:'/stats_proc/set_config',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					SalesMain.load();
+					$('.modal-close').trigger('click');			
+				}
+			}
+		})
+		
+
+	}
+}
+</script>

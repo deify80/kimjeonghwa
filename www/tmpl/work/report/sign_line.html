@@ -1,0 +1,42 @@
+<form id="FrmSignLine" onsubmit="return false;">
+<table class="table table-bordered">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tr>
+		<th>결재선명</th>
+		<td><input type="text" name="line_name" class="full validate[required] required" data-errormessage-value-missing="결재선명을 입력하세요." /></td>
+	</tr>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var SignLine = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			// promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmSignLine").validationEngine('attach',option);
+	},
+	save: function() {
+		var formdata = $('#FrmSignLine').serializeArray();
+		ReportSign.saveLine('insert',formdata);
+		$('#HmisModal_signline .modal-close').trigger('click');	
+	}
+}
+
+$(function(){
+	SignLine.init();
+})
+</script>

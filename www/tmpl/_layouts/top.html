@@ -1,0 +1,41 @@
+<div class="area-logo">
+	<a href="/main/msg"><img src="/images/layout/logo_top.png" style="width:55px;"></a>
+	<span><a href="/main/msg" style="color:#33691E"><?=$this->session->userdata( 'ss_biz_name' )?></a></span>
+</div>
+<ul class="top_nav" style="cursor: pointer;">
+<?
+foreach ($this->menu as $d1) {
+	$d2_first = array_shift($d1['children']);
+	$d3_first = array_shift($d2_first['children']);
+?>
+	<li class="<?=(MK_1==$d1['no'])?'selected':''?>"><a href="<?=$d3_first['href']?>" class="top-menu" ><?=$d1['name']?></a></li>
+<? } ?>
+</ul>
+
+<!-- 비밀번호변경:S -->
+<div style="float: right; text-align: right; margin-right: 20px; padding-top: 15px; cursor: pointer;padding-left:10px">
+	<? if ($this->session->userdata( 'ss_duty_code' ) == "9") { ?>
+	<button class="btn btn-theme-dark" onclick="open_bbs('bbs_sinmungo')">신문고</button>&nbsp;
+	<? } ?>
+	<button class="btn btn-theme-dark" onclick="document.location.href='/login/logout'">로그아웃</button>&nbsp;
+	<button class="btn btn-theme-dark" onclick="open_password()">비밀번호 변경</button>
+
+	<!-- 20170220 kruddo : 대표님 모바일 버전 로그인 시 PC버전 보기 기능 추가 -->
+	<? if ($this->session->userdata( 'ss_user_id' ) == "kakwon") { ?>
+	<button class="btn btn-theme-" onclick="device_link('M')">모바일버전</button>
+	<? } ?>
+	<!-- 20170220 kruddo : 대표님 모바일 버전 로그인 시 PC버전 보기 기능 추가 -->
+</div>
+<!-- 비밀번호변경:E -->
+
+
+<div style="float: right; text-align: right; margin-right: 4px; padding-top: 15px;">
+	<? if($this->common_lib->check_auth_group('ex_bizid')) { ?>
+	<select name="global_biz_id" id="global_biz_id" style="width: 150px; border: 0;">
+		<? foreach($this->session->userdata( 'ss_my_biz_list' ) as $i=>$val): ?>
+		<option value="<?=$i?>"><?=$val?></option>
+		<? endforeach; ?>
+	</select>
+	<? } ?>
+	<span style="color: #fff;">&nbsp;<? if($this->session->userdata( 'ss_team_name' ) != ""): ?>[<?=$this->session->userdata( 'ss_team_name' )?>]<? endif; ?> <?=$this->session->userdata( 'ss_name' )?> <?=$this->session->userdata( 'ss_position_name' )?></span>
+</div>

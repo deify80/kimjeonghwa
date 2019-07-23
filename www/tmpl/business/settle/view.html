@@ -1,0 +1,552 @@
+<script>
+
+	var settle_type = 0;
+
+	$(document).ready(function() {
+			$('[data-toggle="tooltip"]').tooltip();
+
+		open_calendar("#expense_start_date");
+		open_calendar("#expense_end_date");
+
+		// 결재라인 다이얼로그
+		$("#settle_line-area").dialog({
+			autoOpen : false,
+			width : 900,
+			height : 450,
+			resizable : false,
+			modal : true,
+			show : {
+				effect : "blind"
+			},
+			buttons : {
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+
+		// 결재올리기
+		$("#bt-ok").button("option", "icons", {
+			primary : "ui-icon-circle-check"
+		});
+
+
+
+
+		$( "table#unconfirm-list tbody tr" ).bind({
+			click: function() {
+				document.location = "/business/settle_view/give/"+$(this).attr("id");
+			},
+			mouseover: function() {
+			    $(this).children().css("cursor", "pointer");
+	            $(this).children().css('background-color', '#deedf8');
+			},
+			mouseleave: function() {
+				$(this).children().css('background-color', '#ffffff');
+			}
+		});
+
+	});
+
+	// 기안참조 레이아웃 팝업
+	function draft_refer(draft_no){
+
+		$( '#settle_line-area' ).dialog('option', 'title', '기안참조');
+		$( "#settle_line-area" ).load( "/business/settle_view?no="+draft_no+"&mode=draft");
+		$( "#settle_line-area" ).dialog("open");
+	}
+
+	function init_expence(settle_type){
+		$('.expense_div'+settle_type).show();
+	}
+
+	function go_back(){
+		//history.back();
+		document.location = '/business/settle/<?=$_GET['view_mode']?>';
+	}
+
+	function settle_cancel(){
+		if( confirm('올린결재를 취소하시겠습니까?') ){
+			$('#frm').attr({action:'/business_proc/settle_cancel', method:'post'}).submit();
+		}
+	}
+
+	//mode==terminate시 db삭제처리
+	function settle_del(mode){
+		var msg = (mode=='terminate')?"삭제후에는 복구할 수 없습니다.\n삭제하시겠습니까?":"삭제하시겠습니까?";
+		if(!confirm(msg)) return false;
+		$('#frm input[name="del_mode"]').val(mode);
+		var formdata = $('#frm').serializeArray();
+		// formdata.push({name:'type',value:''})
+
+		$.ajax({
+			url:'/business_proc/settle_del',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				alert(r.msg);
+				go_list();
+			}
+
+		});
+		// $('#frm').attr({action:'/business_proc/settle_del', method:'post'}).submit();
+	}
+
+	function go_list() {
+		var view_mode = "<?=$_GET['view_mode']?>";
+		if(view_mode=='give') {
+			document.location.href='/business/settle/give';
+		}
+		else {
+			document.location.href='/business/settle/send';
+		}
+
+	}
+
+	function consult_add(){
+		var settle_no = $('#settle_no').val();
+		var consult = $('#consult').val();
+
+		if( $.trim(consult) == "" ){
+			alert('내용을 입력해 주세요.');
+			return;
+		}
+
+		var url = "/business_proc/consult_add";
+ 		$.ajax({
+ 			type : "POST",
+ 			url : url,
+ 			data : "settle_no="+settle_no+"&consult="+consult,
+ 			success : function(result_data) {
+
+ 				var obj = $.parseJSON(result_data);
+ 				$("#consult_str").append(obj.reg_date+" "+obj.user_name+" : "+obj.content+" "+"<br />");
+ 				$('#consult').val('');
+ 			}
+ 		});
+	}
+
+	function settle_approve(settle_no, max_level, my_level){
+
+		if( confirm("승인 처리 하시겠습니까??") ){
+			var url = "/business_proc/settle_approve";
+	 		$.ajax({
+	 			type : "POST",
+	 			url : url,
+	 			data : 'settle_no='+settle_no+'&max_level='+max_level+'&my_level='+my_level,
+	 			success : function(r) {
+	 				window.location.reload();
+	 			}
+	 		});
+		}
+
+	}
+
+
+	function settle_return( settle_no ){
+
+		if( confirm("반려 처리 하시겠습니까?") ){
+			var url = "/business_proc/settle_return";
+	 		$.ajax({
+	 			type : "POST",
+	 			url : url,
+	 			data : 'settle_no='+settle_no,
+	 			success : function(result_data) {
+	 				window.location.reload();
+	 			}
+	 		});
+		}
+
+
+	}
+
+	function file_down(file_name){
+		document.location.href = '/business/download_file?file_name='+file_name;
+	}
+
+
+
+	function init(){
+
+	}
+
+
+function copy() {
+	var str = $("#temp_contents").val();
+	var IE=(document.all)?true:false;
+	if (IE) {
+		window.clipboardData.setData('Text',str);
+		alert("정상적으로 복사되었습니다. \n붙여넣기 하시면 됩니다.");
+	} else {
+		temp = prompt("Ctrl+C를 눌러 클립보드로 복사하세요.", str);
+	}
+}
+
+
+
+</script>
+
+<div id="settle_line-area" title="기안참조"></div>
+<textarea style="display: none;" id="temp_contents"><?=trim(htmlspecialchars_decode(strip_tags($view_data['content'])))?></textarea>
+<div style="width: 100%;">
+	<form id="frm" action="" method="post">
+		<input type="hidden" name="settle_no" id="settle_no" value="<?=$view_data['no'];?>">
+		<input type="hidden" name="del_mode" value="">
+		<h3 class="area-title">
+			<div>결재 상세보기</div>
+			<div class="button-box">
+
+				<?php
+				//취소된 기안인경우 본인에 한해 삭제버튼 노출 2015-04-28 by hjlee
+				if( $view_data['status'] == 4 && ( $this->session->userdata( 'ss_user_no' ) == $view_data['user_no']  ) ){
+				?>
+				<button type="button" onClick="settle_del();">기안삭제</button>
+				<? } ?>
+
+				<?php
+				//직책이 대표이사인경우 완전삭제버튼 노출  2015-04-28 by hjlee
+				if($this->session->userdata('ss_duty_code') == 9) {
+				?>
+				<button type="button"  class="btn btn-flat-orange" onClick="settle_del('terminate');"><i class="fa fa-times fa-1"></i> 기안완전삭제</button>
+				<? } ?>
+
+				<? if($mode != "draft"): ?>
+				<button type="button"  id="bt-print" class="btn btn-flat-purple" onClick="SettleView.print('print')"><i class="fa fa-print fa-1"></i> 인쇄</button>
+				<? endif; ?>
+
+				<button type="button" class="btn btn-flat-orange " onclick="SettleView.list()" >목록</button>
+
+				<? if ($auth['business_mod']) {?>
+				<button type="button" class="btn btn-flat-blue" onClick="location.href='/business/settle_modify/<?=$view_data['no']?>'"><i class="fa fa-edit fa-1"></i> 수정</button>
+				<? } ?>
+
+			</div>
+		</h3>
+
+		<div id="print">
+		<table class="table table-bordered table-form">
+			<colgroup>
+				<col style="width:100px" />
+				<col style="width:200px" />
+				<col style="width:100px" />
+			</colgroup>
+
+			<tbody>
+				<tr>
+					<th>사업장</th>
+					<td colspan="7">
+						<?=$biz_info[$view_data['biz_id']]['biz_name']?>
+					</td>
+				</tr>
+
+				<tr>
+					<th>품의번호</th>
+					<td>
+						<?=$view_data['settle_number'];?>
+					</td>
+					<th rowspan="3">결재</th>
+
+					<?php
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td style="text-align: center; padding-left: 0px;">
+						<?php echo $approval[$i]['position_title']; ?>
+					</td>
+					<?php } ?>
+
+				</tr>
+				<tr>
+					<th>작성일자</th>
+					<td>
+						<?=$view_data['reg_date'];?>
+
+					</td>
+
+					<?php
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td rowspan="2" style="text-align: center; padding-left: 0px;">
+						<?php
+						$button_chk = 0;
+						if( isset( $approval[$i] ) ) {
+							if( $approval[$i]['status'] == NULL ){
+								$approval[$i]['status'] = 0;
+							}
+							echo "(".$settle_status[$approval[$i]['status']].")"; //상태
+							echo "<br>";
+							echo $approval[$i]['name']; //결제자명
+
+
+
+							//결제완료(승인/반려)
+							if( $approval[$i]['status'] == 2 || $approval[$i]['status'] == 3 ){
+								echo "<br>";
+								echo $approval[$i]['mod_date']; //결제일
+							}
+
+							if(($this->session->userdata('ss_user_no') == $approval[$i]['user_no'] || $approval[$i]['instead']) && $approval[$i]['status'] <2  && $view_data['status'] != 5 ){
+
+					?>
+						<div style="margin-top:5px">
+						<button type="button" class="btn btn-flat-blue btn-onlyicon" onClick="settle_approve('<?=$view_data['no'];?>','<?=count($approval);?>','<?=$approval[$i]['level']?>');"  data-toggle="tooltip" title="승인"><i class="fa fa-thumbs-up "></i></button>
+						<button type="button" class="btn btn-flat-orange btn-onlyicon" onClick="settle_return('<?=$view_data['no'];?>');" data-toggle="tooltip" title="반려"><i class="fa fa-thumbs-down"></i></button>
+						</div>
+					<?php
+							}
+						}
+					?>
+					</td>
+					<?php } ?>
+				</tr>
+				<tr>
+					<th>내용구분</th>
+					<td>
+						<?=$view_data['settle_type_str'];?>
+					</td>
+				</tr>
+				<tr>
+					<th>작성자</th>
+					<td>
+						<?=$view_data['name'];?>
+					</td>
+					<th>참조</th>
+					<td colspan="5">
+						<?php
+					$refer_str = "";
+					for( $i = 0 ; $i < count($refer) ; $i++ ){
+						if( $refer_str ){
+							$refer_str .= ", ";
+						}
+
+						$refer_str .= $refer[$i]['name']."(".$settle_status[$refer[$i]['status']].")";
+					}
+					echo $refer_str;
+					?>
+					</td>
+				</tr>
+				<tr>
+					<th>제목</th>
+					<td colspan="7">
+						<?=$view_data['title'];?>
+					</td>
+				</tr>
+				<tr>
+					<th colspan="8">주요내용</th>
+				</tr>
+				<tr>
+
+					<td colspan="8" style="padding: 15px;" id="settle-contents"><br />
+					<div style="line-height:2em"><?=$view_data['content']?></div>
+
+						<?
+						$no = 1;
+						foreach($settle_expense as $row){
+							$settle_expense_cnt = $row;
+
+							if($no == 1)		echo "<h3>지출예정 : ".$view_data['expense_schedule']."</h3>";
+							else if($no == 3)		echo "<h3>지출완료 : ".$view_data['expense_complete']."</h3>";
+
+							if($no == 1 || $no == 3)	$expense_title = "<현금 지출분>";
+							else if($no == 2 || $no == 4)	$expense_title = "<카드 지출분>";
+						?>
+						<table style="display: none" class="expense_div1 basic-table">
+							<colgroup>
+								<col width="10%" />
+								<col width="10%" />
+								<col width="10%" />
+								<col width="17%" />
+								<col width="10%" />
+								<col width="20%" />
+							</colgroup>
+							<thead>
+								<tr>
+									<th colspan="6"><?=$expense_title?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<th>지출일</th>
+									<th>거래처</th>
+									<th>내역</th>
+									<th>적용기간</th>
+									<th>금액</th>
+									<th>비고</th>
+								</tr>
+							<?php
+								$total = 0;
+								foreach( $settle_expense_cnt as $row){
+							?>
+							<tr>
+								<td style="text-align: center; padding-left: 0px;">
+									<?=substr($row['expense_date'],0,10);?>
+								</td>
+								<td style="text-align: center; padding-left: 0px;">
+									<?=$row['expense_company']?>
+								</td>
+								<td style="text-align: center; padding-left: 0px;">
+									<?=$row['expense_history']?>
+								</td>
+								<td style="text-align: center; padding-left: 0px;">
+									<?=substr($row['expense_period_start'],0,10)?> ~ <?=substr($row['expense_period_end'],0,10)?>
+								</td>
+								<td style="text-align: right;">
+									<?=number_format($row['expense_price'])?>
+								</td>
+								<td style="text-align: center; padding-left: 0px;">
+									<?=$row['expense_etc']?>
+								</td>
+							</tr>
+							<?php
+								$total += $row['expense_price'];
+							}
+							?>
+							<tr>
+								<th colspan=4 style="text-align: center; padding-left: 0px;">합계</th>
+								<th style="text-align: right;">
+									<?=number_format($total);?>
+								</th>
+								<th></th>
+							</tr>
+						</tbody>
+					</table>
+					<?
+					$no++;
+					}
+					?>
+
+
+					<script>
+					init_expence( "<?=$view_data['settle_type'];?>");
+					</script></td>
+				</tr>
+				<tr>
+					<th>첨부파일</th>
+					<td colspan="7">
+						<?php
+					for( $i = 0 ; $i < count($settle_file) ; $i++ ){
+					if( $i > 0 ){
+						echo "<br/>";
+					}
+					?> <a href="#" onclick="file_down('<?=$settle_file[$i]['file_name']?>')">
+							<?=$settle_file[$i]['ori_name']?>
+					</a> <?php
+					}
+					?>
+					</td>
+				</tr>
+				<tr>
+					<th>기안참조</th>
+					<td colspan="7">
+						<?php
+					//print_r($settle_draft);
+					foreach( $settle_draft as $row ){
+					?> <a href="#" onClick="draft_refer('<?=$row['draft_no'];?>');">
+							<?php echo "[".$row['draft_number']."-".$settle_type[$row['draft_type']]."]".$row['draft_title'];?>
+					</a> <?php
+					}
+					?>
+					</td>
+				</tr>
+				<tr class="no-print">
+					<th>참고</th>
+					<td colspan="7">
+						<?php
+					if( $mode != "draft"){
+					?> <input type="text" style="width: 90%;" name="consult" id="consult" onKeyPress="if(event.keyCode == 13){ consult_add(); return false; }" value="">
+					<button class="btn" onClick="consult_add();">등록</button> <?php } ?>
+
+						<div id="consult_str">
+							<?php
+					foreach( $settle_consult as $row ){
+					echo $row['reg_date']." ".$row['name']." : ".$row['content']."<br />";
+					}
+					?>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		</div>
+		<div class="tool-box">
+			<? if($_GET['view_mode'] == '' && $mode != "draft"):?>
+			<button class="btn"  id="bt-copy" onClick="copy();">내용복사</button>
+			<? endif; ?>
+			<?php
+		if( $mode != "draft") {
+		?>
+			<button class="btn"  id="bt-ok" onClick="go_back();">확인</button>
+
+			<?php
+			//기안취소 기능숨김 by hjlee 2018-01-15
+			if( $settle_status_chk && ( $view_data['status'] != 4 && $view_data['status'] != 5 ) && ( $this->session->userdata( 'ss_user_no' ) == $view_data['user_no'] && true==false ) ){
+			?>
+
+			<button type='button' class="btn btn-theme" onClick="settle_cancel();">기안취소</button>
+			<?php
+			}
+			?>
+		<? } ?>
+		</div>
+	</form>
+
+	<div style="text-align: center;">
+	<button type="button" class="btn btn-lg btn-flat-orange " onclick="SettleView.list()" >목록보기</button>
+	</div>
+
+	<!-- 미결재 내역 -->
+	<?php
+	if(is_array($wait_list)) { ?>
+	<div style="position: absolute; left: 1230px; top: -7px; width: 450px;">
+		<table class="table table-bordered table-form" id="unconfirm-list">
+			<colgroup>
+				<col width="20%" />
+				<col width="15%" />
+				<col width="" />
+			</colgroup>
+			<thead>
+				<tr>
+					<th>작성일자</th>
+					<th>작성자</th>
+					<th>제목</th>
+				</tr>
+			</thead>
+			<tbody>
+				<? foreach($wait_list as $i): ?>
+				<tr id="<?=$i->no?>" data-biz="<?=$i->biz_id?>">
+					<td><?=$i->reg_date?></td>
+					<td><?=$i->name?></td>
+					<td><?=$i->title?></td>
+				</tr>
+				<? endforeach; ?>
+			</tbody>
+		</table>
+	</div>
+	<? } ?>
+
+</div>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var SettleView = {
+	filter: function(id) {
+		$('#unconfirm-list').find('tr').css('display','');
+		if(id!='all') {
+			$('#unconfirm-list').find('tr[data-biz!="'+id+'"]').css('display','none');
+		}
+	},
+	print: function(divName) {
+		var printContents = document.getElementById(divName).innerHTML;
+		var originalContents = document.body.innerHTML;
+
+		document.body.innerHTML = printContents;
+
+		window.print();
+
+		document.body.innerHTML = originalContents;
+	},
+	list: function() {
+		document.location.href="/business/settle/send/<?=$_GET[mode]?>?page=<?=$_GET[page]?>";
+	}
+}
+</script>

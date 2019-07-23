@@ -1,0 +1,190 @@
+<script>
+$(document).ready(function() {
+	$("#menu a").eq(<?=$menu_idx?>).addClass("selected");
+	$("#input-frm").validationEngine('attach');
+
+	$(document).on('click', 'ul#url-area li span', function() {
+		var remove = " <span class='badge bt-remove'>-</span>";
+		var idx = $(this).index( "ul#url-area li span" );
+
+		if (idx > 0) {
+			$("#url-area li").eq(idx).remove();
+		} else if (idx == 0) {
+			$("#url-area li").last().clone().insertAfter("#url-area li:last");
+			if ($("#url-area li").length == 2) {
+				$("#url-area li span").last().remove();
+				$("#url-area li").last().append(remove);
+			}
+		}
+	});
+
+	$('form').highlight('td', 'highlight-selected', 'mousedown');
+
+	$("#bt-check-remove").button("option", "icons", {
+			primary : "ui-icon-circle-minus"
+	});
+
+	$("#bt-save").button("option", "icons", {
+		primary : "ui-icon-check"
+	});
+
+
+	var bar = $('.bar');
+	var percent = $('.percent');
+	var status = $('#status');
+
+	$('#input-frm').ajaxForm({
+			beforeSend : function() {
+				status.empty();
+				var percentVal = '0%';
+				bar.width(percentVal)
+				percent.html(percentVal);
+			},
+			uploadProgress : function(event, position, total, percentComplete) {
+				var percentVal = percentComplete + '%';
+				bar.width(percentVal)
+				percent.html(percentVal);
+			},
+			success : function() {
+				var percentVal = '100%';
+				bar.width(percentVal)
+				percent.html(percentVal);
+			},
+			complete: function(result_data){
+				var obj = $.parseJSON(result_data.responseText);
+				document.location = "/work/biz_log_view/<?=$work_type?>/"+obj.biz_seqno;
+			}
+	});
+
+	$( "input[type='file']" ).change(function() {
+  	  $(".progress").show();
+	});
+
+
+
+	$( "#bt-check-remove" ).click(function() {
+
+		if (is_checked("input-frm") == 0) {
+			alert("삭제할 항목을 한개 이상 선택해주세요.");
+			return;
+		}
+
+		$.ajax({
+ 			type : "POST",
+ 			url : "/work_proc/remove_work_url",
+ 			data : $("#input-frm").serialize(),
+ 			success : function(result_data) {
+ 				document.location = "/work/biz_log_input/<?=$work_type?>/<?=$row['biz_seqno']?>";
+ 			}
+ 		});
+
+	});
+
+	$("#typeD").attr("checked", "checked");
+	if ($("#mode").val () == "MODIFY") {
+		$("#status").val("<?=$row['status']?>");
+		$("#type<?=$row['type']?>").attr("checked", "checked");
+	} else {
+		$("#title").val('<?=date("Y-m-d")?> <?=$this->session->userdata(ss_name)?> 일일업무보고서');
+	}
+
+});
+
+function row_remove() {
+	$("#url-area li:last").remove();
+	if ($("#url-area li").length == 1) $("#bt-remove").remove();
+}
+
+
+
+</script>
+<div style="width: 100%;">
+
+	<form id="input-frm" enctype="multipart/form-data" method="post" action="/work_proc/add_biz_log">
+		<input type="hidden" name="mode" id="mode" value="<?=$mode?>">
+		<input type="hidden" name="biz_seqno" value="<?=$row['biz_seqno']?>">
+		<input type="hidden" name="type" value="<?=$work_type?>">
+
+		<h3 class="area-title"><?=$sub_title?>일지 작성
+			<div class="button-box">
+				<button type="submit" id="bt-save">저장</button>
+			</div>
+		</h3>
+		<table class="basic-table">
+			<colgroup>
+				<col width="10%">
+				<col width="22%">
+				<col width="10%">
+				<col width="22%">
+				<col width="10%">
+				<col width="">
+			</colgroup>
+			<tr>
+				<th>작성일자</th>
+				<td><input type="text" name="work_date" value="<?=$row['work_date']?>" readonly="readonly" style="background-color: #fff; border: 0;"></td>
+				<th>작성자</th>
+				<td><?=$this->session->userdata( 'ss_name' )?></td>
+								<th>진행율</th>
+				<td><select name="status" id="status">
+						<? foreach($work_status as $i=>$val): ?>
+						<option value="<?=$i?>"><?=$val?></option>
+						<? endforeach; ?>
+				</select></td>
+			</tr>
+			<tr>
+				<th>제목</th>
+				<td colspan="5"><input type="text" name="title" id="title" size="100" value="<?=$row['title']?>"></td>
+			</tr>
+<!-- 		20170317 kruddo : 삭제	
+			<tr>
+				<th>대표님 지시사항</th>
+				<td colspan="5"><textarea class="work" name="owner_command" style="width:100%;height:100px"><?=$row['owner_command']?></textarea></td>
+			</tr> -->
+			<tr>
+				<th>업무내용</th>
+				<td colspan="5" style="padding-top: 10px;">
+					<div style="float: left; width: 48%;">
+						<span style="font-weight: bold;" id="cur-title"><?=$title_type['cur-title']?></span>
+						<textarea rows="25" class="work" name="cur_work" style="width: 100%;"><?=$row['cur_work']?></textarea>
+					</div>
+					<div style="float: left; width: 48%; margin-left: 10px;">
+						<span style="font-weight: bold;" id="next-title"><?=$title_type['next-title']?></span>
+						<textarea rows="25" class="work" name="next_work" style="width: 100%;"><?=$row['next_work']?></textarea>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>첨부파일</th>
+				<td colspan="5">
+					<? if(is_array($url_list)): ?>
+					<div style="margin:5px 0;">
+					<button id="bt-check-remove">선택삭제</button>
+					</div>
+					<ul style="margin-bottom: 10px;">
+						<? foreach($url_list as $i): ?>
+						<li>
+							<input type="checkbox" name="chk[]" value="<?=$i->seqno?>">
+							<?=$i->url_type?> - <?=$i->url?> <a href="#">
+								<?=$i->file_name?>
+						</a>
+						</li>
+						<? endforeach; ?>
+					</ul>
+					<? endif; ?>
+					<ul id="url-area">
+						<li><select name="url_type[]">
+								<? foreach($work_url_type as $i=>$val): ?>
+								<option value="<?=$i?>"><?=$val?></option>
+								<? endforeach; ?>
+						</select> <input type="text" size="100" name="url[]"> <input type="file" name="userfile[]" size="60"> <span class='badge bt-add' id='bt-add'>+</span></li>
+					</ul>
+					<div class="progress">
+						<div class="bar"></div>
+						<div class="percent">0%</div>
+					</div>
+					<div id="status"></div>
+				</td>
+			</tr>
+		</table>
+	</form>
+</div>

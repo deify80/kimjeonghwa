@@ -1,0 +1,194 @@
+<h3 class="area-title">
+<a href="javascript:;" onclick="StatusMain.loadGroup('');">전체</a><span class="split">|</span>
+{@ group}
+<a href="javascript:;" onclick="StatusMain.loadGroup('{.group_code}');">{.name} : {=number_format(.cnttotal)} 건</a><span class="split">|</span>
+<!-- <label class="btn {? search.team_code==.key_}active{/}"><input type="radio" name="team_code" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label> -->
+{/}
+</h3>
+
+
+<script>
+	$(".tr_visible a").click(function() {
+		$(this).parent().parent().nextUntil(".tr_visible").toggle();
+		return false;
+	});
+</script>
+<style>
+	.media tbody tr {display:none;}
+	.media tbody tr.tr_visible {background:#eee; display:table-row;}
+</style>
+
+<? $trstyle = 'style="background-color:#b0b0b0;?>" '; ?>
+<table class="media table table-bordered table-form table-center table-hover">
+    <colgroup>
+		<col width="150px">
+	</colgroup>
+	<thead>
+
+		<tr>
+			<th <?=$trstyle;?> rowspan="2">미디어그룹</th>
+			<th <?=$trstyle;?> colspan="10">상담관리</th>
+			<th <?=$trstyle;?> colspan="4">CRM</th>
+		</tr>
+		
+		<tr>
+			<th <?=$trstyle;?>>미디어코드</th>
+			<th <?=$trstyle;?>>총DB</th>
+			<th <?=$trstyle;?>>분배DB</th>
+			<th <?=$trstyle;?>>중복DB</th>
+			<th <?=$trstyle;?>>내원예약</th>
+			<th <?=$trstyle;?>>내원상담</th>
+			<th <?=$trstyle;?>>수술예약</th>
+			<th <?=$trstyle;?>>수술완료</th>
+			<th <?=$trstyle;?> class="f-notice">매출액(원)</th>
+			<th <?=$trstyle;?> class="f-notice">수납액(원)</th>
+
+			<th <?=$trstyle;?>>OP명수</th>
+			<th <?=$trstyle;?>>시술명수</th>
+			<th <?=$trstyle;?>>OP매출액(원)</th>
+			<th <?=$trstyle;?>>OP총액(원)</th>
+		</tr>
+	</thead>
+
+    <tbody>
+        {@ list}
+		<tr class="tr_visible">
+            <th colspan="2"><a href="#">{.name}</a></th>
+			<th>{=number_format(.cnt_total)}</th>
+			<th>{=number_format(.cnt_1)}</th>
+			<th>{=number_format(.cnt_8)}</th>
+			<th>{=number_format(.cnt_51)}</th>
+			<th>{=number_format(.cnt_52)}</th>
+			<th>{=number_format(.cnt_98)}</th>
+			<th>{=number_format(.cnt_99)}</th>
+			<th>{=number_format(.price_sales)}원</th>
+			<th>{=number_format(.price_paid)}원</th>
+
+			<th>{=number_format(.op_opcount)}명</th>
+			<th>{=number_format(.op_skincount)}명</th>
+			<th>{=number_format(.op_amount_basic)}원</th>
+			<th>{=number_format(.op_amount_paid)}원</th>
+        </tr>
+			{@ .children}
+				{? ..index_ >0}<tr>{/}
+				<td></td>
+				<td>{..name}</td>
+				<td>{=number_format(..cnt.total)}</td>
+				<td>{=number_format(..cnt[1])}</td>
+				<td>{=number_format(..cnt[8])}</td>
+				<td>{=number_format(..status[51])}</td>
+				<td>{=number_format(..status[52])}</td>
+				<td>{=number_format(..status[98])}</td>
+				<td>{=number_format(..status[99])}</td>
+				<td>{=number_format(..price.sales)}원</td>
+				<td>{=number_format(..price.paid)}원</td>
+
+				<td>{=number_format(..op.opcount)}명</td>
+				<td>{=number_format(..op.skincount)}명</td>
+				<td>{=number_format(..op.amount_basic)}원</td>
+				<td>{=number_format(..op.amount_paid)}원</td>
+				{? ..index_ >0}</tr>{/}
+			{/}
+        
+		{/}
+
+		<tr class="dark tr_visible">
+			<th colspan=2 <?=$trstyle;?>>합계</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.total)}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.cnt[1])}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.cnt[8])}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.status[51])}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.status[52])}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.status[98])}</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.status[99])}</th>
+			<th <?=$trstyle;?> class="f-notice">{=if_empty_number(total.price.sales)}원</th>
+			<th <?=$trstyle;?> class="f-notice">{=if_empty_number(total.price.paid)}원</th>
+
+			<th <?=$trstyle;?>>{=if_empty_number(total.op.opcount)}명</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.op.skincount)}명</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.op.amount_basic)}원</th>
+			<th <?=$trstyle;?>>{=if_empty_number(total.op.amount_paid)}원</th>
+		</tr>
+        
+    </tbody>
+</table>
+
+
+
+<!-- <table class="table table-bordered table-form table-center table-hover">
+	<colgroup>
+		<col width="150px">
+	</colgroup>
+	<thead>
+
+		<tr>
+			<th rowspan="2">미디어그룹</th>
+			<th colspan="10">상담관리</th>
+			<th colspan="4">CRM</th>
+		</tr>
+		
+		<tr>
+			<th>미디어코드</th>
+			<th>총DB</th>
+			<th>분배DB</th>
+			<th>중복DB</th>
+			<th>내원예약</th>
+			<th>내원상담</th>
+			<th>수술예약</th>
+			<th>수술완료</th>
+			<th class="f-notice">매출액(원)</th>
+			<th class="f-notice">수납액(원)</th>
+
+			<th>OP명수</th>
+			<th>시술명수</th>
+			<th>OP매출액(원)</th>
+			<th>OP총액(원)</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<th rowspan="{.count}">{.name}</th>
+			{@ .children}
+				{? ..index_ >0}<tr>{/}
+				<td>{..name}</td>
+				<td>{=number_format(..cnt.total)}</td>
+				<td>{=number_format(..cnt[1])}</td>
+				<td>{=number_format(..cnt[8])}</td>
+				<td>{=number_format(..status[51])}</td>
+				<td>{=number_format(..status[52])}</td>
+				<td>{=number_format(..status[98])}</td>
+				<td>{=number_format(..status[99])}</td>
+				<td>{=number_format(..price.sales)}원</td>
+				<td>{=number_format(..price.paid)}원</td>
+
+				<td>{=number_format(..op.opcount)}명</td>
+				<td>{=number_format(..op.skincount)}명</td>
+				<td>{=number_format(..op.amount_basic)}원</td>
+				<td>{=number_format(..op.amount_paid)}원</td>
+
+			{? ..index_ >0}</tr>{/}
+			{/}
+		</tr>
+	
+		{/}
+
+		<tr class="dark">
+			<th colspan=2>합계</th>
+			<th>{=if_empty_number(total.total)}</th>
+			<th>{=if_empty_number(total.cnt[1])}</th>
+			<th>{=if_empty_number(total.cnt[8])}</th>
+			<th>{=if_empty_number(total.status[51])}</th>
+			<th>{=if_empty_number(total.status[52])}</th>
+			<th>{=if_empty_number(total.status[98])}</th>
+			<th>{=if_empty_number(total.status[99])}</th>
+			<th class="f-notice">{=if_empty_number(total.price.sales)}원</th>
+			<th class="f-notice">{=if_empty_number(total.price.paid)}원</th>
+
+			<th>{=if_empty_number(total.op.opcount)}명</th>
+			<th>{=if_empty_number(total.op.skincount)}명</th>
+			<th>{=if_empty_number(total.op.amount_basic)}원</th>
+			<th>{=if_empty_number(total.op.amount_paid)}원</th>
+		</tr>
+	</tbody>
+</table> -->

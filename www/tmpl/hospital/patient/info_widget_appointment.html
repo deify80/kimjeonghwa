@@ -1,0 +1,126 @@
+
+<table class="table table-bordered table-list">
+	<colgroup>
+		<col style="width:50px" /><!-- 번호 -->
+		<col style="width:50px" /><!-- 선택 -->
+		<col style="width:100px" /><!-- 예약일자 -->
+		<col style="width:100px" /><!-- 예약시간 -->
+		<col style="width:80px" /><!-- 예약유형 -->
+		<col style="width:100px" /><!-- 예약상태 -->
+		<col style="width:80px" /><!-- 담당실장 -->
+		<col style="width:80px" /><!-- 담당의사 -->
+		<col style="width:200px" /><!-- 진료부위 -->
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked_appointment[]')"><span class="lbl"></span></label></th>
+			<th>예약일자</th>
+			<th>예약시간</th>
+			<th>예약유형</th>
+			<th>예약상태</th>
+			<th>담당실장</th>
+			<th>담당의사</th>
+			<th>진료부위</th>
+			<th>메모</th>
+		</tr>
+	</thead>
+	<tbody id="appointment_list">
+		<? foreach($list as $row) { ?>
+		<tr>
+			<td><?=$row['idx']?></td>
+			<td><label class="hmis"><input type="checkbox" class="hmis" name="checked_appointment[]" value="<?=$row['no']?>"><span class="lbl"></span></label></td>
+			<td><a href="javascript:;" onclick="PatientInfo.modalWidget('appointment','예약수정',{no:<?=$row['no']?>})" class="link"><?=$row['appointment_date']?></a></td>
+			<td><?=$row['appointment_time']?></td>
+			<td><?=$row['type_text']?></td>
+			<td><?=$row['status_text']?></td>
+			<td><?=$row['manager_name']?></td>
+			<td><?=$row['doctor_name']?></td>
+
+			<td class="left" style=" white-space: nowrap; text-overflow: ellipsis;overflow: hidden;"><span data-toggle="tooltip" data-html='yes' title="<?=str_replace(',','<br />',$row['treat_info'])?>"><?=$row['treat_info']?></span></td>
+			<td class="left"><div class="ellipsis"><?=$row['comment']?></div></td>
+		</tr>
+		<? } ?>
+
+		<? if(empty($list)){?>
+		<tr>
+			<td colspan="10" class="center">등록된 예약내역이 없습니다.</td>
+		</tr>
+		<? } ?>
+
+	</tbody>
+</table>
+<div style="margin-top:7px;position:absolute;padding:10px;bottom:0px;right:0px;width:100%">
+	<? if($auth['appointment_delete']) {?>
+	<button type="button" onclick="PatientAppointment.remove()" class="btn btn-flat-orange">삭제</button>
+	<? } ?>
+	<div style="position:absolute;right:10px;bottom:10px">
+		<div id="pagination">
+			<ul class="pagination small">
+				<li><a href="javascript:;" onclick="PatientInfo.load('appointment','<?=$paging['first']?>')"><i class="fa fa-angle-double-left"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.load('appointment','<?=$paging['prev']?>')"><i class="fa fa-angle-left"></i></a></li>
+				<? foreach($paging['block'] as $block) { ?>
+				<li class="<?=($block['equal']==1)?'active':'' ?>"><a href="javascript:;" onclick="PatientInfo.load('appointment','<?=$block['num']?>')"><?=$block['num']?></a></li>
+				<? } ?>
+				<li><a href="javascript:;" onclick="PatientInfo.load('appointment','<?=$paging['next']?>')"><i class="fa fa-angle-right"></i></a></li>
+				<li><a href="javascript:;" onclick="PatientInfo.load('appointment','<?=$paging['last']?>')"><i class="fa fa-angle-double-right"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<!-- <?pre($paging)?> -->
+<script type="text/javascript">
+var PatientAppointment = {
+	page:"<?=$paging['this']?>",
+	init: function() {
+
+	},
+	reload: function(){
+		PatientInfo.load('appointment', PatientAppointment.page);
+	},
+	modify: function(appointment_no) {
+		var modalReserve = new HmisModal('modal-appointment', {width:900, top:100});
+		modalReserve.callback = PatientAppointment.reload;
+		modalReserve.open('예약 수정','/patient/appointment_input', {no:appointment_no});
+	},
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked_appointment[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 예약건을 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var appointment_no = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/treat_proc/remove_appointment',
+					data:{
+						patient_no:PatientInfo.patient_no,
+						appointment_no:appointment_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							me.reload();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})
+			}
+
+		});
+	}
+}
+
+$(function() {
+	PatientAppointment.init();
+})
+</script>

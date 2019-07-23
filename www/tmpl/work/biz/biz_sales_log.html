@@ -1,0 +1,314 @@
+
+<h3 class="area-title">일일매출보고</h3>
+<form id="FrmBizSearch" onsubmit="return false">
+<!-- <input type="text" name="limit" id="cnt_search" value="" /> -->
+<input type="hidden" name="limit" id="limit" value="2">
+<input type="hidden" name="mode" id="mode" value="">
+<input type="hidden" name="team_name" id="team_name" value="">
+<input type="hidden" name="work_type" id="work_type" value="{cfg.work_type}">
+
+<? 
+	$cur_data = split(",", $_REQUEST['cur_data']);
+	$tcode = $cur_data[0];
+	$s_date = $cur_data[1];
+	$e_date = $cur_data[2];
+	$db_date = $cur_data[3];
+?>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>수술일</th>
+			<td class="db_search_colspan">
+				<? 
+				if($s_date == '') { 
+					$s_date = {cfg.date.cur_month};
+					$e_date = {cfg.date.cur_month_end};
+					$db_date = {=date('Y-m-d')};
+				}
+				?>
+				<input type="text" class="datepicker lg" name="date_s" id="sdate_s" value="<?=$s_date?>"> ~ <input type="text" class="datepicker lg" name="date_e" value="<?=$e_date?>" id="sdate_e">
+				
+				<ul class="btn-group btn-group-xs">
+					<li onclick="WorkBiz.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="WorkBiz.setDate('{cfg.date.weekday_db}','{=date('Y-m-d')}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="WorkBiz.setDate('{cfg.date.cur_month}','{cfg.date.cur_month_end}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="WorkBiz.setDate('{cfg.date.yesterday}','{=cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="WorkBiz.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="WorkBiz.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+			<th class="db_search">당일DB조회</th>
+			<td class="db_search">
+				<input type="text" class="datepicker lg" name="date_db" id="date_db" value="<?=$db_date?>">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="WorkBiz.setDateDb('{=date('Y-m-d')}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="WorkBiz.setDateDb('{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+				</ul>
+				<button type="submit" class="btn btn-lg btn-theme" onclick="WorkBiz.loadDb()"><i class="fa fa-search"></i> 검색</button>
+			</td>
+
+		</tr>
+		<tr class="team_hide">
+			<th>담당팀</th>
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+
+					<? $status = 0; ?>
+					{@ cfg.team}
+						{? .key_ == layout.login.info.ss_team_code}
+							<? $status = 1; ?>
+						{/}
+					{/}
+
+					{@ cfg.team}
+						<? if($status == 0) { ?>
+							<label class="btn">
+							<? if($tcode != '') {
+							?>
+								<input type="radio" name="team_code_search" value="{.key_}" <? if($tcode == {.key_}){ ?>checked <?}?> data-role="search" />
+							<?
+							}
+							else{
+							?>
+								<input type="radio" name="team_code_search" value="{.key_}" {? search.team_code_search==.key_}checked{/} data-role="search" />
+							<?
+							}
+							?>
+							{.value_}</label>
+							<input type="hidden" value="{.value_}" id="team_name_{.key_}">
+						<? } 
+							else{
+						?>
+							{? layout.login.info.ss_team_code == .key_}
+							<label class="btn"><input type="radio" name="team_code_search" value="{.key_}" checked data-role="search" />{.value_}</label>
+							{/}
+						<? } ?>
+					{/}
+				</div>
+
+			</td>
+			
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="WorkBiz.selectSalesTeam()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="WorkBiz.reset()">처음으로</button>
+	<button class="btn btn-lg btn-blue" onclick="WorkBiz.excel()"><i class="fa fa-1 fa-file-excel-o" style="color:#0091EA"></i>엑셀다운로드</button>
+	<button class="btn btn-lg btn-green" onclick="WorkBiz.print('print')"><i class="fa fa-print fa-1"></i>인쇄</button>
+	<button class="btn btn-lg btn-orange" onclick="WorkBiz.print('op_print')" id="op_print_btn"><i class="fa fa-print fa-1"></i>OP매출 보고서 인쇄</button>
+</div>
+</form>
+
+<!-- <div class="dashed"></div> -->
+
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+
+
+
+<script type="text/javascript">
+var WorkBiz = {
+	team_code:0,
+	init : function() {
+		$('#op_print_btn').hide();
+
+		HmisCommon.searchInit('FrmBizSearch');
+
+		WorkBiz.selectSalesTeam();
+
+		$('[data-role="search"]').on('change.search',function() {
+			WorkBiz.selectSalesTeam();
+		});
+
+		HmisCommon.createDatepicker();
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		WorkBiz.selectSalesTeam();
+	},
+	setDateDb: function(s,e, target_s, target_e) {
+		$('#date_db').val(s);
+		this.loadDb();
+		//HmisCommon.setDate(s,e,target_s, target_e);
+		//WorkBiz.selectSalesTeam();
+	},
+	reset: function(){
+		//HmisCommon.formReset('FrmBizSearch');
+		location.href="/work/biz_sales_log/"+$('#work_type').val();
+	},
+
+	selectSalesTeam : function() {
+		$('#op_print_btn').hide();
+
+		var checked = $('input:radio[name=team_code_search]:checked');
+		if(checked.length<1) return false;
+
+		$('#team_name').val($('#team_name_'+checked.val()).val());
+		this.team_code = checked.val();
+		
+		biz_type = WorkBiz.selectSalesBizType(checked.val());	//checked.val();
+
+		if(biz_type == 1){
+			$('.db_search').show();
+			$('.db_search_colspan').attr("colSpan",1);
+			
+		}
+		else{
+			$('.db_search').hide();
+			$('.db_search_colspan').attr("colSpan",3);
+		}
+
+		if($('#work_type').val() == "D" || $('#work_type').val() == "S"){
+			$('.team_hide').hide();
+		}
+		else{
+			$('.team_hide').show();
+		}
+
+		var param = {
+			'biz_type':biz_type
+		};
+
+		WorkBiz.load(biz_type);
+		
+		$('#sales_schedule_list').hide();
+		$('#sales_db_list').hide();
+
+		if(biz_type == 1){
+			$('#sales_schedule_list').show();
+			$('#sales_db_list').show();
+			
+			WorkBiz.loadSchedule(biz_type);
+			WorkBiz.loadDb(biz_type);
+		}
+		else if(biz_type == 2){
+			$('#op_print_btn').show();
+			$('#sales_schedule_list').show();
+			WorkBiz.loadSchedule(biz_type);
+		}
+		//$('#work_format').load('/work/biz_format/',param);
+	},
+	load: function(biz_type) {
+
+		$('#mode').val('');
+		$('#expense_customer').focus();
+		var biz_type = biz_type;
+		var formdata = $('#FrmBizSearch').serializeArray();
+		formdata.push({name:"biz_type", value:biz_type});
+		formdata.push({name:"is_schedule", value:"N"});
+		$('#sales_list').load('/work/biz_sales_list_paging', formdata);
+	},
+
+	loadSchedule: function(biz_type) {
+
+		$('#mode').val('');
+		$('#expense_customer').focus();
+		var biz_type = biz_type;
+		var formdata = $('#FrmBizSearch').serializeArray();
+		formdata.push({name:"biz_type", value:biz_type});
+		formdata.push({name:"is_schedule", value:"Y"});
+		$('#sales_schedule_list').load('/work/biz_sales_list_paging', formdata);
+	},
+
+	loadDb: function(biz_type) {
+		$('#mode').val('');
+		var biz_type = biz_type;
+		var team_name = $('#team_name').val();
+
+		var formdata = new Array();
+		formdata.push({name:"biz_type", value:biz_type});
+		formdata.push({name:"team_code_search", value:this.team_code});
+		formdata.push({name:"date_db", value:$('#date_db').val()});
+		formdata.push({name:"date_s", value:$('#sdate_s').val()});
+		formdata.push({name:"date_e", value:$('#sdate_e').val()});
+		
+		$('#sales_db_list').load('/work/biz_sales_list_db', formdata);
+	},
+
+	selectSalesBizType:function(team_code){
+		if(team_code >= 90)		return 1;
+		else if(team_code == 50)		return 3;
+		else if(team_code == 51)		return 2;
+		
+	},
+	print: function(divName) {
+		var biz_type = $('#biz_type').val();
+
+		var cur_data = this.team_code+","+$('#sdate_s').val()+","+$('#sdate_e').val()+","+$('#date_db').val();
+		$('#sign_box').removeClass('hide');
+		$('#biz_title').removeClass('hide');
+
+		$('.col_span').attr("colSpan",2);
+		$('.td_hide').addClass('hide');
+
+
+		
+		var originalContents = document.body.innerHTML;
+
+		if(biz_type == 2){
+			if(divName == 'print'){
+				$('#sales_list').show();
+				$('#sales_schedule_list').hide();
+			}
+			else if(divName == 'op_print'){
+				$('#sales_list').hide();
+				$('#sales_schedule_list').show();
+			}
+		}
+		
+		
+		var printContents = document.getElementById('print').innerHTML;
+
+		document.body.innerHTML = printContents;
+		
+		window.print();
+		document.body.innerHTML = originalContents;
+
+		
+		location.href = '/work/biz_sales_log/'+$('#work_type').val()+'?cur_data='+cur_data;
+
+	},
+	excel: function() {
+		$('#mode').val('excel');
+
+		var biz_type = $('#biz_type').val();
+		var team_name = $('#team_name').val();
+
+		var formdata = $('#FrmBizSearch').serialize();
+		formdata += "&biz_type="+biz_type;
+		formdata += "&is_schedule=N";
+		formdata += "&team_name="+team_name;
+
+		if(limit > 500) {
+			HmisAlert.confirm("엑셀변환데이터가 500건 이상으로 다운로드 시간이 1분이상 소요될수 있습니다.<br />다운로드받으시겠습니까?", function(r) {
+				if(r) {
+					document.location.href = '/work/excel?'+formdata;
+				}
+			})
+		}
+		else {
+			document.location.href = '/work/excel?'+formdata;
+		}
+	},
+}
+
+$(function(){
+	WorkBiz.init();
+})
+
+
+
+</script>
+<div id="print">
+<div id="sales_db_list" style="padding: 0;margin: 0;"></div>
+<div id="sales_list" style="padding: 0;margin: 0;"></div>
+<div id="sales_schedule_list" style="padding: 0;margin: 0;"></div>
+</div>

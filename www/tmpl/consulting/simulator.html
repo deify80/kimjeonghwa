@@ -1,0 +1,104 @@
+<div style="padding:20px">
+<h2>DB 재분배 Simulator</h2>
+
+<table class="table table-bordered">
+	<thead>
+		{@ assign}
+		<th>{.key_} ({=count(.db)})</th>
+		{/}
+	</thead>
+	<tr>
+		{@ assign}
+		<td>
+			{@ .status}
+			<div style="line-height:1.5em"><b>{cfg.status[..key_]}</b> : {..value_}개</div>
+			
+			{/}
+		</td>
+		{/}
+		
+	</tr>
+</table>
+
+
+<h2>팀 지정</h2>
+<form id="frmSimulator">
+<input type="hidden" name="act" id="act" value="query" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	{@ cfg.team}
+	<tr>
+		<th>{.value_}</th>
+		<td>
+			<select name="to_team[{.value_}]" class="validate[required] required" data-errormessage-value-missing="팀을 선택하세요.">
+				<option value="">::팀선택</option>
+				{@ (cfg.team_to)}
+				<option value="{..key_}">{..value_}</option>
+				{/}
+			</select>
+			<textarea type="text" name="cst_seqno[{.value_}]" value="" readonly class="hmis" style="margin-top:5px;height:30px" >{=implode(',',assign[.value_].db)}</textarea>
+			<!-- <textarea type="text" name="cst_seqno[{.value_}][]" value="" placeholder="추가 배분 DB" class="hmis required" style="margin-top:5px;height:60px"></textarea> -->
+		</td>
+	</tr>
+	{/}
+</table>
+
+<div style="text-align:center;margin:20px 0px">
+	<button type="button" class="btn btn-lg btn-theme" onclick="Simulator.setMode('query');">Query View</button>
+	<button type="button" class="btn btn-lg btn-flat-orange" onclick="Simulator.setMode('exec');">[위험!!]실행</button>
+</div>
+</form>
+
+
+
+<div id="query" style="width:100%;height:200px;border:solid 1px #C3C3C3;overflow-y: scroll"></div>
+</div>
+
+<script type="text/javascript">
+var Simulator = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition : "centerRight",
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#frmSimulator").validationEngine('attach',option);
+	},
+	setMode: function(mode){
+		$('#act').val(mode);
+		if(mode == 'exec') {
+			HmisAlert.confirm("실행후에는 복구가 불가능합니다.<br />DB를 재분배하시겠습니까?", function(r) {
+				if(r) {
+					$("#frmSimulator").trigger('submit');
+				}
+			})
+		}
+		else {
+			$("#frmSimulator").trigger('submit');
+		}
+		
+	},
+	save: function(){
+		var formdata = $('#frmSimulator').serialize();
+		$.ajax({
+			url:'/consulting_proc/simulator_assign',
+			data:formdata,
+			dataType:'text',
+			type:'POST',
+			success: function(r) {
+				$('#query').html(r);
+			}
+		});
+	}
+}
+
+$(function(){
+	Simulator.init();
+});
+</script>

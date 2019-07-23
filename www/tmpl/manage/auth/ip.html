@@ -1,0 +1,159 @@
+<script>
+	$(document).ready(function() {
+
+
+		$("#input-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status)
+					save();
+			}
+		})
+
+		set_list();
+	});
+
+	function set_list() {
+		$("#list").jqGrid({
+			width : 1200,
+			height : 500,
+			url : "/manage/ip_lists",
+			datatype : "json",
+			colNames : [ "번호", "등록일자", "IP", "내용", "상태", "seqno" ],
+			colModel : [ {
+				name : "no",
+				index : "no",
+				width : 30,
+				align : "center",
+				sortable : false
+			}, {
+				name : "reg_date",
+				index : "reg_date",
+				width : 60,
+				align : "center",
+				sortable : false
+			}, {
+				name : "ip",
+				index : "ip",
+				width : 120,
+				align : "center",
+				sortable : false
+			}, {
+				name : "info",
+				index : "info",
+				width : 200,
+				align : "left",
+				sortable : false
+			}, {
+				name : "use_flag",
+				index : "use_flag",
+				width : 30,
+				align : "center",
+				sortable : false
+			}, {
+				name : "seqno",
+				index : "seqno",
+				width : 0.1,
+				align : "center",
+				sortable : false
+			} ],
+			viewrecords : true,
+			sortorder : "desc",
+			caption : "목록",
+			multiselect : true,
+			onSelectAll : function(id, status) {
+				if (status) {
+					for (var i = 0; i < id.length; i++) {
+						if ($("#jqg_list_" + id[i]).attr("disabled")) {
+							$("#jqg_list_" + id[i]).removeAttr("checked");
+							$("tr#" + id[i]).removeClass("ui-state-highlight")
+						}
+					}
+				}
+			},
+			afterInsertRow : function(id, data) {
+				if (data.use_flag == "N") {
+					$("#jqg_list_" + id).attr("disabled", "disabled");
+				}
+				$("#jqg_list_" + id).val(data.seqno);
+				$("#jqg_list_" + id).attr("name", "chk[]");
+			}
+		});
+
+		$("#list").hideCol("seqno");
+	}
+
+	function save() {
+		var data = $("#input-frm").serialize();
+		var url = "/manage_proc/ip_insert";
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+
+				var obj = $.parseJSON(result_data);
+				if (obj.status == "0") {
+					$("#msg-area").html("이미 등록되어 있습니다.");
+					$("#msg-area").dialog("open");
+				}
+
+				$('#input-frm')[0].reset();
+				$("#list").trigger("reloadGrid");
+			}
+		});
+
+	}
+
+	function set_off() {
+
+		if (is_checked("list-frm") == 0) {
+			alert("항목을 한개 이상 선택해주세요.");
+			return;
+		}
+
+		if (!confirm("해당 내역을 삭제하시겠습니까?")) {
+			return;
+		}
+
+		var data = $("#list-frm").serialize();
+		var url = "/manage_proc/ip_off";
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				$("#msg-area").html("삭제처리 완료했습니다.");
+				$("#msg-area").dialog("open");
+
+				$("#list").trigger("reloadGrid");
+			}
+		});
+	}
+</script>
+
+<h3 class="area-title">접속허용 IP설정</h3>
+<form id="input-frm">
+	<table class="basic-table">
+		<colgroup>
+			<col width="15%" />
+			<col width="25%" />
+			<col width="15%" />
+			<col width="" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>IP</th>
+				<td><input type="text" size="30" name="ip" id="ip" class="validate[required]"></td>
+				<th>내용</th>
+				<td><input type="text" size="60" name="info" id="info" placeholder="위치를 입력해주세요.">
+					<button type="submit" id="bt-save">IP 추가</button></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<form id="list-frm">
+	<div class="tool-box">
+		<button id="bt-off" onClick="set_off();">선택삭제</button>
+	</div>
+	<table id="list"></table>
+</form>

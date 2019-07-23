@@ -1,0 +1,68 @@
+<table class="table table-bordered table-view">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>회의일시</th>
+			<td><?=$rs['minutes_datetime']?></td>
+			<th>작성자</th>
+			<td><?=$rs['writer_name']?></td>
+		</tr>
+		<tr>
+			<th>회의구분</th>
+			<td><?=$rs['type']?></td>
+
+			<th>회의장소</th>
+			<td><?=$rs['room']?></td>
+		</tr>
+		<tr>
+			<th>참석자</th>
+			<td colspan="3"><?=$rs['attendees_list']?></td>
+		</tr>
+
+		<tr>
+			<th>주요안건</th>
+			<td colspan="3">
+				<div style="line-height:1.5"><?=nl2br($rs['issues'])?></div>
+			</td>
+		</tr>
+
+		<tr>
+			<th>참석자의견</th>
+			<td colspan="3">
+				<dl class="inline">
+					<? foreach ($rs['opinion_list'] as $opinion){?>
+					<dt><?=$opinion['name']?></dt>
+					<dd><?=$opinion['opinion']?></dd>
+					<? }?>
+				</dl>
+			</td>
+		</tr>
+
+		<tr>
+			<th>채택사항</th>
+			<td colspan="3"><?=nl2br($rs['opinion_adopt'])?></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<? if($rs['grant']){?>
+	<button type="button" onclick="MinutesView.modify('<?=$rs['no']?>')" class="btn btn-theme btn-lg">수정</button>
+	<? } ?>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+<script type="text/javascript">
+var MinutesView = {
+	modify: function(minutes_no) {
+		$('.modal-close').trigger('click');	
+		var modal = new HmisModal('minutes_input', {width:900, top:200});
+		modal.open('회의록 수정','/work/minutes_input',{minutes_no:minutes_no});
+	}
+}
+</script>

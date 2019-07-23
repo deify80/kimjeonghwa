@@ -1,0 +1,191 @@
+<form id="FrmPatientDoctorInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="doctor_no" value="{rs.no}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>진료일자</th>
+			<td>
+				<input type="text" name="date_doctor" value="{rs.date_doctor}" class="datepicker lg"  />
+			</td>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? rs.doctor_id ==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>간호사</th>
+			<td>
+				<select name="nurse_id">
+					<option value="">::간호사::</option>
+					{@ cfg.nurse}
+					<option value="{.key_}" {? rs.nurse_id == .key_}selected{/}>{.name}</option>
+					{/}
+				</select>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="sb_team" onchange="PatientDoctorInput.loadUser(this.value)">
+					<option value="">::팀::</option>
+					{@ cfg.manager_team}
+					<option value="{.key_}" {? rs.manager_team_code == .key_}selected{:}disabled{/}>{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" id="sb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="2">진료부위</th>
+			<td colspan="3">
+				<select name="treat_region" id="sb_treat_region" class="required" onchange="HmisTreat.loadTreatItem(this.value)">
+					<option value="">::진료부위::</option>
+					{@ cfg.treat_region}
+					<option value="{.key_}" {? rs.treat_region_code == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+				<select name="treat_item" id="sb_treat_item" class="required" style="display:none" onchange="PatientDoctorInput.addTreat()">
+					<option value="">::진료항목::</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="3">
+				<div id="treat_null" style="padding:6px 0px 7px;">진료부위를 선택하세요.</div>
+				<div id="treat_list">
+					{@ rs.treat_info}
+					<span class="label label-default" style="margin-top:0px;margin-bottom:0px" id="{.id}">{.region} &gt; {.item} <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px" onclick="PatientDoctorInput.removeTreat('{.id}')"></i></span>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>치료내용</th>
+			<td colspan="3">
+				<textarea name="comment" style="height:100px" class="validate[required] hmis required">{rs.comment}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var PatientDoctorInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmPatientDoctorInput").validationEngine('attach',option);
+
+		HmisCommon.createDatepicker();
+		this.buildTreat();
+		this.loadUser("{rs.manager_team_code}", "{rs.manager_id}");
+	},
+	//진료항목추가
+	addTreat: function() {
+		var id = $('#sb_treat_region').val()+'_'+$('#sb_treat_item').val();
+		var text = $('#sb_treat_region option:selected').text()+' > '+$('#sb_treat_item option:selected').text();
+		var target = $('#treat_list');
+
+		if(target.find('span#'+id).length>0) {
+			HmisAlert.alert('동일한 진료항목이 이미 선택되었습니다.');
+			return false;
+		}
+
+		var tbl = $('<span class="label label-default" style="margin-top:0px;margin-bottom:0px" id="'+id+'">'+text+' <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px"></i></label>');
+		tbl.find('i').on('click.doctor', function() {PatientDoctorInput.removeDoctor(id);});
+		target.append(tbl);
+		this.buildTreat();
+	},
+	//진료항목제거
+	removeTreat: function(id) {
+		$('#treat_list > span#'+id).remove();
+		this.buildTreat();
+	},
+	buildTreat: function() {
+		if($('#treat_list > span').length>0) {
+			$('#treat_null').css('display','none');
+		}
+		else {
+			$('#treat_null').css('display','');
+		}
+	},
+	loadUser: function(team_code, user_id, prefix) {
+		var prefix = prefix || 'sb';
+		var team_code = team_code || $('#'+prefix+'_team').val();
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#'+prefix+'_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (i==user_id)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');	
+				}
+			}
+		});
+	}, 
+	save: function(){
+		var treat = $('#treat_list > span').map(function(){ return $(this).attr('id'); }).get();
+		var formdata = $('#FrmPatientDoctorInput').serializeArray();
+		formdata.push({name:'treat', value:treat});
+
+		$.ajax({
+			url:'/patient_proc/save_patient_doctor',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('.modal-close').trigger('click');
+					PatientInfo.loadTab('doctor');
+					PatientInfo.countTab();
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function(){
+	PatientDoctorInput.init();
+})
+</script>

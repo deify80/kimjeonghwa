@@ -1,0 +1,397 @@
+<h3 class="area-title">수술내역 검색</h3>
+<form id="FrmPatientSearch" onsubmit="return false">
+<input type="hidden" name="group_code" value="{cfg.group}" />
+<input type="hidden" name="page" value="{page}" />
+<input type="hidden" name="favorite" value="" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>검색</th>
+			<td>
+				<input type="text" name="word" class="full" placeholder="환자명 or 휴대폰번호 or 차트번호" value="{search.word}" />
+			</td>
+			<th>수술일</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value="{search.date_s}"> ~ <input type="text" class="datepicker" name="date_e" value="{search.date_e}" id="sdate_e">
+				<ul class="btn-group btn-group-xs">
+					<li onclick="ProjectList.setDate('{=date('Y-m-d')}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">오늘</a></li>
+					<li onclick="ProjectList.setDate('{cfg.date.weekday}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번주</a></li>
+					<li onclick="ProjectList.setDate('{cfg.date.cur_month}','{=date('Y-m-d')}','sdate_s','sdate_e');"><a href="javascript:;">이번달</a></li>
+				</ul>
+			</td>
+			<th >수술부위</th>
+			<td>
+				<span id="treat_nav">전체</span>
+				<input type="hidden" id="treat_cost_no" name="treat_cost_no" value="">
+				<button type="button" onclick="HmisCommon.treat('ProjectList.search','','search')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+				<button type="button" onclick="ProjectList.resetTreat()" id="btn_treat_reset" class="btn btn-flat-lightgray btn-onlyicon hide"><i class="fa fa-times fa-1"></i></button>
+			</td>
+		</tr>
+
+		<tr>
+			<th>담당의사</th>
+			<td>
+				<select name="doctor_id" data-role="search">
+					<option value="" {? !search.doctor_id}selected{/}>::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? search.doctor_id==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" id="scsb_team" onchange="ProjectList.loadUser(this.value)" data-role="search">
+					<option value="" {? !search.manager_team_code}selected{/}>::팀::</option>
+					{@ cfg.team}
+					<option value="{.key_}" {? search.manager_team_code==.key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+
+				<select name="manager_id" id="scsb_user" style="display:none" data-role="search">
+					<option value="" {? !search.manager_team_code}selected{/}>::팀원::</option>
+				</select>
+			</td>
+
+			<th>성별</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn"><input type="radio" name="sex" value="" {? !search.sex}checked{/} data-role="search" />전체</label>
+					<label class="btn"><input type="radio" name="sex" value="M" {? search.sex=='M'}checked{/} data-role="search" />남</label>
+					<label class="btn"><input type="radio" name="sex" value="F" {? search.sex=='F'}checked{/} data-role="search" />여</label>
+				</div>
+			</td>
+		</tr>
+
+
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="ProjectList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="ProjectList.reset()">처음으로</button>
+</div>
+</form>
+
+<div class="dashed"></div>
+
+<h3 class="area-title">
+	수술 목록
+	<span class="f-small" style="font-weight:normal;font-size:11px;padding-left:10px">검색된 수술수 <span id="cnt_search" class="f-bold  f-error">0</span>건 <span class="split">|</span> 총 수술수 <span id="cnt_total"class="f-bold">0</span>건
+
+	<div class="button-box">
+
+
+	</div>
+</h3>
+<table id="table_patient" class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col width="60px"><!-- 번호 -->
+		<col width="40px"><!-- 선택 -->
+		<col width="120px"><!-- 차트번호 -->
+		<col width="150px"><!-- 이름 -->
+		<col width="150px"><!-- 생년월일 -->
+		<col width="70px"><!-- 성별 -->
+		<col width="150px"><!-- 연락처 -->
+		<col width="120px"><!-- 수술일자 -->
+		<col><!-- 진료부위 -->
+		<col width="100px"><!-- 담당의사 -->
+		<col width="100px"><!-- 담당실장 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th><label class="hmis"><input type="checkbox" class="hmis" onclick="HmisCommon.toggleCheck(this, 'checked[]')"><span class="lbl"></span></label></th>
+			<th>차트번호</th>
+			<th>이름</th>
+			<th>생년월일</th>
+			<th>성별</th>
+			<th>연락처</th>
+			<th>수술일자</th>
+			<th>수술부위</th>
+			<th>담당의사</th>
+			<th>담당실장</th>
+		</tr>
+	</thead>
+	<tbody id="patient_list">
+	</tbody>
+</table>
+
+<!-- 페이징:S -->
+<div class="area-pagination" id="pagination">
+</div>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr data-no="${\patient_no}">
+		<td data-link="no">${\idx}</td>
+		<td data-link="no"><label class="hmis"><input type="checkbox" class="hmis" name="checked[]" value="${\no}" data-mobile="${\mobile}"><span class="lbl"></span></label></td>
+
+		<td>${\chart_no}</td>
+		<td>${\name}</td>
+		<td>{if birth == '0000-00-00'} <span class="f-null">미입력</span> {\else} ${\birth} (${\age}) {/if}</td>
+		<td>{if sex=='F'} <i class="fa fa-1 fa-female f-pink"></i> {elseif sex=='M'} <i class="fa fa-1 fa-male f-blue"></i> {/if}</td>
+		<td>${\mobile}</td>
+		<td>${\date_project}</td>
+		<td class="left">{if treat_costs!='0'}${\treat_nav}{\else}미입력{/if}</td>
+		<td>{if doctor_id==''} <span class="f-null">미입력</span> {\else} ${\doctor_name} {/if}</td>
+		<td>{if manager_id==''} <span class="f-null">미입력</span> {\else} ${\manager_name} {/if}</td>
+	</tr>
+</textarea>
+
+<textarea id="tmpl_pagination" style="display:none">
+	<ul class="pagination">
+		<li><a href="javascript:;" onclick="ProjectList.load(${\first})"><i class="fa fa-angle-double-left"></i></a></li>
+		<li><a href="javascript:;" onclick="ProjectList.load(${\prev})"><i class="fa fa-angle-left"></i></a></li>
+		{for p in block}
+		<li class="{if p.equal==1} active {/if}"><a href="javascript:;" onclick="ProjectList.load(${\p.num})">${\p.num}</a></li>
+		<!-- <li><a href="javascript:;">2</a></li> -->
+		{/for}
+		<li><a href="javascript:;" onclick="ProjectList.load(${\next})"><i class="fa fa-angle-right"></i></a></li>
+		<li><a href="javascript:;" onclick="ProjectList.load(${\last})"><i class="fa fa-angle-double-right"></i></a></li>
+	</ul>
+</textarea>
+
+<!-- 문자발송폼:S -->
+<form id="FrmSms" method="post" action="/sms/main" target="sms_popup"></form>
+<!-- 문자발송폼:E -->
+
+<script language="javascript" src="/js/Hmis.treat.js"></script>
+<script language="javascript" src="/js/template.js"></script>
+<script language="javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var ProjectList = {
+	page:1,
+	defer: $.Deferred(),
+
+	init : function() {
+		HmisCommon.createDatepicker();
+
+		$('[data-role="search"]').on('change.search',function() {
+			ProjectList.setPage(1);
+			ProjectList.load();
+		});
+
+		HmisCommon.searchInit('FrmPatientSearch');
+
+		HmisCommon.loadUser('{search.manager_team_code}','{search.manager_id}', 'scsb');
+		ProjectList.loadTreatItem('{search.treat_region_code}','{search.treat_item_code}');
+
+	},
+	setPage: function(p) {
+		var p = p || 1;
+		HmisCommon.setValue($('input[name="page"]'),p);
+		this.page = p;
+	},
+	createClick: function() {
+		$('#patient_list > tr > td[data-link!="no"]').on('click',function(event) {
+			if (event.target.type == 'checkbox') return;
+
+			//document.location.href='/patient/info/'+$(this).parents().data('no');
+
+			var href = '/patient/info/'+$(this).parents().data('no');
+			window.open(href,'','width=1800,height=1000');
+
+
+
+		})
+	},
+	setDate: function(s,e, target_s, target_e) {
+		HmisCommon.setDate(s,e,target_s, target_e);
+		this.load(1);
+	},
+
+	search: function(d) {
+		if(d) {
+			$('#treat_nav').html(d.nav.join(' &gt '));
+			$('#treat_cost_no').val(d.no);
+			$('#btn_treat_reset').removeClass('hide');
+		}
+
+		ProjectList.setPage(1);
+		ProjectList.load();
+	},
+	resetTreat: function() {
+		$('#treat_nav').html('전체');
+		$('#treat_cost_no').val('');
+		$('#btn_treat_reset').addClass('hide');
+		this.search();
+	},
+	reload: function() {
+		ProjectList.load(ProjectList.page);
+	},
+	load: function(page) {
+
+		var p = page || this.page;
+		this.setPage(p);
+
+		var me = this;
+		var search = $('#FrmPatientSearch').serialize();
+
+		HmisLoading.show('#patient_list');
+		$.ajax({
+			url:'/patient/project_list_paging',
+			data:{
+				page:p,
+				limit:15,
+				search:search
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#patient_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data.list, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					var tmpl_page = TrimPath.parseDOMTemplate('tmpl_pagination');
+					$('#pagination').empty().append(tmpl_page.process(r.data.paging));
+				}
+				else {
+					var td_length = $('#table_patient th').length;
+					target.append('<tr><td colspan="'+td_length+'">검색된 환자정보가 없습니다.</td></tr>');
+				}
+
+				me.page = p;
+				me.createClick();
+				$('#cnt_total').html(HmisCommon.numberFormat(r.data.count.total));
+				$('#cnt_search').html(HmisCommon.numberFormat(r.data.count.search));
+				$('#cnt_favorite').html(HmisCommon.numberFormat(r.data.count.favorite));
+
+				$('[data-toggle="tooltip"]').tooltip();
+			},
+			complete: function() {
+				HmisLoading.hide();
+			}
+		})
+	},
+	remove: function() {
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('삭제할 환자를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('삭제하시겠습니까?', function(r) {
+			if(r) {
+				var patients = checked.map(function () {return this.value;}).get();
+
+				$.ajax({
+					url:'/patient_proc/remove_patient',
+					data:{
+						patient_no:patients
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						if(r.success){
+							me.reload();
+						}
+						else {
+							alert(r.msg);
+						}
+					}
+				})
+			}
+		});
+	},
+	reset: function(){
+		$('#scsb_treat_item').css('display','none');
+		$('#scsb_user').css('display','none');
+		HmisCommon.formReset('FrmPatientSearch');
+		this.resetTreat();
+		this.load();
+	},
+	loadUser: function(team_code){
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!=""]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	loadTreatItem: function(region_code, item_code) {
+		$.ajax({
+			url:'/patient/get_treat_item',
+			data:{
+				region_code:region_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#scsb_treat_item');
+				if(r.success && region_code!=''){
+					sb.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (item_code==i)?'selected':'';
+						sb.append('<option value="'+i+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('');
+					sb.css('display','none');
+				}
+			},
+			complete: function(){
+				ProjectList.load($('input[name="page"]').val());
+			}
+		});
+	},
+	sms: function(){
+		var checked = HmisCommon.getChecked('checked[]');
+		if (checked.length<1) {
+			HmisAlert.alert('문자발송 대상 환자를 선택하세요.');
+			return false;
+		}
+
+		var me = this;
+		HmisAlert.confirm('문자를 발송하시겠습니까?', function(r) {
+			if(r) {
+				$('#FrmSms').empty();
+				$.each(checked, function(i,e) {
+					var mobile = $(e).data('mobile');
+					if(!mobile) return true;
+					$('#FrmSms').append('<input type="hidden" name="sms[]" value="'+mobile+'" />');
+				})
+
+				open_sms();
+				$('#FrmSms').submit();
+			}
+		});
+	}
+}
+
+$(function(){
+	ProjectList.init();
+})
+</script>

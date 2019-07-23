@@ -1,0 +1,149 @@
+<script>
+	$(document).ready(function() {
+
+		$("#comment-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) comment_save();
+			}
+		})
+
+
+		$("#bt-prev").button("option", "icons", {
+			primary : "ui-icon-circle-triangle-w"
+		});
+
+		$("#bt-next").button("option", "icons", {
+			primary : "ui-icon-circle-triangle-e"
+		});
+
+
+	});
+
+
+
+	function comment_save() {
+
+		var url = "/bbs_proc/comment_insert/<?=$bbs_code?>";
+		var data = $("#comment-frm").serialize();
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				var obj = $.parseJSON(result_data);
+				if (obj.is_success == "1") {
+					$("<li><b>"+obj.reg_date+" "+obj.reg_user_name+"</b> "+obj.comment+"</li>").appendTo("#comment_list");
+					$("#comment").val("");
+				}
+			}
+		});
+	}
+
+
+	function bbs_remove(bbs_code, bbs_seqno) {
+		if (!confirm("삭제를 진행하시겠습니까?")) {
+			return false;
+		}
+		$.ajax({
+			type : "POST",
+			url : "/bbs_proc/remove",
+			data : "bbs_code="+bbs_code+"&bbs_seqno="+bbs_seqno,
+			success : function(result_data) {
+
+				$("#tmp").html(result_data);
+
+				document.location="/bbs/<?=$bbs_code?>";
+
+			}
+		});
+
+	}
+
+</script>
+<div style="width:100%;">
+<h3 class="area-title"><?=$bbs_config['bbs_title']?></h3>
+<div class="tool-box" style="margin: 0px;padding-bottom: 5px;">
+<? if($row['notice_flag'] != 'Y'): ?>
+<div style="width:300px;float: left;text-align: left;">
+<? if($neighbor_list['prev'] !=''): ?><button onClick="bbs_view('<?=$bbs_code?>', '<?=$neighbor_list['prev']?>');" id="bt-prev">이전글</button><? endif; ?>
+<? if($neighbor_list['next'] !=''): ?><button onClick="bbs_view('<?=$bbs_code?>', '<?=$neighbor_list['next']?>');" id="bt-next">다음글</button><? endif; ?>
+</div>
+<? endif; ?>
+<div>
+<button onClick="document.location='/bbs/<?=$bbs_code?>'">목록</button>
+
+<? if($row['reg_user_id'] == $this->session->userdata( 'ss_user_id' ) || $auth['bbs_delete']): ?>	<!-- 20170222 kruddo : 설정에서 bbs_delete에 지정된 그룹 삭제/수정 권한 부여 -->
+
+<button onClick="document.location='/bbs_input/<?=$bbs_code?>/<?=$row['bbs_seqno']?>'">수정</button>
+<button onClick="bbs_remove('<?=$bbs_code?>', '<?=$row['bbs_seqno']?>');">삭제</button>
+<? endif; ?>
+</div>
+</div>
+<table class="basic-table">
+<colgroup>
+<col width="20%">
+<col width="">
+</colgroup>
+	<tr>
+		<th>작성일자</th>
+		<td>
+		<?=$row['reg_date']?>
+		</td>
+	</tr>
+	<tr>
+		<th>작성자</th>
+		<td>
+		<?=$row['reg_user_name']?>
+		</td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td>
+			<?=$row['title']?>
+		</td>
+	</tr>
+	<tr>
+		<th>첨부파일</th>
+		<td>
+			<? foreach($file_list as $i): ?>
+			<a href="/bbs_down/<?=$bbs_code?>/<?=$i->seqno?>"><img src="/images/icon/<?=strtolower($i->ext)?>.gif" style="vertical-align: middle"> <?=$i->file_name?></a><br>
+			<? endforeach; ?>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<div style="margin: 3px 0 3px 0;">
+			<?=nl2br($row['contents'])?>
+			</div>
+		</td>
+	</tr>
+</table>
+<? if($bbs_config['comment_flag'] == "Y"): ?>
+<form id="comment-frm">
+<input type="hidden" name="bbs_code" value="<?=$bbs_code?>">
+<input type="hidden" name="bbs_seqno" value="<?=$row['bbs_seqno']?>">
+<table class="basic-table">
+<colgroup>
+<col width="20%">
+<col width="">
+</colgroup>
+	<tr>
+		<th>댓글</th>
+		<td>
+		<p style="padding-top: 5px;">
+		<input type="text" size="80" name="comment" id="comment" class="validate[required]" placeholder="댓글작성"><button type="submit">등록</button>
+		</p>
+		<ul style="margin: 5px;" id="comment_list">
+		<? foreach($comment_list as $i): ?>
+		<li><b><?=$i->reg_date?> <?=$i->reg_user_name?></b> <?=$i->comment?></li>
+		<? endforeach; ?>
+		</ul>
+		</td>
+	</tr>
+</table>
+</form>
+<? endif; ?>
+</div>
+
+<div id="tmp" style="width:500px;height: 600px;"></div>
+

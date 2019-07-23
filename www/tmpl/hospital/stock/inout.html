@@ -1,0 +1,51 @@
+<h3 class="area-title">입출고 검색</h3>
+<form id="FrmGoodsSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>등록일자</th>
+			<td>
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value="<?=date('Y-m-d')?>"> ~ <input type="text" class="datepicker" name="date_e" value="<?=date('Y-m-d')?>" id="sdate_e"> 
+				<div class="btn-group hmis" data-toggle="buttons">
+					<label class="btn"><input type="radio" checked onchange="GoodsList.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');"> 오늘</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"> 이번주</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"> 이번달</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"> 어제</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['pre_week_start']?>','<?=$cfg['date']['pre_week_end']?>');"> 지난주</label>
+					<label class="btn"><input type="radio" onchange="GoodsList.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"> 지난달</label>
+				</div>	
+			</td>
+			<th>현황</th>
+			<td>
+				<label class="hmis"><input type="radio" name="" value="" class="hmis"><span class="lbl"> 입고</span></label>
+				<label class="hmis"><input type="radio" name="" value="" class="hmis"><span class="lbl"> 출고</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>항목</th>
+			<td>
+				<select name="dept_code" onchange="GoodsList.loadTeam(this.value)">
+					<option value="">::항목선택::</option>
+				</select>
+				<select name="dept_code" onchange="GoodsList.loadTeam(this.value)">
+					<option value="">::분류선택::</option>
+				</select>
+			</td>
+		
+			<th>품목명</th>
+			<td><input type="text" name="goods_name" style="width:100%"></td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-lg btn-theme" onclick="GoodsList.load(1)"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="GoodsList.reset()">처음으로</button>
+</div>
+</form>

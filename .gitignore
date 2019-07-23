@@ -1,0 +1,14 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+
+DATA/
+.vscode/
+.history/
+
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.xlsx
+
+www/application/config/database.php
+www/application/libraries/Template_/compile/

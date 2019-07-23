@@ -1,0 +1,228 @@
+<h2 class="report">{report.report_name}</h2>
+<input type="hidden" name="report_code" value="{report.code}" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:90px" />
+		<col style="width:150px" />
+		<col style="width:90px" />
+		<col style="width:150px" />
+		<col style="width:50px" />
+	</colgroup>
+	<tr>
+		<th>문서종류</th>
+		<td colspan="3">{report.report_name}</td>
+		<th rowspan="3">결재</th>
+		<th class="f-11">{sign.approval[0].user}</th><!-- 결재자1 -->
+		<th class="f-11">{sign.approval[1].user}</th><!-- 결재자2 -->
+		<th class="f-11">{sign.approval[2].user}</th><!-- 결재자3 -->
+		<th class="f-11">{sign.approval[3].user}</th><!-- 결재자4 -->
+		<th class="f-11">{sign.approval[4].user}</th><!-- 결재자5 -->
+	</tr>
+	<tr>
+		<th>문서번호</th>
+		<td>{report.report_number}</td>
+		<th>작성일자</th>
+		<td><div class="minheight">{report.date_insert}</div></td>
+
+		{@ sign.approval}
+		<td rowspan="2" class="center" style="position:relative;padding:0px" id="sign_{.id}">
+			{? report.waiter_id == .id && report.is_waiter} 
+				<button type="button" class="btn" onclick="ReportView.sign('approved')"><i class="fa fa-thumbs-up f-blue"></i> 승인</button>
+				<button type="button" class="btn" onclick="ReportView.sign('rejected')" style="margin-top:5px"><i class="fa fa-thumbs-down f-error"></i> 반려</button>
+			{:}
+				<img src="/images/common/sign_{.status}.png" style="width:60px">
+				{? in_array(.status, array('view','approved','rejected'))}
+				<div style="position:absolute;bottom:5px;width:100%" class="f-10 f-gray">{=date('Y/m/d', strtotime(.date_sign))}</div>
+				{/}
+			{/}
+		</td>
+		{/}
+
+		{@ range(1,(5-count(sign.approval)))}
+		<td rowspan="2" class="center"></td><!-- 결재자5 사인란 -->
+		{/}
+	</tr>
+	<tr>
+		<th>부서</th>
+		<td><div class="minheight">{report.writer_info.team}</div></td>
+		<th>작성자</th>
+		<td>{report.writer_info.name} {report.writer_info.position}</td>
+	</tr>
+	<tr>
+		<th>제목</th>
+		<td colspan="3">{report.title}</td>
+		<th>참조</th>
+		<td colspan="5" class="left">{=implode(', ',sign.reference)}</td>
+	</tr>
+</table>
+
+<div id="tpl">{sub}</div>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:100px" />
+		<col />
+	</colgroup>
+	{? report.contents}
+	<tr>
+		<th>보고내용</th>
+		<td>{report.contents}</td>
+	</tr>
+	{/}
+
+	{? count(file.attach)}
+	<tr>
+		<th>첨부파일</th>
+		<td>
+			<ul>
+				{@ file.attach}
+				<li style="line-height:1.5em">
+					<i class="fa fa-file-o fa-1"></i> <a href="javascript:;" onclick="ReportView.download('{.seqno}')">{.file_name}</a>
+				</li>
+				{/}
+			</ul>
+		</td>
+	</tr>
+	{/}
+	<tr>
+		<th>의견</th>
+		<td>
+			<form id="FrmReportComment" onsubmit="return false">
+			<input type="hidden" name="report_no" value="{report.no}" />
+			<input type="text" name="comment" value="" style="width:800px" placeholder="의견을 남겨주세요." class="validate[required]"  data-errormessage-value-missing="의견을 입력하세요." autocomplete="off"> <button type="submit" class="btn btn-onlyicon"><i class="fa fa-1 fa-pencil f-blue"></i></button>
+			</form>
+
+			<div id="comment_lists"></div>
+			
+		</td>
+	</tr>
+</table>
+
+<div class="area-button">
+	{? report.writer_id == layout.login.info.ss_user_id}
+	{? report.report_status == 'wait'}
+	<button type="button" class="btn btn-flat-brown btn-lg" onclick="ReportView.act('cancel')"><i class="fa fa-2 fa-rotate-left"></i> 상신취소</button>
+	{/}
+	{? in_array(report.report_status, array('wait','cancel'))}
+	<button type="button" class="btn btn-flat-orange btn-lg" onclick="ReportView.act('remove')"><i class="fa fa-2 fa-trash"></i> 삭제</button>
+	{/}
+	{/}
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+
+
+<script type="text/javascript">
+var ReportView = {
+	report_no:'{report.no}',
+	init: function(){
+		$('#viewer').load(function(){
+			$('#viewer_loading').hide();
+			$(this).show();
+		});
+
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.saveComment();
+			}
+		});
+		$("#FrmReportComment").validationEngine('attach',option);
+
+		this.loadComment();
+		// this.loadSub();
+	},
+	act:function(act){
+		var act_txt = (act == 'cancel')?'상신취소':'삭제';
+		HmisAlert.confirm(act_txt+'하시겠습니까?', function(r){
+			if(r){
+				$.ajax({
+					url:'/report_proc/'+act,
+					data:{
+						report_no:ReportView.report_no
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg);
+						if(r.success) {
+							$('#HmisModal_reportview .modal-close').trigger('click');
+						}
+					}
+				})
+			}
+		})
+	},
+	sign: function(sign) {
+		var txt = (sign=='approved')?'승인':'반려';
+		var me = this;
+		HmisAlert.confirm(txt+'하시겠습니까?', function(r){
+			if(r){
+				$.ajax({
+					url:'/report_proc/sign',
+					data:{
+						report_no:ReportView.report_no,
+						sign:sign
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							$('#sign_'+r.data.user_id).html('<img src="/images/common/sign_'+r.data.sign+'.png" style="width:60px">');
+							me.loadSub();
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+		})
+	},
+	download: function(no) {
+		document.location.href = "/report/download/"+no;
+	},
+	loadSub: function() {
+		$('#tpl').load('/report/input_tpl', {mode:'view',report_no:this.report_no, tpl:'{cfg.path_tpl}'}, function(r){
+			// console.log(r);
+		});
+	},
+	loadComment: function(){
+		$('#comment_lists').load('/report/comment_lists', {report_no:this.report_no});
+	},
+	saveComment: function() {
+		var formdata = $('#FrmReportComment').serialize();
+		$.ajax({
+			url:'/report_proc/comment_save',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					ReportView.loadComment();
+					$('#FrmReportComment')[0].reset();
+
+				}
+			}
+		})
+	},
+	removeComment: function(no) {
+		$.ajax({
+			url:'/report_proc/comment_remove',
+			data:{
+				comment_no:no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					ReportView.loadComment();
+				}
+			}
+		})
+	}
+}
+
+$(function() {
+	ReportView.init();
+})
+</script>

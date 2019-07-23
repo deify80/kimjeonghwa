@@ -1,0 +1,132 @@
+<h3 class="area-title">환자레벨설정
+	<div class="button-box">
+		<button class="btn btn-flat-blue" onclick="SettingsGrade.input()"><i class="fa fa-plus fa-1"></i> 레벨추가</button>
+		<button class="btn btn-flat-purple" onclick="SettingsGrade.apply()"><i class="fa fa-cog fa-1"></i> 레벨적용</button>
+	</div>
+</h3>
+<form id="FrmAttendanceSettings">
+	<table class="table table-bordered table-list table-hover table-striped">
+		<colgroup>
+			<col style="width:50px" />
+			<col style="width:150px" />
+			<col style="width:150px" />
+			<col style="width:300px" />
+			<col />
+			<col style="width:100px" />
+			<col style="width:150px" />
+			<col style="width:150px" />
+		</colgroup>
+		<thead>
+			<tr>
+				<!-- <th>순위</th> -->
+				<th>유형</th>
+				<th>레벨코드</th>
+				<th>레벨명</th>
+				<th>금액</th>
+				<th>설명</th>
+				<th>사용여부</th>
+				<th>예상환자수</th>
+				<th>환자수</th>
+			</tr>
+		</thead>
+		<tbody id="grade_list">
+		</tbody>
+	</table>
+</form>
+
+<textarea id="tmpl_list" style="display:none">
+	<tr>
+		<td>{if is_fix == 'Y'} <i class="fa fa-1 fa-lock f-error"></i> {\else} <i class="fa fa-1 fa-unlock f-green"></i> {/if}</td>
+		<td><span class="label f-bold" style="background-color:${\rgb};min-width:22px">${\code}</span></td>
+		<td><a href="javascript:;" onclick="SettingsGrade.input('${\no}')" class="link">${\name}</a></td>
+		<td>매출액 ${HmisCommon.numberFormat(standard)}원 이상</td>
+		<td>${\comment}</td>
+		<td>{if is_use=='Y'}<i class="fa fa-1 fa-check f-blue"></i>{\else}<i class="fa fa-1 fa-times f-null"></i>{/if}</td>
+		<td>${\cnt_expect} 명</td>
+		<td>${\cnt} 명</td>
+
+	</tr>
+</textarea>
+
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span> 
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul>
+		<li style="margin-bottom:3px"><b class="" style="margin-right:10px">레벨기준금액</b>실제 수납액과 관계없이 책정된 매출액 기준으로 레벨이 부여됩니다.</li>
+		<!-- <li><b class="" style="margin-right:10px">개별설정</b> 컴플레인/블랙리스트 레벨은 회원관리에서 수동으로 설정합니다.</li> -->
+	</ul>
+
+</div>
+<script language="javascript" src="/js/template.js"></script>
+
+<script type="text/javascript">
+var SettingsGrade = {
+	init: function() {
+		this.load();
+	},
+	load: function() {
+		var me = this;
+		$.ajax({
+			url:'/patient/grade_list',
+			data:{
+				
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_list');
+				var target = $('#grade_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					
+				}
+				else {
+					// target.append('<tr><td colspan="13">검색된 환자정보가 없습니다.</td></tr>');
+				}
+
+				$('[data-toggle="tooltip"]').tooltip();
+			}
+		})
+	},
+	input:function(no) {
+		var title = (no)?'레벨변경':'레벨추가';
+		var modal = new HmisModal('gradeinput', {width:800, top:200});
+		modal.callback = this.load;
+		modal.open(title,'/patient/settings_grade_input',{no:no});
+	},
+	apply: function(){
+		HmisAlert.confirm('현재 설정된 레벨기준으로 모든 환자의 레벨이 지정됩니다.<br />실행하시겠습니까?', function(r){
+			if(r) {
+				$.ajax({
+					url:'/patient_proc/sync_grade',
+					data :{
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success) {
+							HmisAlert.alert(r.msg, function() {
+								SettingsGrade.load();
+							});
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+			
+		})
+	}
+};
+
+$(function() {
+	SettingsGrade.init();
+})
+</script>

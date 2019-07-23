@@ -1,0 +1,53 @@
+<style type="text/css">
+td {mso-number-format: "\@";}
+</style>
+
+<table border="1" style="font-size: 11px; border-collapse: collapse;width:100%;">
+	<thead>
+		<tr style="background-color: #cccccc; height: 30px;">
+			<th>수납일자</th>
+			<th>수납구분</th>
+			<th>구분</th>
+			<th>환자명</th>
+			<th>연락처</th>
+			<th>수납자</th>
+			<th>담당실장</th>
+			<th>현금영수증</th>
+			<th>총수납액</th>
+			<th>현금</th>
+			<th>카드</th>
+			<th>계좌이체</th>
+			<th>특이사항</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.date_paid}</td>
+			<td>{? .pay_type=='paid'}입금{:}환불{/}</td>
+			<td>{? .pay_type=='paid'} {.sales_type}{:} - {/}</td>
+			<td>{.name}</td>
+			<td>{.mobile}</td>
+			<td>{.acceptor_name}</td>
+			<td>{.manager_name}</td>
+			<td>{.receipt_type}</td>
+			{? .pay_type == 'paid'}
+			<td>
+				{.amount_paid}
+			</td>
+			<td>{.amount_paid_cash}</td>
+			<td>{.amount_paid_card}</td>
+			<td>{.amount_paid_bank}</td>
+			{:}
+			<td>
+				-{.amount_refund}
+			</td>
+			<td>{? .amount_refund_cash>0}-{.amount_refund_cash}{:}0{/}</td>
+			<td>{? .amount_refund_card>0}-{.amount_refund_card}{:}0{/}</td>
+			<td>{? .amount_refund_bank>0}-{.amount_refund_bank}{:}0{/}</td>
+			{/}
+			<td class="left">{.comment}</td>
+		</tr>
+		{/}
+	</tbody>
+</table>

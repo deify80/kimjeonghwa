@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/lib/js/flexslider/flexslider.css" type="text/css" media="screen" />
+<script defer src="/lib/js/flexslider/jquery.flexslider.js"></script>
+
+<script>
+	$(window).load(function() {
+		
+		$("body > div").css("margin", "0");
+		
+		$('.flexslider').flexslider({
+			animation : "slide",
+			controlNav : "thumbnails"
+		});
+	});
+</script>
+<div style="margin: 0;padding:0;width:100%;">
+	<div id="slider" class="flexslider" style="background-color: #000;">
+		<ul class="slides">
+			<? foreach($file_list as $i): ?>
+			<li data-thumb="/DATA/work/paper/<?=$i->new_name?>"><img src="/DATA/work/paper/<?=$i->new_name?>" /></li>
+			<? endforeach; ?>
+		</ul>
+	</div>
+</div>

@@ -1,0 +1,359 @@
+<form id="FrmPatientPayInput" onsubmit="return false">
+<input type="hidden" name="patient_no" value="{rs.patient_no}" />
+<input type="hidden" name="project_no" value="{rs.project_no}" />
+<input type="hidden" name="mode" value="{mode}" />
+<input type="hidden" name="pay_no" value="{rs.no}" />
+<input type="hidden" name="auth_save" value="{auth.save}">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="pay_type" value="paid" class="hmis" {? rs.pay_type=='paid'}checked{/} data-ui="change"/><span class="lbl"> 입금</span></label>
+				<label class="hmis"><input type="radio" name="pay_type" value="refund" class="hmis" {? rs.pay_type=='refund'}checked{/} data-ui="change" /><span class="lbl"> 환불</span></label>
+			</td>
+			<th>수납일자</th>
+			<td>
+				<input type="text" name="date_paid" value="{rs.date_paid}" class="datepicker lg" />
+			</td>
+			<th>수납자</th> <!-- 코디에서 불러옴 -->
+			<td>
+				<select name="acceptor_id">
+					<option value="">::수납자::</option>
+					{@ cfg.coordi}
+					<option value="{.key_}" {? rs.acceptor_id == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>담당실장</th>
+			<td>
+				<select name="manager_team_code" data-modify="yes" id="sb_team" onchange="HmisCommon.loadUser(this.value)">
+					<option value="">::팀::</option>
+					{@ cfg.manager_team}
+					<option value="{.key_}" {? rs.manager_team_code == .key_}selected{:}disabled{/}>{.value_}</option>
+					{/}
+				</select>
+				<select name="manager_id" data-modify="yes" id="sb_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+			<th>담당의사</th>
+			<td colspan="3">
+				<select name="doctor_id"  data-modify="yes">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}" {? rs.doctor_id ==.key_ }selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<style>
+.bb { border-bottom:solid 1px #DDDDDD; }
+.br { border-right:solid 1px #DDDDDD; }
+</style>
+
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>정산구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="calc_type" value="basic" class="hmis" {? rs.calc_type=='basic'}checked{/} /><span class="lbl"> 기본</span></label><!--기본매출-->
+				<label class="hmis"><input type="radio" name="calc_type" value="addition" class="hmis" {? rs.calc_type=='addition'}checked{/} /><span class="lbl"> 추가</span></label><!--기본매출-->
+			</td>
+		</tr>
+		<tr >
+			<th>매출구분</th>
+			<td>
+				<label class="hmis"><input type="radio" name="sales_type" value="1" class="hmis" {? rs.sales_type=='수술'}checked{/} /><span class="lbl"> 수술</span></label><!--기본매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="3" class="hmis" {? rs.sales_type=='예치'}checked{/} /><span class="lbl"> 예치</span></label><!--기본매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="2" class="hmis" {? rs.sales_type=='판매'}checked{/} /><span class="lbl"> 판매</span></label><!--추가매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="4" class="hmis" {? rs.sales_type=='시술'}checked{/} /><span class="lbl"> 시술</span></label><!--추가매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="8" class="hmis" {? rs.sales_type=='피부'}checked{/} /><span class="lbl"> 피부</span></label><!--추가매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="5" class="hmis" {? rs.sales_type=='검사'}checked{/} /><span class="lbl"> 검사</span></label><!--추가매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="6" class="hmis" {? rs.sales_type=='증명서'}checked{/} /><span class="lbl"> 증명서</span></label><!--추가매출-->
+				<label class="hmis"><input type="radio" name="sales_type" value="7" class="hmis" {? rs.sales_type=='보증금'}checked{/} /><span class="lbl"> 보증금</span></label><!--추가매출-->
+			</td>
+		</tr>
+		<tr data-ui-group="pay_type" data-ui-value="paid">
+			<th>수납금액</th>
+			<td style="padding:0px">
+				<table class="table" style="margin:0px">
+					<colgorup>
+						<col style="width:80px" />
+						<col />
+					</colgorup>
+					<tr>
+						<td class="bb">현금 </td>
+						<td class="bb">
+							<input type="text" name="amount_paid_cash" value="{=number_format(rs.amount_paid_cash)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="수납금액을 입력하세요." />
+							{? !C.CASHX}
+							<input type="text" name="amount_paid_cash_x" value="{=number_format(rs.amount_paid_cash_x)}" class="validate[groupRequired[paid]] number" id="cashx" />
+							{/}
+						</td>
+					</tr>
+					<tr>
+						<td class="bb">카드</td>
+						<td class="bb">
+							<input type="text" name="amount_paid_card" value="{=number_format(rs.amount_paid_card)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="수납금액을 입력하세요." />
+							<select name="card_code" >
+								<option value="">::카드사::</option>
+								{@ cfg.card}
+								<option value="{.key_}" {? rs.card_code==.key_}selected{/}>{.value_}</option>
+								{/}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="bb">이체 </td>
+						<td class="bb">
+							<input type="text" name="amount_paid_bank" value="{=number_format(rs.amount_paid_bank)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="수납금액을 입력하세요." />
+							<select name="bank_code" >
+								<option value="">::은행::</option>
+								{@ cfg.bank}
+								<option value="{.key_}" {? rs.bank_code==.key_}selected{/}>{.value_}</option>
+								{/}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td><b>총수납액</b></td>
+						<td>
+							<input type="text" name="amount_paid" value="{=number_format(rs.amount_paid)}" class="transparent number" readonly /> <!-- (현금 + 카드 + 이체) -->
+						</td>
+					</tr>
+				</table>
+
+			</td>
+		</tr>
+		<tr data-ui-group="pay_type" data-ui-value="refund">
+			<th>환불금액</th>
+			<td style="padding:0px">
+				<table class="table" style="margin:0px">
+					<colgorup>
+						<col style="width:80px" />
+						<col />
+					</colgorup>
+					<tr>
+						<td class="bb">현금 </td>
+						<td class="bb">
+							<input type="text" name="amount_refund_cash" value="{=number_format(rs.amount_refund_cash)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="환불금액을 입력하세요." />
+							{? !C.CASHX}
+							<input type="text" name="amount_refund_cash_x" value="{=number_format(rs.amount_refund_cash_x)}" class="validate[groupRequired[paid]] number"/>
+							{/}
+						</td>
+					</tr>
+					<tr>
+						<td class="bb">카드</td>
+						<td class="bb">
+							<input type="text" name="amount_refund_card" value="{=number_format(rs.amount_refund_card)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="환불금액을 입력하세요." />
+
+						</td>
+					</tr>
+					<tr>
+						<td class="bb">이체 </td>
+						<td class="bb">
+							<input type="text" name="amount_refund_bank" value="{=number_format(rs.amount_refund_bank)}" class="validate[groupRequired[paid]] required number" data-errormessage-value-missing="환불금액을 입력하세요." />
+
+						</td>
+					</tr>
+					<tr>
+						<td><b>총환불액</b></td>
+						<td>
+							<input type="text" name="amount_refund" value="{=number_format(rs.amount_refund)}" class="transparent number" readonly /> <!-- (현금 + 카드 + 이체) -->
+						</td>
+					</tr>
+				</table>
+				<!--{*
+				<input type="text" name="amount_refund" value="{=number_format(rs.amount_refund)}" class="validate[custom[numberFormat] required] number required" />
+				*}-->
+			</td>
+		</tr>
+		<tr>
+			<th>미납금액 <!-- <i class="fa fa-info-circle fa-1 f-info" data-toggle="tooltip" title="총매출-할인금액-환불금액-총수납액"></i> --></th>
+			<td>
+				<input type="text" name="amount_unpaid" id="amount_paid" data-unpaid="{project.amount_unpaid+rs.amount_paid}" value="{=number_format(project.amount_unpaid)}" class="transparent number" readonly /><!-- (총매출-할인금액-환불금액-총수납액) -->
+			</td>
+		</tr>
+		<tr data-ui-group="pay_type" data-ui-value="paid">
+			<th>현금영수증</th>
+			<td>
+				<label class="hmis"><input type="radio" name="receipt_type" value="1" class="hmis" {? rs.receipt_type=='자진발급'}checked{/} /><span class="lbl"> 자진발급</span></label>
+				<label class="hmis"><input type="radio" name="receipt_type" value="2" class="hmis" {? rs.receipt_type=='발행'}checked{/} /><span class="lbl"> 발행</span></label>
+				<label class="hmis"><input type="radio" name="receipt_type" value="3" class="hmis" {? rs.receipt_type=='미발행'}checked{/} /><span class="lbl"> 미발행</span></label>
+			</td>
+		</tr>
+		<tr data-ui-group="pay_type" data-ui-value="refund">
+			<th>현금영수증</th>
+			<td>
+				<label class="hmis"><input type="checkbox" name="receipt_type" value="4" class="hmis" {? rs.receipt_type=='차감'}checked{/} /><span class="lbl"> 차감</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>특이사항</th>
+			<td>
+				<textarea name="comment" class="hmis">{rs.comment}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+
+<div class="area-button">
+
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	{? auth.save}{/}
+	<!-- <button type="button" class="btn btn-flat-orange btn-lg">삭제</button> -->
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<div class="well" style="margin-top:5px">
+	<span class="label label-error">도움말</span>
+	<div class="dashed" style="margin:7px 0px"></div>
+	<ul class="helper">
+		<li><b style="margin-right:10px">수정</b>작성시간기준 3일(72시간)이내에만 수정가능합니다.</li>
+		<li><b style="margin-right:10px;color:#fff;">수정</b>작성시간기준 3일(72시간)이후에는 담당실장, 담당의사정보만 변경가능합니다.</li>
+	</ul>
+
+</div>
+
+<script type="text/javascript">
+var PatientPayInput = {
+	amount:{},
+	auth_save:'{auth.save}',
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition : "centerRight",
+			//display:'alert',
+
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmPatientPayInput").validationEngine('attach',option);
+
+		HmisCommon.loadUser("{rs.manager_team_code}","{rs.manager_id}");
+
+		HmisCommon.createDatepicker();
+		//HmisTreat.loadTreatItem("{rs.treat_region_code}","{rs.treat_item_code}");
+		this.createNumber();
+
+		$.each($('[data-ui]'), function(i,e) {
+			me.setUI(this.name);
+			var evt = $(e).data('ui');
+			$(this).on(evt,function() {
+				me.setUI(this.name);
+			});
+		});
+
+		if(this.auth_save != '1') {
+			$.each($('#FrmPatientPayInput').find('input, select'),function() {
+				if($(this).data('modify') == 'yes' || this.type == 'hidden') return true;
+				$(this).attr('disabled',true);
+			});
+		}
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('focus.number').bind('focus.number', function(evt){
+			var e = $(this);
+			e.val(e.val().replace(/[^0-9]/gi,''));
+		});
+
+		$("input.number").unbind('blur.number').bind('blur.number', function(evt){
+			var e = $(this);
+			e.val(HmisCommon.numberFormat(e.val()) );
+			PatientPayInput.calc(e);
+		});
+	},
+	setUI : function(name) {
+		var frm = $('#FrmPatientPayInput');
+		frm.validationEngine('hide');
+		var v = HmisCommon.getValue($('#FrmPatientPayInput input[name="'+name+'"]'));
+
+		var group = $('[data-ui-group="'+name+'"]');
+		group.css('display','none');
+		group.filter('[data-ui-value~="'+v+'"]').css('display','');
+
+		if(name=='pay_type') {
+			//frm.find('[name="amount_unpaid"]').val(HmisCommon.numberFormat($('#amount_paid').data('unpaid')));
+		}
+
+
+	},
+	calc: function(e) {
+		var frm = $('#FrmPatientPayInput');
+		var amount = this.amount;
+		$.each($("input.number"), function(i,e) {
+			var $e = $(e);
+			amount[e.name] = parseInt(e.value.toString().replace(/[^0-9]/gi,''));
+		});
+
+		//총수납액
+
+
+		var amount_paid = amount.amount_paid_cash+amount.amount_paid_card+amount.amount_paid_bank;
+		amount.amount_paid = amount_paid;
+		frm.find('[name="amount_paid"]').val(HmisCommon.numberFormat(amount_paid));
+
+		//총환불액
+		var amount_refund = amount.amount_refund_cash+amount.amount_refund_card+amount.amount_refund_bank;
+		amount.amount_refund = amount_refund;
+		frm.find('[name="amount_refund"]').val(HmisCommon.numberFormat(amount_refund));
+
+		var pay_type = $('input[name="pay_type"]:checked').val();
+		if(pay_type=='paid') amount_refund = 0;
+		else amount_paid = 0;
+
+		//미납금액 = 총매출-할인금액-환불금액-총수납액
+		var amount_unpaid = parseInt($('#amount_paid').data('unpaid')) - amount.amount_paid + amount.amount_refund;
+
+		frm.find('[name="amount_unpaid"]').val(HmisCommon.numberFormat(amount_unpaid));
+
+	},
+	save: function(){
+		this.calc();			// 20170221 kruddo : 수납금액 입력 후 Enter 하게 되면 총수납앱/미납액 계산 되지 않은채로 저장 됨. 저장 전 한번 더 계산 단계
+
+		var formdata = $('#FrmPatientPayInput').serialize();
+		$.ajax({
+			url:'/patient_proc/save_patient_pay',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success) {
+					$('.modal-close').trigger('click');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	}
+}
+
+$(function(){
+	PatientPayInput.init();
+})
+</script>

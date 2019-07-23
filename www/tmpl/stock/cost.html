@@ -1,0 +1,495 @@
+<style>
+#classify_list .fa {
+	color:#E3E3E3;
+}
+
+#classify_list tr.selected .fa{
+	color:#FF5722;
+}
+
+tr.selected td{
+	background-color:#F5F5F5;
+}
+
+tr.selected th {
+}
+
+</style>
+
+
+
+<table class="table table-list" style="margin-top:5px">
+	<tr>
+		<td colspan="3" style="text-align:left"><h3>원장진/OP재료</h3></td>
+	</tr>
+	<tr style="vertical-align:top">
+		<td id="tbl_classify_list">
+			<h3 class="area-title">
+				분류 목록
+				<div class="button-box">
+					<button class="btn btn-flat-blue" onclick="StockSettings.openClassify('000D')"><i class="fa fa-plus fa-1"></i> 분류추가 </button>
+				</div>
+			</h3>
+			<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+				<colgroup>
+					<col width="80px">
+					<col width="80px">
+					<col>
+					<col width="20px">
+				</colgroup>
+				<tbody id="classify_list"></tbody>
+			</table>
+		</td>
+		<td id="tbl_item_list">
+			<h3 class="area-title">
+				<span class="f-error" id="classify_name"></span> 의 하위 분류
+				<div class="button-box">
+					<button class="btn btn-flat-purple" onclick="StockSettings.openItem()"><i class="fa fa-plus fa-1"></i> 항목추가</button>
+				</div>
+			</h3>
+			<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+				<colgroup>
+					<col width="80px">
+					<col width="80px">
+					<col>
+				</colgroup>
+				<tbody id="item_list">
+				</tbody>
+			</table>
+		</td>
+		<td id="tbl_item_sub_list">
+			<h3 class="area-title">
+				<span class="f-error" id="item_name"></span> 의 하위 분류
+				<div class="button-box">
+					<button class="btn btn-flat-green" onclick="StockSettings.openItemSub('000D')"><i class="fa fa-plus fa-1"></i> 물품등록</button>
+				</div>
+			</h3>
+			<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+				<colgroup>
+					<col width="80px">
+					<col width="80px">
+					<col>
+				</colgroup>
+				<tbody id="item_sub_list">
+				</tbody>
+			</table>
+		</td>
+	</tr>
+
+
+	<tr>
+		<td colspan="3" style="text-align:left"><h3>마취목록</h3></td>
+	</tr>
+	<tr style="vertical-align:top">
+		<td>
+			<h3 class="area-title">
+				분류 목록
+				<div class="button-box">
+					<button class="btn btn-flat-purple" onclick="StockSettings.openClassify('000A')"><i class="fa fa-plus fa-1"></i> 항목추가 </button>
+				</div>
+			</h3>
+
+			<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+				<colgroup>
+					<col width="80px">
+					<col width="80px">
+					<col>
+				</colgroup>
+				<tbody id="anesthesia_item_list">
+				</tbody>
+			</table>
+		</td>
+		<td id="tbl_anesthesia_item_sub_list">
+			<h3 class="area-title">
+				<span class="f-error" id="anesthesia_name"></span> 의 하위 분류
+				<div class="button-box">
+					<button class="btn btn-flat-green" onclick="StockSettings.openItemSub('000A')"><i class="fa fa-plus fa-1"></i> 물품등록</button>
+				</div>
+			</h3>
+			<table class="table table-bordered table-hover table-list" style="margin-top:5px">
+				<colgroup>
+					<col width="80px">
+					<col width="80px">
+					<col>
+				</colgroup>
+				<tbody id="anesthesia_item_sub_list">
+				</tbody>
+			</table>
+		</td>
+		<td>
+		</td>
+	</tr>
+</table>
+
+
+
+
+<textarea id="tmpl_classify" style="display:none">
+	<tr id="classify_${\code_parent}_${\code}" data-code="${\code_parent}_${\code}" data-name="${\name}" data-use="${\is_use}">
+		<td><a href="javascript:;" onclick="StockSettings.openClassify('000D', '${\no}')" class="link">${\code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setUse('${\no}', '${\is_use}', 'classify', '000D')">
+			{if is_use=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left" style="border-right:0px;cursor:pointer" onclick="StockSettings.loadItem('${\code_parent}_${\code}');">
+			${\name}
+		</td>
+		<td style="border-left:0px">
+			<i class="fa fa-chevron-right"></i>
+		</td>
+	</tr>
+</textarea>
+
+
+
+<textarea id="tmpl_item" style="display:none">
+	<tr id="item_${\code_parent}_${\code}" data-code="${\code_parent}_${\code}" data-name="${\name}" data-use="${\is_use}">
+		<td><a href="javascript:;" onclick="StockSettings.openItem('${\no}')" class="link">${\code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setUse('${\no}', '${\is_use}', 'item', '')">
+			{if is_use=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left" style="border-right:0px;cursor:pointer" onclick="StockSettings.loadItemSub('${\code_parent}_${\code}');">
+			${\name}
+		</td>
+		<td style="border-left:0px">
+			<i class="fa fa-chevron-right"></i>
+		</td>
+	</tr>
+</textarea>
+
+
+<textarea id="tmpl_anesthesia_item" style="display:none">
+	<tr id="anesthesia_${\code_parent}_${\code}" data-code="${\code_parent}_${\code}" data-name="${\name}" data-use="${\is_use}">
+		<td><a href="javascript:;" onclick="StockSettings.openClassify('000A', '${\no}')" class="link">${\code}</a></td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setUse('${\no}', '${\is_use}', 'item', '000A')">
+			{if is_use=='Y'}
+			<span class="label label-xs label-theme">사용</span>
+			{else if}
+			<span class="label label-xs">미사용</span>
+			{/if}
+			</a>
+		</td>
+		<td class="left" style="border-right:0px;cursor:pointer" onclick="StockSettings.loadAnesthesiaSub('${\code_parent}_${\code}');">
+			${\name}
+		</td>
+		<td style="border-left:0px">
+			<i class="fa fa-chevron-right"></i>
+		</td>
+	</tr>
+</textarea>
+
+
+
+<textarea id="tmpl_item_sub" style="display:none">
+	<tr>
+		<td>${\rownum}</td>
+		<td>
+			<a href="javascript:;" onclick="StockSettings.setDel('${\pno}', '${\pcode_parent}')">
+			<span class="label label-xs label-theme">삭제</span>
+			</a>
+		</td>
+		<td class="left">
+			${\goods_name}
+		</td>
+	</tr>
+</textarea>
+
+<script language="javascript" src="/js/template.js"></script>
+<script type="text/javascript">
+var StockSettings = {
+	classify_code:'',
+	item_code:'',
+	anesthesia_code:'',
+	group_code:"000D",
+	anesthesia_group_code:"000A",
+	init: function() {
+		this.loadClassify();
+		this.loadAnesthesia();
+	},
+	loadClassify: function(classify_code){
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'classify',
+				code_parent:this.group_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_classify');
+				var target = $('#classify_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					classify_code = classify_code || $('#classify_list > tr:first').data('code');
+
+					me.loadItem(classify_code);
+
+					$('#tbl_item_list').show();
+				}
+				else {
+					target.append('<tr><td colspan="4">등록된 항목이 없습니다.</td></tr>');
+					$('#tbl_item_list').hide();
+					$('#tbl_item_sub_list').hide();
+				}
+			}
+		})
+	},
+	loadItem: function(classify_code, code_real){
+		this.classify_code = classify_code;
+		$('#classify_list > tr').removeClass('selected');
+		$('#classify_'+classify_code).addClass('selected');
+		$('#classify_name').html($('#classify_'+classify_code).data('name'));
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'item',
+				code_parent:classify_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_item');
+				var target = $('#item_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					var classify_use = $('#classify_'+me.classify_code).data('use');
+					$.each(r.data, function(i,e){
+						if(classify_use == 'N') e.is_use = 'N';
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+
+
+					//classify_code = classify_code || $('#item_list > tr:first').data('code');
+					classify_code = code_real || $('#item_list > tr:first').data('code');
+
+					me.loadItemSub(classify_code);
+					$('#tbl_item_sub_list').show();
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 항목이 없습니다.</td></tr>');
+					$('#tbl_item_sub_list').hide();
+				}
+			}
+		})
+
+	},
+	loadItemSub: function(classify_code){
+		this.item_code = classify_code;
+
+		$('#item_list > tr').removeClass('selected');
+		$('#item_'+classify_code).addClass('selected');
+		$('#item_name').html($('#item_'+classify_code).data('name'));
+
+		var me = this;
+		$.ajax({
+			url:'/stock/category_sub_list',
+			data:{
+				kind:'item_sub',
+				code_parent:classify_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_item_sub');
+				var target = $('#item_sub_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					//var classify_use = $('#item_sub_'+me.classify_code).data('use');
+					$.each(r.data, function(i,e){
+						//if(classify_use == 'N') e.is_use = 'N';
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 항목이 없습니다.</td></tr>');
+				}
+			}
+		})
+	},
+
+	loadAnesthesia: function(classify_code){
+		var me = this;
+		$.ajax({
+			url:'/stock/category_list',
+			data:{
+				kind:'classify',
+				code_parent:this.anesthesia_group_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_anesthesia_item');
+				var target = $('#anesthesia_item_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					$.each(r.data, function(i,e){
+						html += tmpl.process(e);
+					});
+					target.append(html);
+
+					classify_code = classify_code || $('#anesthesia_item_list > tr:first').data('code');
+
+					me.loadAnesthesiaSub(classify_code);
+					$('#tbl_anesthesia_item_sub_list').show();
+				}
+				else {
+					target.append('<tr><td colspan="4">등록된 항목이 없습니다.</td></tr>');
+					$('#tbl_anesthesia_item_sub_list').hide();
+				}
+			}
+		})
+	},
+
+	loadAnesthesiaSub: function(classify_code){
+		//console.log(classify_code);
+		this.anesthesia_code = classify_code;
+
+		$('#anesthesia_item_list > tr').removeClass('selected');
+		$('#anesthesia_'+classify_code).addClass('selected');
+		$('#anesthesia_name').html($('#anesthesia_'+classify_code).data('name'));
+
+		var me = this;
+		$.ajax({
+			url:'/stock/category_sub_list',
+			data:{
+				kind:'item_sub',
+				code_parent:classify_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var tmpl = TrimPath.parseDOMTemplate('tmpl_item_sub');
+				var target = $('#anesthesia_item_sub_list');
+				target.empty();
+				if(r.success) {
+					var html = '';
+					//var classify_use = $('#item_sub_'+me.classify_code).data('use');
+					$.each(r.data, function(i,e){
+					//	if(classify_use == 'N') e.is_use = 'N';
+						html += tmpl.process(e);
+					});
+					target.append(html);
+				}
+				else {
+					target.append('<tr><td colspan="3">등록된 항목이 없습니다.</td></tr>');
+				}
+			}
+		})
+
+	},
+
+
+	openClassify: function(group, no){
+		var title = (no)?'분류 수정':'분류 추가';
+		var modal = new HmisModal('modal_classify', {width:500, top:200});
+		modal.open(title,'/stock/classify_input', {no:no, code_parent:group});
+	},
+
+	openItem: function(no){
+		var title = (no)?'항목 수정':'항목 추가';
+		var modal = new HmisModal('modal_classify', {width:500, top:200});
+		modal.open(title,'/stock/item_input', {no:no, code_parent:this.classify_code});
+	},
+
+	openItemSub: function(status) {
+		var title = '물품 추가';
+		var modal = new HmisModal('modal_item', {width:800, top:100});
+		if(status == '000A')		code_parent = this.anesthesia_code;
+		else						code_parent = this.item_code;
+		modal.open(title,'/stock/item_sub_input', {code_parent:code_parent});
+	},
+
+
+
+	setUse: function(no, is_use, group, status) {
+		if(group == 'item') {
+			var classify_use = $('#classify_'+this.classify_code).data('use');
+			if(classify_use == 'N') {
+				alert('상위 분류가 사용안함으로 설정되어 있습니다.');
+				return false;
+			}
+		}
+
+		var me = this;
+		var is_use = (is_use=='Y')?'N':'Y';
+		$.ajax({
+			url:'/stock_proc/category_use',
+			data:{
+				no:no,
+				is_use:is_use
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					if(status == '000A'){
+						me.loadAnesthesia(me.anesthesia_group_code);
+					}
+					else{
+						me.loadClassify(me.classify_code);
+					}
+				}
+			}
+		})
+
+	},
+
+	setDel:function(no, parent){
+		var me = this;
+		$.ajax({
+			url:'/stock_proc/cost_product_del',
+			data:{
+				no:no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+
+					if(parent.split("_")[0] == "000A"){
+						classify_code = $('#anesthesia_item_list > tr:first').data('code');
+						me.loadAnesthesiaSub(classify_code);
+					}
+					else{
+						classify_code = $('#item_list > tr.selected').data('code');
+						me.loadItemSub(classify_code);
+					}
+
+
+				}
+			}
+		})
+	}
+
+}
+
+$(function(){
+	StockSettings.init();
+})
+</script>

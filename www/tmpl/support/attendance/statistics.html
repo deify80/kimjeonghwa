@@ -1,0 +1,120 @@
+<h3 class="area-title">근태 검색</h3>
+<form id="FrmAttendanceSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>출력날짜</th>
+			<td colspan="1">
+				<input type="text" class="datepicker" name="date_s" id="sdate_s" value="<?=date('Y-m-d')?>"> ~ <input type="text" class="datepicker" name="date_e" value="<?=date('Y-m-d')?>" id="sdate_e"> 
+				<div class="btn-group hmis" data-toggle="buttons">
+					<label class="btn">
+						<input type="radio" checked onchange="AttendanceStatistics.setDate('<?=date('Y-m-d')?>','<?=date('Y-m-d')?>');" checked> 오늘
+					</label>
+					<label class="btn">
+						<input type="radio" onchange="AttendanceStatistics.setDate('<?=$cfg['date']['weekday']?>','<?=date('Y-m-d')?>');"> 이번주
+					</label>
+					<label class="btn">
+						<input type="radio" onchange="AttendanceStatistics.setDate('<?=$cfg['date']['cur_month']?>','<?=date('Y-m-d')?>');"> 이번달
+					</label>
+					<label class="btn">
+						<input type="radio" onchange="AttendanceStatistics.setDate('<?=$cfg['date']['yesterday']?>','<?=$cfg['date']['yesterday']?>');"> 어제
+					</label>
+					<label class="btn">
+						<input type="radio" onchange="AttendanceStatistics.setDate('<?=$cfg['date']['pre_week_start']?>','<?=$cfg['date']['pre_week_end']?>');"> 지난주
+					</label>
+					<label class="btn">
+						<input type="radio" onchange="AttendanceStatistics.setDate('<?=$cfg['date']['pre_month_start']?>','<?=$cfg['date']['pre_month_end']?>');"> 지난달
+					</label>
+				</div>				
+				<!-- <ul class="btn-group btn-group-xs btn-group-striped" style="margin-left:10px">
+					<? foreach(range(1,12) as $m){ ?>
+					<li class="" onclick="HmisCommon.setDate('date_s','date_e',0);"><a href="javascript:;"><?=$m?>월</a></li>
+					<? } ?>
+				</ul> -->
+			</td>
+		</tr>
+		<tr>
+			<th>기준</th>
+			<td style="padding:5px 5px">
+				<div class="btn-group hmis blue" data-toggle="buttons">
+					<label class="btn active">
+						<input type="radio" name="type" value="dept" checked> 부서별
+					</label>
+					<label class="btn">
+						<input type="radio" name="type" value="team"> 팀별
+					</label>
+					<label class="btn">
+						<input type="radio" name="type" value="position"> 직급별
+					</label>
+				</div>
+
+			</td>
+			<!-- <th>출력데이터(X)</th>
+			<td>
+				<ul class="btn-group btn-group-xs red">
+					<li class="" onclick=""><a href="javascript:;">부서</a></li>
+					<li class="" onclick=""><a href="javascript:;">팀</a></li>
+					<li class="active" onclick=""><a href="javascript:;">직급</a></li>
+					<li class="" onclick=""><a href="javascript:;">요일</a></li>
+					<li class="" onclick=""><a href="javascript:;">출근상태</a></li>
+					<li class="" onclick=""><a href="javascript:;">근태상태</a></li>
+				</ul>
+			</td>
+			<th>출력데이터(Y)</th>
+			<td>
+				<ul class="btn-group btn-group-xs purple">
+					<li class="" onclick=""><a href="javascript:;">부서</a></li>
+					<li class="" onclick=""><a href="javascript:;">팀</a></li>
+					<li class="" onclick=""><a href="javascript:;">직급</a></li>
+					<li class="active" onclick=""><a href="javascript:;">요일</a></li>
+					<li class="" onclick=""><a href="javascript:;">출근상태</a></li>
+					<li class="" onclick=""><a href="javascript:;">근태상태</a></li>
+				</ul>	
+			</td> -->
+		</tr>
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="AttendanceStatistics.load()"><i class="fa fa-bar-chart"></i> 통계데이터 보기</button>
+</div>
+
+<div class="dashed1" style="margin:10px 0px"></div>
+
+<div id="statistics"></div>
+
+<style>
+tspan {font-family: 'NG';}
+</style>
+
+<script src="/js/bootstrap.button.js"></script>
+<script src="/lib/js/highcharts/highcharts.js"></script>
+<script type="text/javascript">
+var AttendanceStatistics = {
+	init: function() {
+		this.load();
+		var me = this;
+		$('input[name="type"]').on('change',function(){
+			me.load();
+		})
+	},
+	setDate: function(date_s, date_e) {
+		HmisCommon.setDate(date_s, date_e);
+		this.load();
+	},
+	load: function() {
+		var type = $('input[name="type"]:checked').val();
+		$('#statistics').load('/attendance/statistics_chart', {type:type});
+	}
+}
+
+$(function(){
+	AttendanceStatistics.init();	
+})
+
+</script>

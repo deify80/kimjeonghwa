@@ -1,0 +1,1148 @@
+<style type="text/css">
+/*.no-border { border:0px; background:#ffffff; }*/
+</style>
+<script src="//cdn.ckeditor.com/4.4.6/standard/ckeditor.js"></script>
+<script src="/js/adapter.ckeditor.js"></script>
+
+<script>
+
+	var settle_type = 0;
+	var type1_cnt = 0;
+	var type2_cnt = 0;	
+	var type4_cnt = 0;
+	
+	$(document).ready(function() {	
+		
+		open_calendar("#expense_start_date");
+		open_calendar("#expense_end_date");
+		
+		init();
+		
+		// 결재라인 다이얼로그
+		$("#settle_line-area").dialog({
+			autoOpen : false,
+			width : 950,
+			height : 480,
+			resizable : false,
+			modal : true,
+			show : {
+				effect : "blind"
+			},
+			buttons : {
+				"닫기" : function() {
+					$(this).dialog("close");
+				}
+			}
+		});		
+				
+		// 기안 선택 (라디오)
+		$("input:radio[name=settle_type]").change(function()
+		{
+			var id = $(this).attr("id");
+			settle_type = $(this).val();			
+			$('#settle_type_str').text($('label[for='+id+']').text());
+			
+			for( i = 1 ; i <= 4 ; i++ ){
+				if( i == settle_type ){
+					$('#expense_div_type'+i).show();					
+					$('#expense_div_type'+i).find("input,select").attr("disabled", false);
+				}
+				else{
+					$('#expense_div_type'+i).hide();
+					$('#expense_div_type'+i).find("input,select").attr("disabled", true);
+				}
+			}
+			
+			if(settle_type == 0 || settle_type == 3){
+				$('#add_expense').hide();
+			}
+			else{
+				$('#add_expense').show();
+			}
+		});
+		
+		$("input:checkbox[name=expense_receipt]").change(function()
+		{
+			var id = $(this).attr("id");
+			settle_type = $(this).val();			
+			
+		});
+		
+		// 결재올리기
+		$("#bt-save").button("option", "icons", {
+			primary : "ui-icon-circle-check"
+		});
+		
+		$("#bt-off").button("option", "icons", {
+			primary : "ui-icon-closethick"
+		});
+						
+		$("#input-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {				
+				if (status) save();
+			}
+		})		
+		
+		// 숫자만 입력, 콤마 붙여주기
+		$(document).on("keyup", '.number', function(){
+			var total_price = 0;
+			var total_material = 0;
+			var total_expense_price = 0;			
+			num = $(this).val();			
+			
+			var idx = $(this).attr("title");
+			if( idx ){
+				$( "input:enabled[title="+idx+"]" ).each(function() {
+		        	if( this.value ){
+		        		total_expense_price = parseInt(total_expense_price) + parseInt(this.value.replace(/[^0-9]/g,''));		        		
+		        	}
+				});
+				$("#expense_price"+idx).val(total_expense_price.number_format(0));
+			}
+			
+			//console.log("removeText: 숫자 제거 합니다.");
+	        if (typeof(num)==="undefined")
+	        {
+	            $(this).each(function(){	            	
+	            	num = this.value.replace(/[^0-9]/g,'');
+	            });
+	        }
+	        else
+	        {
+	        	num = num.replace(/[^0-9]/g,'');
+	        }	        
+			
+			num = num.split(',').join(''); 
+			var arr = num.split('.'); 
+			var num = new Array(); 
+			
+			for (i = 0; i <= arr[0].length-1; i++) { 
+				num[i] = arr[0].substr(arr[0].length-1-i,1); 
+				if(i%3 == 0 && i != 0){
+					num[i] += ','; 
+				}
+			}
+			
+			num = num.reverse().join(''); 
+			if (!arr[1]){ 
+				$(this).val(num);
+			}
+			else{ 
+				$(this).val(num+'.'+arr[1]); 
+			}
+			
+			$( "input:enabled[id^=expense_price]" ).each(function() {
+	        	if( this.value ){
+	        		total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+	        	}
+			});
+			
+			$( "input:enabled[id^=expense_material_cost]" ).each(function() {
+	        	if( this.value ){
+	        		total_material = parseInt(total_material) + parseInt(this.value.replace(/[^0-9]/g,''));
+	        	}
+			});
+	        
+	        $( "input:enabled[id=total_price]" ).val(total_price.number_format(0));
+	        $( "input:enabled[id=total_material]" ).val(total_material.number_format(0));	
+	        
+		}); 
+	});
+	
+	// 초기화
+	function init(){
+		settle_type = '<?=$view_data['settle_type'];?>'
+		//$('#expense_div_type'+settle_type).show();
+		$('input:radio[name=settle_type]:input[value='+settle_type+']').attr("checked", true);
+		
+		for( i = 1 ; i <= 4 ; i++ ){
+			if( i == settle_type ){
+				$('#expense_div_type'+i).show();					
+				$('#expense_div_type'+i).find("input,select").attr("disabled", false);
+			}
+			else{
+				$('#expense_div_type'+i).hide();
+				$('#expense_div_type'+i).find("input,select").attr("disabled", true);
+			}
+		}
+		
+		var start_date = $("#expense_start_date").val();
+		var end_date = $("#expense_end_date").val();
+		
+		var d1 = new Date(start_date);
+		var d2 = new Date(end_date);
+
+		var d_time_1 = d1.getTime();
+		var d_time_2 = d2.getTime();
+
+		var dayTime = d_time_2 - d_time_1;
+		var period = (dayTime/1000/60/60/24)+1;			
+		
+		if( period > 0 ){
+			$("#expense_period").text(period+"일");
+		}else{
+			$("#expense_period").text("");
+		}
+		
+		
+		$(".datepicker").datepicker({
+			defaultDate : "+w",
+			changeMonth : true,
+			numberOfMonths : 1,
+			dateFormat : 'yy-mm-dd',
+			dayNamesMin : [ '일', '월', '화', '수', '목', '금',
+					'토' ],
+			monthNames : [ '1월', '2월', '3월', '4월', '5월',
+					'6월', '7월', '8월', '9월', '10월', '11월',
+					'12월' ],
+			monthNamesShort : [ '1월', '2월', '3월', '4월',
+					'5월', '6월', '7월', '8월', '9월', '10월',
+					'11월', '12월' ],
+			showOn : "button",
+			buttonImage : "/images/layout/calendar.gif",
+			buttonImageOnly : true,
+
+			onSelect: function(dateText) {
+				var start_date = $("#expense_start_date").val();
+				var end_date = $("#expense_end_date").val();
+				
+				var d1 = new Date(start_date);
+				var d2 = new Date(end_date);
+
+				var d_time_1 = d1.getTime();
+				var d_time_2 = d2.getTime();
+
+				var dayTime = d_time_2 - d_time_1;
+				var period = dayTime/1000/60/60/24;			
+				
+				if( period > 0 ){
+					$("#expense_period").text(period+"일");
+				}else{
+					$("#expense_period").text("");
+				}
+			}
+		});
+		
+	}
+	
+	Number.prototype.number_format = function(round_decimal) {
+		 
+	    return this.toFixed(round_decimal).replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+	};
+	
+	// 저장
+	function save(){		
+		if( $('#approval_person').val() == "" ){
+			alert("결재라인을 선택해 주세요.");
+			return;
+		} 
+		
+		document.input-frm.submit();			
+	}
+
+	// 라인 레이아웃 팝업
+	function settle_line(){
+		$( "#settle_line-area" ).load( "/business/settle_line");
+		$( "#settle_line-area" ).dialog("open");
+	}	
+	
+	// 기안참조 레이아웃 팝업
+	function draft_refer(){
+		$( '#settle_line-area' ).dialog('option', 'title', '기안참조');
+		$( "#settle_line-area" ).load( "/business/draft_refer");
+		$( "#settle_line-area" ).dialog("open");
+	}
+	
+	// 상세 추가
+	function add_expense(){
+		var cnt = 0;
+		if( settle_type == 1 ){		
+			cnt = $('#expense_div_type1 tr').length;
+			$('#add_expense_type1_'+type1_cnt).hide();
+			$('#del_expense_type1_'+type1_cnt).hide();
+			type1_cnt++;
+			$('#expense_div_type1 > tbody > tr').eq(cnt-2).after("<tr id='type1_"+type1_cnt+"'><td><input type='text' name='expense_start_date[]' id='expense1_start_date"+type1_cnt+"' size='10' class='datepicker'></td><td><select name='expense_type[]' id='expense_type[]'><?php foreach( $settle_expense_type as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?></select></td><td><input type='text' style='width:95%;' name='expense_devision[]' id='expense_devision[]' value=''></td><td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td><td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value=''></td><td><input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''> <span class='badge' id='add_expense_type1_"+type1_cnt+"' onClick='add_expense();' style='cursor:pointer;'>+</span> <span class='badge' id='del_expense_type1_"+type1_cnt+"' onClick=\"del_expense('type1_"+type1_cnt+"');\" style='cursor:pointer;'>-</span></td></tr>");			
+		}
+		else if( settle_type == 2 ){
+			cnt = $('#expense_div_type2 tr').length;
+			$('#add_expense_type2_'+type2_cnt).hide();
+			$('#del_expense_type2_'+type2_cnt).hide();
+			type2_cnt++;
+			//$('#expense_div_type2 > tbody > tr').eq(cnt-2).after("<tr id='type2_"+type2_cnt+"'><td><input type='text' name='expense_start_date[]' id='expense2_start_date"+type2_cnt+"' size='10' class='datepicker'></td><td><select name='expense_type[]' id='expense_type[]'><?php foreach( $settle_expense_type as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?></select></td><td><input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value=''></td><td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td><td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value=''></td><td><input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''> <span class='badge' id='add_expense_type2_"+type2_cnt+"' onClick='add_expense();' style='cursor:pointer;'>+</span> <span class='badge' id='del_expense_type2_"+type2_cnt+"' onClick=\"del_expense('type2_"+type2_cnt+"');\" style='cursor:pointer;'>-</span></td></tr>");
+			$('#expense_div_type2 > tbody > tr').eq(cnt-2).after("<tr id='type2_"+type2_cnt+"'><td><input type='text' name='expense_start_date[]' id='expense2_start_date"+type2_cnt+"' size='10' class='datepicker'></td><td><input type='text' style='width:95%;' name='expense_charger[]' id='expense_charger[]' value=''></td><td><input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value=''></td><td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td><td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value=''></td><td><input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''> <span class='badge' id='add_expense_type2_"+type2_cnt+"' onClick='add_expense();' style='cursor:pointer;'>+</span> <span class='badge' id='del_expense_type2_"+type2_cnt+"' onClick=\"del_expense('type2_"+type2_cnt+"');\" style='cursor:pointer;'>-</span></td></tr>");
+			
+		}
+		else if( settle_type == 4 ){			
+			cnt = $('#expense_div_type4 tr').length;	
+			$('#add_expense_type4_'+type4_cnt).hide();
+			$('#del_expense_type4_'+type4_cnt).hide();
+			type4_cnt++;			
+			$('#expense_div_type4 > tbody > tr').eq(cnt-2).after("<tr id='type4_"+type4_cnt+"'><td><input type='text' name='expense_start_date[]' id='expense4_start_date"+type4_cnt+"' size='10' class='datepicker'></td><td><input type='text' class='datepicker' name='expense_end_date[]' id='expense4_end_date"+type4_cnt+"' size='10' ></td><td><input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value=''></td><td><select name='expense_doctor[]' id='expense_doctor[]'><?php foreach( $settle_expense_doctor as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?></select></td><td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td><td>현금 <input type='text' class='number' style='width:65%;' name='expense_receipt_money[]' id='expense_receipt_money[]' title='"+type4_cnt+"' value=''><br />카드 <input type='text' class='number' style='width:65%;' name='expense_receipt_card[]' id='expense_receipt_card[]' title='"+type4_cnt+"' value=''><br />계좌 <input type='text' class='number' style='width:65%;' name='expense_receipt_account[]' id='expense_receipt_account[]' title='"+type4_cnt+"' value=''></td><td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price"+type4_cnt+"' value='' readonly></td><td><input type='text' class='number' style='width:95%;' name='expense_material_cost[]' id='expense_material_cost"+type4_cnt+"' value=''></td><td><select name='team_list[]' id='team_list"+type4_cnt+"' onChange='team_select("+type4_cnt+");'><option value=''>-팀선택-</option><?php foreach( $team_info as $key => $val ){ ?><option value='<?=$key;?>'><?=$val;?></option><?php } ?></select><br/><select name='expense_advice[]' id='expense_advice"+type4_cnt+"'></select></td><td><input type='text' style='width:75%;' name='expense_etc[]' id='expense_etc[]' value=''> <span class='badge' id='add_expense_type4_"+type4_cnt+"' onClick='add_expense();' style='cursor:pointer;'>+</span> <span class='badge' id='del_expense_type4_"+type4_cnt+"' onClick=\"del_expense('type4_"+type4_cnt+"');\" style='cursor:pointer;'>-</span></td></tr>");
+		}
+		
+		$(".datepicker").datepicker({
+			defaultDate : "+w",
+			changeMonth : true,
+			numberOfMonths : 1,
+			dateFormat : 'yy-mm-dd',
+			dayNamesMin : [ '일', '월', '화', '수', '목', '금',
+					'토' ],
+			monthNames : [ '1월', '2월', '3월', '4월', '5월',
+					'6월', '7월', '8월', '9월', '10월', '11월',
+					'12월' ],
+			monthNamesShort : [ '1월', '2월', '3월', '4월',
+					'5월', '6월', '7월', '8월', '9월', '10월',
+					'11월', '12월' ],
+			showOn : "button",
+			buttonImage : "/images/layout/calendar.gif",
+			buttonImageOnly : true,
+
+			onSelect: function(dateText) {
+			}
+		});
+	}
+	
+	function del_expense(id){		
+		$("#"+id).remove();	
+		
+		var id_array = id.split('_');
+		idx = parseInt(id_array[1])-1;
+		
+		$('#add_expense_'+id_array[0]+'_'+idx).show();
+		$('#del_expense_'+id_array[0]+'_'+idx).show();	
+		
+		if( id_array[0] == "type1") type1_cnt--;
+		if( id_array[0] == "type2") type2_cnt--;
+		if( id_array[0] == "type4") type4_cnt--;
+		
+		var total_price = 0;
+		
+		$( "input:enabled[id=expense_price]" ).each(function() {
+        	if( this.value ){
+        		total_price = parseInt(total_price) + parseInt(this.value.replace(/[^0-9]/g,''));
+        	}
+		});
+        
+        $( "input:enabled[id=total_price]" ).val(total_price.number_format(0));				
+	}
+	
+	function draft_cancel( draft_cancel_no ){
+		var draft_no = $("#draft_no").val();
+		
+		var draft_array = draft_no.split(',');
+		
+		
+		var i;
+		var draft_no_str = "";
+		
+		//alert( draft_array.length );
+		for( i = 0 ; i < draft_array.length ; i++ ){
+			//alert( draft_array[i]+" "+draft_cancel_no );
+			
+			if( draft_array[i] == draft_cancel_no ){
+				$('#draft_cancel_id'+draft_cancel_no).remove();			
+			}
+			else{
+				
+				if( draft_no_str != "" ){
+					draft_no_str = draft_no_str+","+draft_array[i];
+				}
+				else{
+					draft_no_str = draft_array[i];
+				}
+			}
+		}
+		
+		$("#draft_no").val(draft_no_str);
+	}
+	
+	function file_choice(idx, file_no){
+		//alert( idx );
+		/*
+		if( $('#settle_file_ori'+idx).text() == "" ){			
+			$('#settle_file_plus'+idx).show();	
+			$('#settle_file_cancel'+idx).show();
+		}
+		*/
+		
+		$('#settle_file_plus'+idx).show();	
+		$('#settle_file_cancel'+idx).show();
+		$('#settle_file_ori'+idx).hide();
+		
+		file_cancel_no(file_no);
+	}
+	
+	// 파일 추가
+	function settle_file_plus(idx){		
+		//alert( idx_ );
+		var idx_ = parseInt(idx)+parseInt(1);		
+		$('#settle_file'+idx_).show();
+		$('#settle_file_plus'+idx).hide();	
+		$('#settle_file_cancel'+idx).hide();	
+	}
+	
+	// 파일 취소
+	function settle_file_cancel(idx, file_no){
+		//alert( file_no );
+		if( idx != 0 ){
+			var idx_ = parseInt(idx)-parseInt(1);	
+			$('#settle_file'+idx).hide();			
+			$('#settle_file'+idx_).show();
+			$('#settle_file_plus'+idx_).show();	
+			$('#settle_file_cancel'+idx_).show();
+		}
+		$('#settle_file_ori'+idx).hide();
+		$('#settle_file'+idx).val('');
+		$('#settle_file_plus'+idx).hide();	
+		$('#settle_file_cancel'+idx).hide();	
+		
+		file_cancel_no(file_no);
+	}
+	
+	function file_cancel_no(file_no){
+		
+		if( file_no ){
+			var file_cancel_no = $('#file_cancel_no').val();
+			
+			file_cancel_array = file_cancel_no.split(',');
+			
+			if( $.inArray( file_no, file_cancel_array ) == -1 ){
+				if( file_cancel_no == "" ){
+					$('#file_cancel_no').val(file_no);
+				}
+				else{
+					$('#file_cancel_no').val(file_cancel_no+","+file_no);
+				}				
+	    	}
+		}
+		
+		
+	}
+	
+	function team_select(idx, advice_no){	
+		
+		var url = "/business/get_user_info_json/";	
+		  $.ajax({
+				type: "POST",
+				url: url,
+				data: "what=team_s&code="+$('#team_list'+idx).val(),
+				dataType: "json",
+				success: function(result_data){
+					var rows = "";
+				    if (result_data != null && result_data != "") {
+				    	$.each(result_data, function(index, entry){
+				    		
+				    		if( advice_no == index ){
+				    			rows += "<option value='"+index+"' selected >"+entry+"</option>";	
+				    		}else{
+				    			rows += "<option value='"+index+"'>"+entry+"</option>";	
+				    		}
+						});
+					}
+				    if( $('#team_list'+idx).val() ){
+				    	$('select#expense_advice'+idx).html(rows);
+				    }
+				    else{
+				    	$('select#expense_advice'+idx).html("");
+				    }
+          }
+      });
+	}
+	
+</script>
+
+<?php
+//$this->func_lib->pr( $view_data );
+//$this->func_lib->pr( $settle_file );
+//$this->func_lib->pr( $settle_expense ); 
+
+?>
+<div id="settle_line-area" title="결재라인"></div>
+
+<div style="width: 100%;margin: auto;">
+	<form id="input-frm" action="/business_proc/settle_add" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="mode" id="mode" value="modify">	
+		<input type="hidden" name="settle_no" id="settle_no" value="<?=$view_data['no'];?>">	
+		<input type="hidden" name="approval_person" id="approval_person" value="">
+		<input type="hidden" name="refer_person" id="refer_person" value="">
+		<input type="hidden" name="draft_no" id="draft_no" value="">
+		<input type="hidden" name="file_cancel_no" id="file_cancel_no" value="">		
+		
+		
+		<h3 class="area-title">
+		기안수정
+		</h3>
+		
+		<div class="button-box" style="top:50px;width:440px;">
+			<button id="bt-line" onClick="settle_line();">결재라인</button>
+		</div>	
+		
+		<table class="basic-table">
+			<colgroup>
+				<col width="10%" />
+				<col width="16%" />
+				<col width="10%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+				<col width="12%" />
+			</colgroup>
+			<tbody>
+				<tr>
+					<th>기안 선택</th>
+					<td colspan="3">
+						<?php
+						$cnt = 0;
+						foreach( $aSettleType as $key=>$val){			 
+						?>
+						<label for="settle_type<?=$cnt;?>"><?=$val;?></label>
+						<input type="radio" class="validate[required]" name="settle_type" id="settle_type<?=$cnt;?>" value="<?=$key;?>"><?=$val;?>
+						<?php
+						$cnt++; 
+						} 
+						?>
+					</td>
+					<th>사업장 선택</th>
+					<td colspan="3">
+						<select name="biz_id">
+						<?	foreach( $biz_info as $i=>$val):?>
+						<option value="<?=$i?>" <?php if( $view_data['biz_id'] == $i ){ echo "selected"; }?>><?=$val?></option>
+						<? endforeach; ?>
+						</select>
+						<!-- 
+						<?php
+						$cnt = 0;
+						foreach( $biz_info as $row){
+						?>
+						<label for="biz_id<?=$cnt;?>"><?=$row['biz_name'];?></label>
+						<input type="radio" class="validate[required]" name="biz_id" id="biz_id<?=$cnt;?>" value="<?=$row['biz_id'];?>" <?php if( $view_data['biz_id'] == $row['biz_id'] ){ echo "checked='checked'"; }?> ><?=$row['biz_name'];?>
+						
+						<?php
+						$cnt++; 
+						} 
+						?>
+						-->
+					</td>
+				</tr>		
+				<tr>
+					<th>품의번호</th>
+					<td>
+					<input style="border:0px; background:#ffffff; width:160px;" type="text" id="settle_number" name="settle_number" value="<?=$view_data['settle_number'];?>" readonly>
+					</td>
+					<th rowspan="3">결재</th>
+					
+					<?php
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td>
+					<div id="position<?=$i;?>">
+					<?php echo $approval[$i]['position_title']; ?>
+					</div>
+					</td>
+					<?php } ?>
+										
+				</tr>
+				<tr>
+					<th>작성일자</th>
+					<td>
+					<input style="border:0px; background:#ffffff;" type="text" id="reg_date" name="reg_date" value="<?=date('Y-m-d H:i:s');?>" readonly>
+					</td>
+					
+					<?php
+					$approval_user = "";
+					for( $i = 0 ; $i < 5 ; $i++ ){
+					?>
+					<td rowspan="2">
+					<div id="approval_name<?=$i;?>">
+					<?php 
+						$button_chk = 0;
+						if( isset( $approval[$i] ) ){
+							if( $approval[$i]['status'] == NULL ){
+								$approval[$i]['status'] = 0;
+							}
+							echo $approval[$i]['name'];
+
+							if( $approval_user != "" ){ $approval_user .= ","; };
+							$approval_user .=  $approval[$i]['user_no'];
+						}
+					?>
+					</div>
+					</td>
+					<?php
+					}
+					echo "<script>$('#approval_person').val('$approval_user');</script>";
+					?>
+				</tr>
+				<tr>
+					<th>내용구분</th>
+					<td><div id="settle_type_str"><?=$view_data['settle_type_str'];?></div></td>
+				</tr>
+				<tr>
+					<th>작성자</th>
+					<td>
+					<input style="border:0px; background:#ffffff;" type="text" value="<?=$view_data['name'];?>" readonly>
+					</td>
+					<th>참조</th>
+					<td colspan="5">
+					<div id="refer_name">
+					<?php
+					$refer_str = "";
+					$refet_user = "";
+					for( $i = 0 ; $i < count($refer) ; $i++ ){
+						if( $refer_str ){ 
+							$refer_str .= ", ";
+						}
+
+						if( $refet_user != "" ){ $refet_user .= ","; };
+						$refet_user .=  $refer[$i]['user_no'];
+
+						$refer_str .= $refer[$i]['name'];
+					}
+					echo $refer_str;
+					echo "<script>$('#refer_person').val('$refet_user');</script>";
+					?>					
+					</div>
+					</td>
+				</tr>
+				<tr>
+					<th>제목</th>
+					<td colspan="7">
+					<input type="text" class="validate[required]" style="width:95%;" name="title" id="title" value="<?=$view_data['title'];?>">
+					</td>
+				</tr>
+				<tr>
+					<th colspan="8">주요내용</th>
+				</tr>
+				<tr>	
+					<td colspan="8">
+					
+					<textarea name="content" id="content" style="overflow-y:scroll;" rows="12" cols="193"><?=$view_data['content'];?></textarea>
+					<script>
+		                CKEDITOR.replace( 'content' );
+		            </script>
+					<br/>
+					
+					<table id="expense_div_type3" style="display:none" class="basic-table">
+						<colgroup>
+							<col width="10%" />
+							<col width="10%" />
+							<col width="10%" />
+							<col width="5%" />
+							<col width="5%" />
+							<col width="5%" />
+							<col width="25%" />
+							<col width="10%" />
+							<col width="10%" />
+							<col width="10%" />
+						</colgroup>
+						<tbody >
+							<tr>
+								<th>사업장</th>
+								<th>부서명</th>
+								<th>팀명</th>
+								<th>직급</th>
+								<th>이름</th>
+								<th>구분</th>
+								<th>기간</th>
+								<th>사유</th>
+								<th>대리업무자</th>
+								<th>비상연락망</th>
+							</tr>
+							<tr>
+								<td><?=$this->session->userdata( 'ss_biz_name' );?></td>
+								<td><?=$this->session->userdata( 'ss_dept_name' );?></td>
+								<td><?=$this->session->userdata( 'ss_team_name' );?></td>
+								<td><?=$this->session->userdata( 'ss_position_name' );?></td>
+								<td><?=$this->session->userdata( 'ss_name' );?></td>
+								<?php
+								if( $view_data['settle_type'] == 3 ){	
+									foreach( $settle_expense as $row){
+								?>
+								<td>
+								<select name='expense_holiday' id='expense_holiday'>
+									<?php foreach( $settle_expense_holiday as $key => $val){ ?><option value="<?=$key;?>" <?php if( $key == $row['expense_holiday'] ) echo "selected"; ?> ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td>
+								<input type="text" name="expense_start_date" id="expense_start_date" size="10" class="datepicker" value="<?=substr($row['expense_start_date'],0,10);?>">
+			 						~ <input type="text" name="expense_end_date" id="expense_end_date" size="10" class="datepicker" value="<?=substr($row['expense_end_date'],0,10);?>">
+					 			<span id="expense_period"></span>
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc' id='expense_desc' value='<?=$row['expense_desc'];?>'></td>
+								<td><input type='text' style='width:95%;' name='expense_customer' id='expense_customer' value='<?=$row['expense_customer'];?>'></td>
+								<td><input type='text' style='width:95%;' name='expense_etc' id='expense_etc' value='<?=$row['expense_etc'];?>'></td>
+								<?php
+									}
+								}else{
+								?>
+								<td>
+								<select name='expense_holiday' id='expense_holiday'>
+									<?php foreach( $settle_expense_holiday as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td>
+								<input type="text" name="expense_start_date" id="expense_start_date" size="10" class="datepicker">
+					 					~ <input type="text" name="expense_end_date" id="expense_end_date" size="10" class="datepicker">
+					 			<span id="expense_period"></span>
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc' id='expense_desc' value=''></td>
+								<td><input type='text' style='width:95%;' name='expense_customer' id='expense_customer' value=''></td>
+								<td><input type='text' style='width:95%;' name='expense_etc' id='expense_etc' value=''></td>
+								<?php
+								}
+								?>
+							</tr>
+						</tbody>
+					</table>
+					
+					
+					<div id="expense_div_type3" style="display:none">
+						<?php
+						if( $view_data['settle_type'] == 3 ){	
+							foreach( $settle_expense as $row){
+						?>
+						<select name='expense_holiday' id='expense_holiday'>
+							<?php foreach( $settle_expense_holiday as $key => $val){ ?><option value="<?=$key;?>" <?php if( $key == $row['expense_holiday'] ) echo "selected"; ?> ><?=$val;?></option><?php } ?>
+						</select>
+						<input type="text" name="expense_start_date" id="expense_start_date" size="10" class="datepicker" value="<?=substr($row['expense_start_date'],0,10);?>">
+			 					~ <input type="text" name="expense_end_date" id="expense_end_date" size="10" class="datepicker" value="<?=substr($row['expense_end_date'],0,10);?>">
+			 			<?php 
+							}
+						}else{
+						?>
+						<select name='expense_holiday' id='expense_holiday'>
+							<?php foreach( $settle_expense_holiday as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+						</select>
+						<input type="text" name="expense_start_date" id="expense_start_date" size="10" class="datepicker">
+			 					~ <input type="text" name="expense_end_date" id="expense_end_date" size="10" class="datepicker"> 			
+						<?php
+						}
+						?>
+						
+						<span id="expense_period"></span>
+					</div>
+					
+					<table id="expense_div_type1" style="display:none" class="basic-table">
+						<colgroup>
+							<col width="10%" />
+							<col width="10%" />
+							<col width="10%" />
+							<col width="12%" />
+							<col width="10%" />
+							<col width="20%" />
+						</colgroup>
+						<tbody >
+							<tr>
+								<th>거래일</th>
+								<th>유형</th>
+								<th>구분</th>
+								<th>적요</th>
+								<th>금액</th>
+								<th>비고</th>
+							</tr>
+							
+							<?php
+							$total = 0; 
+							$type1_i = 0;
+							if( $view_data['settle_type'] == 1 ){
+								foreach( $settle_expense as $row){
+									$expense_type = $row['expense_type'];
+									$expense_devision = $row['expense_devision']
+							?>
+							<tr id="type1_<?=$type1_i;?>">
+								<td><input type='text' class='datepicker' name='expense_start_date[]' id='expense1_start_date' size='10' value="<?=substr($row['expense_start_date'],0,10);?>"></td>
+								<td>
+								<select name='expense_type[]' id='expense_type[]'>
+								<?php foreach( $settle_expense_type as $key => $val){ ?><option value="<?=$key;?>" <?php if( $key == $expense_type ) echo "selected"; ?> ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_devision[]' id='expense_devision[]' value='<?=$row["expense_devision"]?>'>									
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value='<?=$row["expense_desc"]?>'></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value='<?=number_format($row["expense_price"])?>'></td>
+								<td>
+								<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value='<?=$row["expense_etc"]?>'>
+																
+								<?php if( $type1_i == 0 ){ ?>
+								<span class='badge' id='add_expense_type1_<?=$type1_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>								
+								<?php }else if( $type1_i != 0 && $type1_i != count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type1_<?=$type1_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>
+								<span class='badge' id='del_expense_type1_<?=$type1_i;?>' onClick="del_expense('type1_<?=$type1_i;?>');" style='cursor:pointer;display:none;'>-</span>								
+								<?php }else if( $type1_i != 0 && $type1_i == count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type1_<?=$type1_i;?>' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								<span class='badge' id='del_expense_type1_<?=$type1_i;?>' onClick="del_expense('type1_<?=$type1_i;?>');" style='cursor:pointer;'>-</span>
+								<?php } ?>
+								
+								</td>								
+							</tr>	
+							<?php
+								$total += $row['expense_price'];
+								$type1_i++;
+								}
+								echo "<script> type1_cnt = $type1_i-1;</script>";
+							}
+							else{
+							?>
+							<tr>
+								<td><input type='text' class='datepicker' name='expense_start_date[]' id='expense1_start_date' size='10'></td>
+								<td>
+								<select name='expense_type[]' id='expense_type[]'>
+								<?php foreach( $settle_expense_type as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_devision[]' id='expense_devision[]' value=''>									
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value=''></td>
+								<td>
+								<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''>
+								<span class='badge' id='add_expense_type1_0' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								</td>
+							</tr>
+							<?php
+							}
+							?>
+							
+							<tr>
+							<td colspan=4 style="text-align:center;">합계</td>
+							<td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_price" value="<?=number_format($total);?>"></td>
+							<td></td>
+							</tr>
+							
+							
+						</tbody>
+					</table>
+					
+					<table id="expense_div_type2" style="display:none" class="basic-table">
+						<colgroup>
+							<col width="10%" />
+							<col width="10%" />
+							<col width="10%" />
+							<col width="12%" />
+							<col width="10%" />
+							<col width="20%" />
+						</colgroup>
+						<tbody >
+							<tr>
+								<th>지출예상일</th>
+								<th>담당자</th>
+								<th>거래처</th>
+								<th>적요</th>
+								<th>금액</th>
+								<th>비고</th>
+							</tr>
+							<?php
+							$total = 0; 
+							$type2_i = 0;
+							if( $view_data['settle_type'] == 2 ){
+								foreach( $settle_expense as $row){
+									$expense_type = $row['expense_type'];
+							?>
+							<tr id="type2_<?=$type2_i;?>">
+								<td><input type='text' class='datepicker' name='expense_start_date[]' id='expense2_start_date' size='10' value="<?=substr($row['expense_start_date'],0,10);?>"></td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_charger[]' id='expense_charger[]' value='<?=$row["expense_charger"];?>'>
+								<!-- 
+								<select name='expense_type[]' id='expense_type[]'>
+								<?php foreach( $settle_expense_type as $key => $val){ ?><option value="<?=$key;?>" <?php if( $key == $expense_type ) echo "selected"; ?> ><?=$val;?></option><?php } ?>								
+								</select>
+								 -->
+								</td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value='<?=$row["expense_customer"];?>'>			
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value='<?=$row["expense_desc"];?>'></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value='<?=number_format($row["expense_price"]);?>'></td>
+								<td>
+								<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value='<?=$row["expense_etc"];?>'>
+								<?php if( $type2_i == 0 ){ ?>
+								<span class='badge' id='add_expense_type2_<?=$type2_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>								
+								<?php }else if( $type2_i != 0 && $type2_i != count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type2_<?=$type2_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>
+								<span class='badge' id='del_expense_type2_<?=$type2_i;?>' onClick="del_expense('type2_<?=$type2_i;?>');" style='cursor:pointer;display:none;'>-</span>								
+								<?php }else if( $type2_i != 0 && $type2_i == count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type2_<?=$type2_i;?>' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								<span class='badge' id='del_expense_type2_<?=$type2_i;?>' onClick="del_expense('type2_<?=$type2_i;?>');" style='cursor:pointer;'>-</span>
+								<?php } ?>
+								</td>
+							<?php
+								$total += $row['expense_price'];
+								$type2_i++;
+								}
+								echo "<script> type2_cnt = $type2_i-1;</script>";
+							}else{
+							?>
+							<tr>
+								<td><input type='text' class='datepicker' name='expense2_start_date' id='expense_start_date[]' size='10'></td>
+								<td>
+								<select name='expense_type[]' id='expense_type[]'>
+								<?php foreach( $settle_expense_type as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value=''>			
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price' value=''></td>
+								<td>
+								<input type='text' style='width:80%;' name='expense_etc[]' id='expense_etc[]' value=''>
+								<span class='badge' id='add_expense_type2_0' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								</td>
+							</tr>	
+							<?php
+							}
+							?>
+							
+							<tr>
+							<td colspan=4 style="text-align:center;">합계</td>
+							<td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_price" value="<?=number_format($total);?>"></td>
+							<td></td>
+							</tr>
+							
+						</tbody>
+					</table>
+					
+					<table id="expense_div_type4" style="display:none" class="basic-table">
+						<colgroup>
+							<col width="10%" />
+							<col width="10%" />
+							<col width="7%" />
+							<col width="7%" />
+							<col width="12%" />
+							<col width="9%" />
+							<col width="7%" />
+							<col width="7%" />
+							<col width="10%" />
+							<col width="16%" />
+						</colgroup>
+						<tbody >
+							<tr>
+								<th>상담일</th>
+								<th>수술일</th>
+								<th>이름</th>
+								<th>담당의</th>
+								<th>수술내용</th>
+								<th>수납방식</th>
+								<th>총매출</th>
+								<th>재료비</th>								
+								<th>상담실장</th>
+								<th>비고</th>
+							</tr>
+							
+							<?php
+							$total = 0;
+							$total_material = 0; 
+							$type4_i = 0;
+							if( $view_data['settle_type'] == 4 ){								
+								foreach( $settle_expense as $row){
+									$expense_type = $row['expense_type'];
+							?>
+							<tr id="type4_<?=$type4_i;?>">
+								<td><input type='text' class='datepicker' name='expense_start_date[]' id='expense4_start_date' value="<?=substr($row['expense_start_date'],0,10);?>" size='10'></td>
+								<td><input type='text' class='datepicker' name='expense_end_date[]' id='expense4_end_date' value="<?=substr($row['expense_end_date'],0,10);?>" size='10' ></td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value='<?=$row["expense_customer"]?>'>			
+								</td>
+								<td>
+								<select name='expense_doctor[]' id='expense_doctor[]'>
+								<?php foreach( $settle_expense_doctor as $key => $val){ ?><option value='<?=$key;?>' <?php if( $key == $row['expense_doctor'] ) echo "selected"; ?> ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value='<?=$row["expense_desc"]?>'></td>								
+								<td>								
+								현금 <input type='text' class='number' style='width:65%;' name='expense_receipt_money[]' id='expense_receipt_money<?=$type4_i;?>' title='<?=$type4_i;?>' value='<?=number_format($row["expense_receipt_money"]);?>'><br />
+								카드 <input type='text' class='number' style='width:65%;' name='expense_receipt_card[]' id='expense_receipt_card<?=$type4_i;?>' title='<?=$type4_i;?>' value='<?=number_format($row["expense_receipt_card"]);?>'><br />
+								계좌 <input type='text' class='number' style='width:65%;' name='expense_receipt_account[]' id='expense_receipt_account<?=$type4_i;?>' title='<?=$type4_i;?>' value='<?=number_format($row["expense_receipt_account"]);?>'>
+								</td>
+								<td><input type='text' style='width:95%;'class='number'  name='expense_price[]' id='expense_price<?=$type4_i;?>' value='<?=number_format($row["expense_price"]);?>' readonly></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_material_cost[]' id='expense_material_cost<?=$type4_i;?>' value='<?=number_format($row["expense_material_cost"]);?>'></td>								
+								<td>
+								<select name='team_list[]' id='team_list<?=$type4_i;?>' onChange='team_select(<?=$type4_i;?>);'>
+								<option value=''>-팀선택-</option>
+								<?php foreach( $team_info as $key => $val ){ ?><option value='<?=$key;?>' <?php if( $row['expense_team'] == $key ) echo "selected"; ?> ><?=$val;?></option><?php } ?>
+								</select><br/>
+								<select name='expense_advice[]' id='expense_advice<?=$type4_i;?>'>
+								</select>
+								</td>
+								<td>
+								<input type='text' style='width:75%;' name='expense_etc[]' id='expense_etc[]' value='<?=$row["expense_etc"]?>'>
+								<?php if( $type4_i == 0 ){ ?>
+								<span class='badge' id='add_expense_type4_<?=$type4_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>								
+								<?php }else if( $type4_i != 0 && $type4_i != count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type4_<?=$type4_i;?>' onClick='add_expense();' style='cursor:pointer;display:none;'>+</span>
+								<span class='badge' id='del_expense_type4_<?=$type4_i;?>' onClick="del_expense('type4_<?=$type4_i;?>');" style='cursor:pointer;display:none;'>-</span>								
+								<?php }else if( $type4_i != 0 && $type4_i == count($settle_expense)-1 ){ ?>
+								<span class='badge' id='add_expense_type4_<?=$type4_i;?>' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								<span class='badge' id='del_expense_type4_<?=$type4_i;?>' onClick="del_expense('type4_<?=$type4_i;?>');" style='cursor:pointer;'>-</span>
+								<?php } ?>
+								</td>
+							</tr>	
+							<?php
+								echo "<script>team_select($type4_i,".$row['expense_advice']." );</script>";
+								$total += $row['expense_price'];
+								$total_material += $row['expense_material_cost'];
+								$type4_i++;
+								}
+								echo "<script> type4_cnt = $type4_i-1;</script>";
+							}else{
+							?>
+							<tr>
+								<td><input type='text' class='datepicker' name='expense_start_date[]' id='expense4_start_date' size='10' ></td>
+								<td><input type='text' class='datepicker' name='expense_end_date[]' id='expense4_end_date' size='10' ></td>
+								<td>
+								<input type='text' style='width:95%;' name='expense_customer[]' id='expense_customer[]' value=''>			
+								</td>
+								<td>
+								<select name='expense_doctor[]' id='expense_doctor[]'>
+								<?php foreach( $settle_expense_doctor as $key => $val){ ?><option value='<?=$key;?>' ><?=$val;?></option><?php } ?>
+								</select>
+								</td>
+								<td><input type='text' style='width:95%;' name='expense_desc[]' id='expense_desc[]' value=''></td>
+								<td>
+								현금 <input type='text' class='number' style='width:65%;' name='expense_receipt_money[]' id='expense_receipt_money[]' title='0' value=''><br />
+								카드 <input type='text' class='number' style='width:65%;' name='expense_receipt_card[]' id='expense_receipt_card[]' title='0' value=''><br />
+								계좌 <input type='text' class='number' style='width:65%;' name='expense_receipt_account[]' id='expense_receipt_account[]' title='0' value=''>
+								</td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_price[]' id='expense_price0' value='' readonly></td>
+								<td><input type='text' class='number' style='width:95%;' name='expense_material_cost[]' id='expense_material_cost0' value=''></td>								
+								<td>
+								<select name='team_list[]' id='team_list0' onChange='team_select(0);'>
+								<option value=''>-팀선택-</option>
+								<?php foreach( $team_info as $key => $val ){ ?><option value='<?=$key;?>'><?=$val;?></option><?php } ?>
+								</select><br/>
+								<select name='expense_advice[]' id='expense_advice0'>
+								</select>
+								</td>
+								<td>
+								<input type='text' style='width:75%;' name='expense_etc[]' id='expense_etc[]' value=''>
+								<span class='badge' id='add_expense_type4_0' onClick='add_expense();' style='cursor:pointer;'>+</span>
+								</td>
+							</tr>	
+							<?php
+							}
+							?>
+							<tr>
+								<td colspan=6 style="text-align:center;">합계</td>
+								<td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_price" value="<?=number_format($total);?>"></td>
+								<td><input type="text" style='width:95%; border:0px; background:#ffffff;' readonly id="total_material" value="<?=number_format($total_material);?>"></td>
+								<td></td>
+								<td></td>
+							</tr>
+						</tbody>
+					</table>
+					
+					<?php 
+					$style_str = "";
+					if( $view_data['settle_type'] == 0 || $view_data['settle_type'] == 3 ){ 
+						$style_str = "display:none;";  
+					}?>
+					
+					<!-- <span class="badge" id="add_expense" onClick="add_expense();" style="cursor:pointer;<?=$style_str;?>" >+</span> -->
+					
+					
+					<!-- table  class="basic-table">
+						<colgroup>
+							<col width="10%" />
+							<col width="16%" />
+							<col width="10%" />
+							<col width="12%" />
+							<col width="12%" />
+							<col width="12%" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<td colspan='4' style='text-align:center;'>합계</td>
+								<td><div id="expense_price_total"></div></td>
+								<td></td>
+							</tr>
+						</tbody>
+					</table> -->
+					
+					</td>
+				</tr>
+				<tr>
+					<th>첨부파일</th>
+					<td colspan="7">
+					
+					<?php
+					for($i = 0 ; $i < count($settle_file) ; $i++ ){
+					$style_str = "style='cursor:pointer;'";
+					if( $i != count($settle_file)-1 ){
+						$style_str = "style='cursor:pointer;display:none'";
+					}
+					?>
+					<!--img alt="" src="http://crm.myhost.com/images/settle/<?=$settle_file[$i]['file_name']?>" style="width:60px;"-->
+					<input type="file" style="width:155px;" onChange="file_choice('<?=$i;?>', '<?=$settle_file[$i]['no']?>');" name="settle_file<?=$i;?>" id="settle_file<?=$i;?>" value="">
+					<span id="settle_file_ori<?=$i;?>">(기존 파일 : <?=$settle_file[$i]['ori_name']?>)</span>
+					<?php
+					if( $i != 4 ){					
+					?>
+					<span class="badge" id="settle_file_plus<?=$i;?>" onClick="settle_file_plus('<?=$i;?>');" <?php echo $style_str; ?> >+</span>
+					<?php } ?>
+					<span class="badge" id="settle_file_cancel<?=$i;?>" onClick="settle_file_cancel('<?=$i;?>', '<?=$settle_file[$i]['no']?>');" <?php echo $style_str; ?> >-</span>
+					<?php
+					}
+					?>
+					
+					
+					<?php
+					for($j = $i ; $j < 5 ; $j++ ){
+					$style_str = "style='cursor:pointer;'";
+					if( $j != 0 ){
+						$style_str = "style='corsur:pointer;display:none'";
+					}
+					?>
+					<input type="file" onChange="file_choice('<?=$j;?>');" name="settle_file<?=$j;?>" id="settle_file<?=$j;?>" value="" <?=$style_str;?> >
+					<?php
+					if( $j != 4 ){					
+					?>
+					<span class="badge" id="settle_file_plus<?=$j;?>" onClick="settle_file_plus('<?=$j;?>');" style="display:none;cursor:pointer;" >+</span>
+					<?php } ?>
+					<span class="badge" id="settle_file_cancel<?=$j;?>" onClick="settle_file_cancel('<?=$j;?>');" style="display:none;cursor:pointer;" >-</span>
+					<?php
+					}
+					?>
+					
+					
+					
+					</td>
+				</tr>
+				<tr>
+					<th>기안참조</th>
+					<td colspan="7">					
+					<button id="bt-line" onClick="draft_refer();">기안선택</button>
+					<span id="draft_refer_str">
+					<?php
+					$draft_no_str = "";					
+					foreach( $settle_draft as $row ){					
+					echo "<span id='draft_cancel_id".$row['draft_no']."'> [".$row['draft_number']."-".$row['draft_type']."]".$row['draft_title']." <span class='badge' id='draft_cancel' onClick='draft_cancel(".$row['draft_no'].");' style='cursor:pointer;' >x</span></span>";
+						if( $draft_no_str != "" ){	
+							$draft_no_str .= ",".$row['draft_no']; 
+						}						
+						else{
+							$draft_no_str .= $row['draft_no']; 
+						}				
+					}	
+					?>
+					</span>
+					<script>
+					$('#draft_no').val('<?=$draft_no_str;?>');					
+					</script>
+					
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="tool-box">
+		<button type="submit" id="bt-save">결재수정</button>
+		</div>
+		<script>
+		
+		</script>
+	</form>
+	
+		
+</div>

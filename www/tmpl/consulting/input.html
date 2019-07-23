@@ -1,0 +1,828 @@
+<input type="hidden" name="consulting_write" id="consulting_write" value="N">
+<table class="table table-closely">
+	<colgroup>
+		<col />
+		<col style="width:20px" />
+		<col style="width:500px" />
+	</colgroup>
+	<tr>
+		<td style="vertical-align: top">
+			<form id="input-frm" onsubmit="return false">
+			<input type="hidden" name="cst_seqno" id="cst_seqno" value="{row.cst_seqno}">
+			<!-- <input type="hidden" name="path" id="path" value="{row.path}"> -->
+			<input type="hidden" name="reg_date" id="reg_date" value="{row.reg_date}">
+			<input type="hidden" name="change_item" id="change_item">
+			<input type="hidden" name="type" id="type" value="{type}">
+
+			<h3 class="area-title">
+				고객상세정보
+				<div class="button-box">
+					{? row.patient}
+					<button type="button" class="btn btn-flat-orange" onclick="window.open('/patient/info/{row.patient.no}')"><i class="fa fa-1 fa-share"></i> 환자정보바로가기</button>
+					<span class="split">|</span>
+					{/}
+					<button type="button" class="btn btn-flat-purple" onclick="ConsultingInput.appointment('{row.cst_seqno}', '{row.patient.no}')"><i class="fa fa-1 fa-calendar-plus-o"></i> 예약</button>
+					<span class="split">|</span>
+					{? save_valid}<button type="submit" class="btn btn-theme"><i class="fa fa-save fa-1"></i> 저장</button>{/}
+					<button type="button" class="btn btn-gray" onClick="document.location='/consulting/main/{type}'"><i class="fa fa-1 fa-list"></i> 목록</button>
+				</div>
+			</h3>
+			<!-- 고객정보:S -->
+
+
+			<table class="table table-bordered table-form">
+				<colgroup>
+					<col style="width:120px" />
+					<col />
+					<col style="width:120px" />
+					<col />
+					<col style="width:120px" />
+					<col />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>이름</th>
+						<td><input type="text" name="name" id="name" value="{row.name}" class="validate[required]"></td>
+						<th>성별</th>
+						<td>
+							<label class="hmis"><input type="radio" name="sex" value="F" class="hmis"><span class="lbl"> 여</span></label>
+							<label class="hmis"><input type="radio" name="sex" value="M" class="hmis"><span class="lbl"> 남</span></label>
+						</td>
+						<th>생년월일</th>
+						<td><input type="text" name="birth" id="birth" value="{row.birth}" maxlength="8" class="validate[custom[birth]] center" style="width:70px"> / <input type="text" size="3" name="age" id="age" value="{row.age}" class="center">세</td>
+					</tr>
+					<tr>
+						<th>연락처</th>
+						<td>
+							{? auth.ex_phone2}
+							<input type="text" name="tel" id="tel" value="{row.tel}">
+							{:}
+							{row.tel}
+							{/}
+						</td>
+						<th>메신저</th>
+						<td><input type="text" name="messenger" id="messenger" value="{row.messenger}"></td>
+						<th>이메일</th>
+						<td><input type="text" name="email" id="email" value="{row.email}" class="validate[custom[email]]"></td>
+					</tr>
+					<tr>
+						<th>통화가능시간</th>
+						<td>
+							 <select name="call_time" id="call_time">
+								<option value="">-선택-</option>
+								{@ range(9, 20)}
+								<option value="{=str_pad(.value_, 2, '0', STR_PAD_LEFT)}00">{=str_pad(.value_, 2, "0", STR_PAD_LEFT)}시 00분</option>
+								{/}
+							</select>
+
+
+						</td>
+						<th>거주지</th>
+						<td><input type="text" name="addr" id="addr" value="{row.addr}" /></td>
+						<th>직업</th>
+						<td>
+							<select name="job_code">
+								<option value="">-선택-</option>
+								{@ job_list}
+								<option value="{.key_}" {? row.job_code==.key_}selected{/}>{.value_}</option>
+								{/}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th>고객성향</th>
+						<td colspan="5">
+							<input type="text"  name="character" value="{row.character}" class="full" />
+							<input type="hidden" name="x_filter" value="{row.filter}" />
+							<input type="hidden" name="x_charge_date" value="{row.charge_date}" />
+						</td>
+					</tr>
+					<tr>
+						<th>메모</th>
+						<td colspan="5">
+							<input type="text" size="80" name="etc" id="etc" value="{row.etc}" class="full" />
+						</td>
+					</tr>
+					<tr>
+						<th>진료항목</th>
+						<td colspan="3">
+							<span id="treat_nav">{row.treat_nav}</span>
+							<input type="hidden" id="treat_cost_no" name="treat_cost_no" value="{row.treat_cost_no}">
+							<button type="button" onclick="HmisCommon.treat('ConsultingInput.callback','')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+							<button type="button" onclick="ConsultingInput.resetTreat()" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-times fa-1"></i></button>
+						</td>
+						<th>정상수가</th>
+						<td>
+							<span id="cost">0</span> 원
+							<!-- <input type="text" name="sales_origin" value="{=number_format(row.sales_origin)}" readonly class="transparent validate[custom[numberFormat]]" style="width:100px">원 -->
+						</td>
+					</tr>
+					<tr>
+						<th rowspan="2">관심항목</th>
+						<td colspan="5">
+							<button type="button" onclick="HmisCommon.treat('HmisTreat.addTreat','')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+
+
+
+
+
+						</td>
+					</tr>
+					<tr>
+						<td colspan="5">
+							<div id="treat_null" style="padding:6px 0px 7px;">진료항목을 선택하세요.</div>
+							<div id="treat_list">
+								{@ row.treat_info}
+								<span class="label label-default" style="margin-top:0px;margin-bottom:0px" id="{.key_}">{.value_} <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px" onclick="HmisTreat.removeTreat('{.key_}')"></i></span>
+								{/}
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>총매출</th>
+						<td><div class="minheight">{=number_format(row.patient_sales)}</div> 원</td>
+						<th>예치금 </th>
+						<td>{=number_format(row.patient.deposit)} 원</td>
+						<th>환불액 </th>
+						<td>{=number_format(row.patient.refund)} 원</td>
+					</tr>
+					<tr>
+						<th>수술예정시기</th>
+						<td><input type="text" name="oper_date" size="15" value="{row.oper_date}"></td>
+						<th>예상매출</th>
+						<td colspan="3"><input type="text" name="cost" value="{row.cost}" class="full"></td>
+						<!--
+						<th>매출(원)</th>
+						<td><input type="text" name="sales" id="sales" value="{=number_format(row.sales)}" class="special validate[custom[numberFormat]] number" style="width:100px">원</td>
+						-->
+					</tr>
+
+					<tr>
+						<th>환불</th>
+						<td colspan="3">
+							<label class="hmis"><input type="radio" class="hmis" name="refund_type" value="N" title="환불안함" id="refund_type_N" {? row.refund_type=='N'}checked{/} /><span class="lbl"> 환불안함</span></label>
+							<label class="hmis"><input type="radio" class="hmis" name="refund_type" value="D" title="예치금환불" id="refund_type_D" {? row.refund_type=='D'}checked{/} /><span class="lbl"> 예치금환불</span></label>
+							<label class="hmis"><input type="radio" class="hmis" name="refund_type" value="O" title="수술비환불" id="refund_type_O" {? row.refund_type=='O'}checked{/} /><span class="lbl"> 수술비환불</span></label>
+							<label for="refund">환불금액</label><input type="text" name="refund" value="{=number_format(row.refund)}" class="number" /> 원
+						</td>
+						<th>
+							등록자
+						</th>
+						<td>
+							{row.reg_user_name}
+						</td>
+					</tr>
+					<tr>
+						<th>타병원 상담</th>
+						<td>
+							<label class="hmis"><input type="radio" name="other_status" value="Y" class="hmis" {? row.other_status=='Y'}checked{/} /><span class="lbl"> 예</span></label>
+							<label class="hmis"><input type="radio" name="other_status" value="N" class="hmis" {? row.other_status=='N'}checked{/} /><span class="lbl"> 아니오</span></label>
+						</td>
+						<th>재수술 횟수</th>
+						<td>
+							<input type="text" size="5" name="reoper_cnt" id="reoper_cnt" value="{row.reoper_cnt}"> 회
+						</td>
+						<th>컴플레인</th>
+						<td>
+							<label class="hmis"><input type="radio" name="complain_status" id="complain_statusY" value="Y" class="hmis" /><span class="lbl"> 예</span></label>
+							<label class="hmis"><input type="radio" name="complain_status"  id="complain_statusN" value="N" class="hmis" /><span class="lbl"> 아니오</span></label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<table class="table table-bordered table-form">
+				<colgroup>
+					<col style="width:120px" />
+					<col />
+					<col style="width:120px" />
+					<col />
+					<col style="width:120px" />
+					<col />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>팀</th>
+						<td class="special">
+							{? layout.login.info.ss_dept_code != '90' || in_array(layout.login.info.ss_user_id, array('nhkim', 'stonek','ahkim'))}
+							<select name="team_code" id="team_code" style="width:120px;">
+								{@ team_list}
+								<option value="{.key_}">{.value_}</option>
+								{/}
+							</select>
+							{:}
+							{row.team_name}
+							<input type="hidden" name="team_code" value="{row.team_code}">
+							{/}
+						</td>
+						<th>내원담당자</th>
+						<td class="special">
+							<select name="charge_user_id">
+								<option value="">-선택-</option>
+								{@ user.charger}
+								<option value="{.user_id}" {? row.charge_user_id == .user_id }selected{/}>{.name}</option>
+								{/}
+
+
+							</select>
+						</td>
+						<th>클로징담당자</th>
+						<td class="special">
+							<select name="closing_user_id">
+								<option value="">-선택-</option>
+								{@ user.closing}
+								<option value="{.user_id}" {? row.closing_user_id ==.user_id}selected{/}>{.name}</option>
+								{/}
+							</select>
+						</td>
+						<!--{*
+						<th>수술지역</th>
+						<td>
+							<label class="hmis"><input type="radio" name="locale" value="ko" class="hmis" {? row.locale=='ko'}checked{/} /><span class="lbl"> 한국</span></label>
+							<label class="hmis"><input type="radio" name="locale" value="cn" class="hmis" {? row.locale=='cn'}checked{/} /><span class="lbl"> 중국</span></label>
+						</td>
+						*}-->
+					</tr>
+					<tr>
+						<th>상담상태</th>
+						<td>
+							<select name="cst_status" id="cst_status" class="validate[required]" data-ui="change" >
+								{@ cst_status_list}
+								<option value="{.key_}">{.value_}</option>
+								{/}
+							</select>
+							<span data-ui-group="cst_status" data-ui-value="51" style="display:none">
+								<input type="text" name="appointment_date" id="appointment_date" class="validate[required] datepicker lg" placeholder="내원예약일"  value="{row.appointment_date}" />
+								<input type="text" name="appointment_time" data-mask="time" class="center" value="{row.appointment_time}"  style="width:60px" placeholder="00:00" />
+							</span>
+							<span data-ui-group="cst_status" data-ui-value="98" style="display:none">
+								<input type="text" name="plan_date" id="plan_date" class="validate[required] datepicker lg" placeholder="수술예정일" value="{row.plan_date}" />
+								<input type="text" name="plan_time" data-mask="time" class="center" value="{row.plan_time}" style="width:60px" placeholder="00:00" />
+							</span>
+							<span data-ui-group="cst_status" data-ui-value="50" style="display:none;padding-left:10px"><!-- 내원취소 -->
+								<label class="hmis"><input type="radio" name="cst_status_reason" value="당일부재" class="hmis" {? row.cst_status_reason!='본인거부'}checked{/}><span class="lbl"> 당일부재</span></label>
+								<label class="hmis"><input type="radio" name="cst_status_reason" value="본인거부" class="hmis" {? row.cst_status_reason=='본인거부'}checked{/}><span class="lbl"> 본인거부</span></label>
+							</span>
+							<span data-ui-group="cst_status" data-ui-value="99" style="display:none;"><!-- 99:수술완료 -->
+								<input type="text" name="surgery_date" value="{row.surgery_date}" class="validate[required] datepicker lg" placeholder="수술완료일" />
+								<button type="button" class="btn btn-flat-blue" style="vertical-align: middle" onclick="ConsultingInput.happycall()"><i class="fa fa-1 fa-pencil"></i> 해피콜등록</button>
+							</span>
+						</td>
+						<th>CPA</th>
+						<td>
+							<select name="cpa">
+								<option value="wait" {? !row.cpa}selected{/}>-선택-</option>
+								<option value="valid" {? row.cpa=='valid'}selected{/}>유효</option>
+								<option value="invalid" {? row.cpa=='invalid'}selected{/}>무효</option>
+							</select>
+						</td>
+						<th>재문의횟수</th>
+						<td>{=number_format(row.duplicate_db)}회</td>
+					</tr>
+					{? auth.m_chargedate}
+					<tr>
+						<th>유효기간</th>
+						<td colspan="5">
+							<input type="text" id="charge_date" value="{row.charge_date}" /> <button type="button" class="btn btn-theme btn-onlyicon" onclick="ConsultingInput.saveChargedate()"><i class="fa fa-1 fa-save"></i></button>
+						</td>
+					</tr>
+					{/}
+					{? auth.path_change}
+					<tr>
+						<th>유입경로</th>
+						<td colspan="5">
+							<select id="path_change">
+								<option value="">::유입경로::</option>
+								{@ path}
+								<option value="{.key_}" {? row.path==.key_}selected{/} >{.value_}</option>
+								{/}
+							</select>
+							<button type="button" class="btn btn-theme btn-onlyicon" onclick="ConsultingInput.savePath()"><i class="fa fa-1 fa-save"></i></button>
+						</td>
+					</tr>
+					{/}
+				</tbody>
+			</table>
+			</form>
+			<!-- 고객정보:E -->
+
+			<!-- 탭:S -->
+			<div style="margin-top:20px">
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist" >
+					<!-- <li role="presentation"><a href="#content" data-tabindex="common" role="tab" data-toggle="tab">공통설정</a></li> -->
+					<li role="presentation" class="active"><a href="#content" data-tabindex="log" role="tab" data-toggle="tab">상담항목변경이력</a></li>
+					<li role="presentation"><a href="#content" data-tabindex="contact" role="tab" data-toggle="tab">가능DB 컨택이력</a></li>
+					<li role="presentation"><a href="#content" data-tabindex="pay" role="tab" data-toggle="tab">수술별 수납내역 </a></li>
+					{? row.patient}
+					<li role="presentation"><a href="#content" data-tabindex="appointment" role="tab" data-toggle="tab">예약기록</a></li>
+					{/}
+					<!-- 20170207 kruddo 상담일지 추가 : 상담갯수 0일때 상담일지 안 보이도록 -->
+					{? consulting_cnt > 0}
+					<li role="presentation"><a href="#content" data-tabindex="consulting" role="tab" data-toggle="tab">상담일지<span class="badge red" id="cnt_consulting">{consulting_cnt}</span></a></li>
+					{/}
+					<!-- 20170207 kruddo 상담일지 추가 -->
+				</ul>
+
+				<!-- Tab panes -->
+				<div class="tab-content" style="padding:20px;border:solid 1px #DDDDDD;border-top:none;border-radius: 0px 0px 2px 2px;height:300px;overflow-y: auto">
+					<div role="tabpanel" class="tab-pane active" id="tab_contents" style=""></div>
+				</div>
+			</div>
+			<!-- 탭:E -->
+		</td>
+		<td></td>
+		<td style="vertical-align: top">
+			<h3 class="area-title">
+				메모
+				<div  class="button-box">
+					{? row.contact_date}
+					<span  id="close-area" style="font-weight: bold;">
+						남은시간 <span class="countdown">{row.contact_date}</span>
+						<button type="button" class="btn btn-flat-orange" onclick="ConsultingInput.close()"><i class="fa fa-1 fa-times"></i> 종료</button>
+					</span>
+					{/}
+
+					{? type != 'share'}
+						{? neighbor.prev}<button type="button" class="btn btn-flat-blue" onClick="document.location='/consulting/input/{neighbor.prev}'"><i class="fa fa-1 fa-arrow-left"></i> 이전</button>{/}
+						{? neighbor.next}<button type="button" class="btn btn-flat-blue"  onClick="document.location='/consulting/input/{neighbor.next}'" style="margin-left:5px"><i class="fa fa-1 fa-arrow-right"></i> 다음</button>{/}
+
+					{/}
+				</div>
+
+			</h3>
+
+			<!-- 메모:S -->
+
+			<div class="memo-box" style="margin-top:5px;">
+				<div class="msg"><span class="label label-xs">유입경로</span>  {row.path_txt}  <span class="label label-xs" style="margin-left:10px">접수일자</span> {row.reg_date_txt}</div>
+				<form id="memo-frm">
+				<input type="hidden" name="cst_seqno" value="{row.cst_seqno}">
+				<textarea rows="10" name="memo" id="memo" class="validate[required] full" style="overflow:hidden;"></textarea>
+				<div style="clear: both; text-align: right; margin: 3px;">
+					<button type="button" class="btn btn-flat-purple" onClick="ConsultingInput.saveMemo();"><i class="fa fa-1 fa-pencil"></i> 상담내용 등록</button>
+				</div>
+				</form>
+				<div class="memo-list">
+				{@ memo_list}
+				<dl class="memo" style="border-bottom:dashed 1px #C3C3C3;padding-bottom:15px;">
+					<dt><span class="label label-default label-xs">{.reg_date} {.name}</span></dt>
+					<dd style="margin-left:10px">{=nl2br(.memo)}</dd>
+				</dl>
+				{/}
+				</div>
+			</div>
+			<!-- 메모:E -->
+		</td>
+	</tr>
+</table>
+
+<link rel="stylesheet" href="/css/bootstrap.tab.css?<?=time()?>" />
+<script type="text/javascript" src="/js/bootstrap.tab.js"></script>
+<script src="/js/jquery.maskedinput.min.js"></script>
+<script src="/js/Hmis.treat.js"></script>
+<script>
+	$(document).ready(function() {
+		ConsultingInput.init();
+	});
+
+	function set_cst_date(cst_status) {
+		$("#appointment_date_area").hide();
+		$("#plan_date_area").hide();
+
+		if (cst_status == "51") {
+			$("#appointment_date_area").show();
+		} else if (cst_status == "98") {
+			$("#plan_date_area").show();
+		}
+	}
+
+	function set_age() {
+		if ( $( "#birth" ).val().length >= 4){
+			var date = new Date();
+			var age = (date.getFullYear() - Number($( "#birth" ).val().substring(0,4)) + 1);
+			$("#age").val(age);
+		}
+	}
+
+	function save() {
+		var formdata = $("#input-frm").serializeArray();
+
+		var treat = $('#treat_list > span').map(function(){ return $(this).attr('id'); }).get();
+		if(treat.length > 0) {
+			formdata.push({name:'treat_cost_no_interest', value:treat});
+		}
+
+
+		var url = "/consulting_proc/update";
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : formdata,
+			success : function(result_data) {
+				HmisAlert.alert("저장되었습니다.");
+				// $("#msg-area").html("저장 완료했습니다.");
+				// $("#msg-area").dialog("open");
+
+				var obj = $.parseJSON(result_data);
+				if (obj.select_date_valid == "N") {
+					$( "#appointment_date" ).datepicker( "destroy" );
+				}
+				set_cst_status($("#cst_status").val());
+				$("#change_item").val("");
+				ConsultingInput.loadTab('log');
+				// $("#log-list").trigger("reloadGrid");
+				// $("#contact-list").trigger("reloadGrid");
+
+			}
+		});
+
+	}
+
+	function set_user(team_code) {
+		var url = "/manage/get_user_json";
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: {
+				team_code:team_code
+			},
+			dataType: "json",
+			success: function(r){
+				var rows = "<option value=''>-선택-</option>";
+				if (r.success) {
+					$.each(r.data, function(index, entry){
+						rows += "<option value='"+index+"'>"+entry+"</option>";
+					});
+				}
+				$('select#charge_user_id').html(rows);
+				$("#charge_user_id").val("{row.charge_user_id}");
+
+				{? layout.login.info.ss_position_code == '1'}
+				$("#charge_user_id").attr("disabled", "disabled");
+				{/}
+			}
+		});
+	}
+
+
+
+
+	function set_category(main_category, sub_category, target){
+		var e = $("#"+target);
+		if(!main_category) {
+			e.css('display','none');
+			return false;
+		}
+		var url = "/manage/get_item_json/"+main_category;
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: "",
+			dataType: "json",
+			success: function(result_data) {
+				var rows = "<option value=''>::선택::</option>";
+				if (result_data != null && result_data != "") {
+					$.each(result_data, function(index, entry){
+						var selected = (sub_category == entry.code)?'selected':'';
+						rows += "<option value='"+entry.code+"' "+selected+" data-cost='"+entry.cost+"'>"+entry.title+"</option>";
+						if(selected == 'selected') {
+							$('#cost').html(HmisCommon.numberFormat(entry.cost));
+						}
+					});
+				}
+
+				e.html(rows);
+				e.css('display','');
+			}
+		});
+	}
+
+	function open_appointment_calendar(target_id, max) {
+		$(function() {
+			var dates = $(target_id).datepicker(datepicker_option,{
+				minDate: 0,
+				maxDate: "+"+max+"M",
+				onSelect : function(selectedDate) {
+					var option = this.id == "from" ? "minDate"	: "maxDate", instance = $(this).data("datepicker"), date = $.datepicker.parseDate(
+									instance.settings.dateFormat
+											|| $.datepicker._defaults.dateFormat,
+									selectedDate,
+									instance.settings);
+					dates.not(this).datepicker("option",	option, date);
+					$("#change_item").val($("#change_item").val()+"㉿"+$("label[for='" + $(target_id).attr("name") + "']").text()+"|"+$(target_id).val());
+				}
+			});
+		});
+	}
+
+
+
+	function check_appointment(field, rules, i, options) {
+		if (field.val() == "51" && $("#appointment_date").val() == "") {
+			var msg = "내원예약일을 입력해주세요.";
+			return msg;
+		}
+	}
+
+
+	function set_cst_status(cst_status) {
+		return false; //07.10.11 대표님요청으로 기능 제거(전체노출)
+		$.getJSON("/consulting/get_cst_status/"+cst_status, function(result_data) {
+			var items = [];
+			$.each( result_data, function( key, val ) {
+				items.push( "<option value='" + key + "'>" + val + "</option>" );
+			});
+			$('select#cst_status').html(items.join( "" ));
+			$("#cst_status").val(cst_status);
+		});
+	}
+
+
+
+var ConsultingInput = {
+	cst_seqno:"{row.cst_seqno}",
+	init: function() {
+		HmisTreat.buildTreat();
+		this.initTab();
+		this.createNumber();
+		HmisCommon.createDatepicker();
+
+		$('[name="refund_type"]').on('click',function(){
+			ConsultingInput.setRefund(this.value);
+		});
+
+		$('input[data-mask="time"]').mask('99:99');
+
+
+		// {? select_date_valid == 'Y'}
+		// open_appointment_calendar("#appointment_date", "1");
+		// {/}
+		// open_appointment_calendar("#plan_date", "2");
+
+
+		$("#input-frm").validationEngine('attach', {
+			onValidationComplete : function(form, status) {
+				if (status) save();
+			}
+		})
+
+
+		$("input:radio[name=sex][value='{row.sex}']").attr("checked", "checked");
+		$("#call_time").val("{row.call_time}");
+		// $("#job_code").val("{row.job_code}");
+		// $("#main_category").val("{row.main_category}");
+		$("input:radio[name=other_status][value='{row.other_status}']").attr("checked", "checked");
+		$("input:radio[name=complain_status][value='{row.complain_status}']").attr("checked", "checked");
+		$("#cst_status").val("{row.cst_status}");
+		$("#team_code").val("{row.team_code}");
+		set_user("{row.team_code}");
+
+		{? layout.login.info.ss_position_code != '52'}
+		$("#charge_user_id").attr("disabled", "disabled");
+		{/}
+
+		$( "#team_code" ).change(function() {
+			set_user($(this).val());
+		});
+
+		set_category("{row.main_category}", "{row.sub_category}", 'sub_category');
+		set_category("{row.interest_category_1.main}", "{row.interest_category_1.sub}", 'interest_1');
+		set_category("{row.interest_category_2.main}", "{row.interest_category_2.sub}", 'interest_2');
+
+		set_cst_date("{row.cst_status}");
+		//set_cst_status("{row.cst_status}");
+
+		$( "#cst_status" ).change(function() {
+			set_cst_date($(this).val());
+		});
+
+
+		setInterval(function() {
+			//시간 확인
+			if($('.countdown').text() == '00:00:00') {
+				document.location = "/consulting/main/share";
+			}
+		}, 1000);
+
+
+		//나이
+		$( "#birth" ).keyup(function() {
+			set_age();
+		});
+
+		var me = this;
+		$.each($('[data-ui]'), function(i,e) {
+			me.setUI(this.name);
+			var evt = $(e).data('ui');
+			$(this).on(evt,function() {
+				me.setUI(this.name);
+			});
+		});
+	},
+	initTab: function() {
+		$('[data-toggle="tab"]').click(function() {
+			var me = $(this);
+			var href = '/consulting/tab_'+me.data('tabindex');
+			//20170203 kruddo 상담일지 추가
+			if(me.data('tabindex') == 'consulting'){
+				href = '/patient/info_widget_consulting';
+			}
+			//20170203 kruddo 상담일지 추가
+			HmisLoading.show('#tab_contents');
+			$('#tab_contents').load(href, {cst_seqno:ConsultingInput.cst_seqno, patient_no:'{row.patient.no}'}, function(data) {
+				$('[data-toggle="tooltip"]').tooltip();
+				HmisLoading.hide();
+			})
+		});
+
+		$('[data-toggle="tab"]').first().trigger('click');
+
+	},
+	loadTab: function(index) {
+		$('[data-toggle="tab"][data-tabindex="'+index+'"]').trigger('click');
+	},
+	close: function() {
+		HmisAlert.confirm('종료를 진행하시겠습니까?', function(r) {
+			if(r) {
+				var url = "/consulting_proc/do_close";
+				$.ajax({
+					type : "POST",
+					url : url,
+					data : "cst_seqno={row.cst_seqno}&seqno={row.contact_seqno}",
+					success : function(result_data) {
+						HmisAlert.alert("종료 처리되었습니다.");
+						$('#close-area').remove();
+					}
+				});
+			}
+		})
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+
+		})
+	},
+	//수가
+	setCost: function(e) {
+		var opt = $(e).find('option:selected');
+		$('#cost').html(HmisCommon.numberFormat(opt.data('cost')));
+
+	},
+	//환불금액
+	setRefund: function(refund_type) {
+		if(refund_type=='N') {
+			$('[name="refund"]').val('0');
+			$('[name="refund"]').attr('readonly', true);
+		}
+		else {
+			$('[name="refund"]').removeAttr('readonly');
+		}
+	},
+	//유효기간변경
+	saveChargedate:function() {
+		var charge_date = $('#charge_date').val();
+		var me = this;
+		HmisAlert.confirm('유효기간을 변경하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/consulting_proc/update_chargedate',
+					data:{
+						cst_seqno:me.cst_seqno,
+						charge_date:charge_date
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg);
+					}
+				})
+			}
+		});
+	},
+	saveMemo: function() {
+
+		if ($("#memo").val() == "") {
+			HmisAlert.alert('상담내용을 입력하세요.');
+			return false;
+		}
+
+		var data = $("#memo-frm").serialize();
+		var url = "/consulting_proc/memo_add";
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				var obj = $.parseJSON(result_data);
+				var length = $( ".memo" ).length;
+				var memo = "<dl class='memo' style='border-bottom:dashed 1px #C3C3C3;padding-bottom:15px;'><dt><span class='label label-default label-xs'>"+obj.reg_date+" "+obj.name+"</span></dt><dd style='margin-left:10px'> "+obj.memo+"</dd></dl>";
+				if (length > 0) $( ".memo" ).first().before( memo );
+				else $(".memo-list").html(memo);
+				$("#memo").val("");
+			}
+		});
+
+	},
+	savePath: function() { //유입경로 변경
+		var path = $('#path_change').val();
+		var me = this;
+		HmisAlert.confirm('유입경로를 변경하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/consulting_proc/update_path',
+					data:{
+						cst_seqno:me.cst_seqno,
+						path:path
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg);
+					}
+				})
+			}
+		});
+	},
+	setUI: function(name) {
+		var v = HmisCommon.getValue($('#input-frm [name="'+name+'"]'));
+		switch (name) {
+			default:
+				var group = jQuery('[data-ui-group="'+name+'"]');
+				group.css('display','none');
+				group.filter('[data-ui-value*="'+v+'"]').css('display','');
+			break;
+		}
+	},
+	happycall: function() {
+		var title = '해피콜 등록';
+		var modal = new HmisModal('happycall_input', {width:900, top:200});
+
+		modal.open(title,'/work/happycall_input', {cst_seqno:'{row.cst_seqno}'});
+	},
+	callback: function(d) {
+		$('#treat_nav').html(d.nav.join(' &gt '));
+		$('#treat_cost_no').val(d.no);
+	},
+	resetTreat: function() {
+		$('#treat_nav').html('미지정');
+		$('#treat_cost_no').val('');
+	},
+	appointment: function(cst_seqno,patient_no) {
+		var modalReserve = new HmisModal('modal-appointment', {width:1200, top:50});
+		modalReserve.open('진료예약','/treat/appointment_input', {cst_seqno:cst_seqno,patient_no:patient_no, referer:'teamdb'});
+	}
+
+
+}
+
+// 20170203 kruddo : 상담일지 추가
+var PatientInfo = {
+	tab_page:1,
+	tab_search:{},
+	modalWidget: function(widget_id, title, param){
+		var width = 800;
+		var url = '/patient/info_widget_consulting_input';
+		var modal = new HmisModal('modal_'+widget_id, {width:width});
+
+		switch (widget_id) {
+			case 'consulting':
+				modal.callback = function(rs) {
+
+					if(rs.mode == 'insert') {
+						PatientInfo.patient_no = rs.no;
+						PatientInfo.render();
+					}
+					else {
+						PatientInfo.load('consulting');
+					}
+
+				}
+			break;
+			default:
+				modal.callback = this.widget[widget_id].input.callback;
+			break;
+		}
+
+		if(param  !==  null) {
+			var param = param || {};
+			$.extend(param, {patient_no:this.patient_no, project_no:this.project_no});
+		}
+		modal.open(title, url, param);
+	},
+	searchTab: function(param) {
+		ConsultingInput.loadTab('consulting');
+	},
+	//탭로드
+	loadTab: function(tab, page, param) {
+		ConsultingInput.loadTab('consulting');
+	},
+}
+// 20170203 kruddo : 상담일지 추가
+
+</script>

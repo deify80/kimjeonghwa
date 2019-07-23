@@ -1,0 +1,156 @@
+<style>
+.grade {
+	position:absolute;
+	top:-5px;
+	left:-5px;
+	padding:0px 7px;
+	min-width:20px;
+	height:30px;
+	font-family:'NGB';
+	font-size:20px;
+	text-align: center;
+	vertical-align: middle;
+	padding-top:3px;
+	background-color:#FFC000;
+	color:#FFFFFF;
+	opacity:.8;
+	border-radius: 4px;
+}
+</style>
+<div class="widget-header" >
+	<span class="f-18">{basic.name}</span>
+	<div class="tools">
+		{? auth.consulting_link && basic.cst_seqno>0 }
+		<button type="button" class="btn btn-pink" onclick="PatientBasic.goConsulting('{basic.cst_seqno}')"><i class="fa fa-1 fa-reply"></i> 상담정보 바로가기</button>
+		{/}
+		{? auth.team_change}
+		<button type="button" class="btn btn-flat-purple" onclick="PatientBasic.changeManagerTeam()"><i class="fa fa-1 fa-refresh"></i> 상담실장변경</button>
+		{/}
+		<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.modalWidget('basic','기본정보수정')"><i class="fa fa-pencil fa-1 f-blue" data-toggle="tooltip" title="기본정보 수정"></i></button>
+		<button type="button" class="btn btn-onlyicon" onclick="PatientInfo.load('basic')"><i class="fa fa-refresh fa-1 f-green"></i></button>
+	</div>
+</div>
+<div class="widget-body" style="padding-top:0px">		
+	<table class="table table-inner">
+		<colgroup>
+			<col width="170px">
+			<col width="20px">
+			<col>
+		</colgroup>
+		<tr>
+			<td style="vertical-align: top">
+				<div class="well f-center" style="position:relative">
+					<form id="FrmPatientPhoto" onsubmit="return false">
+					<input type="hidden" name="patient_no" value="{basic.no}" />
+					<div class="grade" data-toggle="tooltip" title="" style="background-color:{grade.rgb};cursor: pointer" onclick="PatientBasic.syncGrade('{basic.no}')">{grade.code}{? basic.grade_type !='N'}-{basic.grade_type}{/}</div>
+		
+					<img src="{basic.photo_path}" style="width:150px;height:175px;" class="img" />
+					<input type="file" name="patient_photo" id="attach" class="file_hidden"  style="width:150px;height:175px;margin:10px"/>
+					</form>
+				</div>
+				<ul class="label-wrap">
+					<li>
+						<span class="label label-error">챠트번호</span> {basic.chart_no}
+					</li>
+					<li>
+						<span class="label label-error">담당의사</span> {=if_empty(basic.doctor_id,'<span class="f-null">미지정</span>', basic.doctor_name)}
+					</li>
+					<li>
+						<span class="label label-error">상담실장</span> {=if_empty(basic.manager_id,'<span class="f-null">미지정</span>', basic.manager_name)}
+					</li>
+				</ul>
+			</td>
+			<td></td>
+			<td style="vertical-align: top">
+				<dl class="inline">
+					<dt>성별</dt><dd>{? basic.sex=='F'}<i class="fa fa-1 fa-female f-pink"></i>{: basic.sex=='M'}<i class="fa fa-1 fa-male f-blue"></i>{:}<span class="f-null">미입력</span>{/}</dd>
+					<dt>나이</dt><dd>{=if_empty(basic.age,'<span class="f-null">미입력</span>', '%s세')}</dd>
+					<dt>연락처</dt><dd>{=if_empty(basic.mobile,'<span class="f-null">미입력</span>')}</dd>
+					<dt>이메일</dt><dd>{=if_empty(basic.email,'<span class="f-null">미입력</span>')}</dd>
+					<dt>주소</dt><dd>{=if_empty(basic.address,'<span class="f-null">미입력</span>')}</dd>
+					<dt>직업</dt><dd>{=if_empty(basic.job_code,'<span class="f-null">미입력</span>', basic.job)}</dd>
+					<dt>직장</dt><dd>{=if_empty(basic.company,'<span class="f-null">미입력</span>')}</dd>
+				</dl>
+				<div class="dashed" style="margin:10px 0px"></div>
+				<dl>
+					<dt>특이사항</dt><dd style="max-height:34px;overflow-y: hidden" data-toggle="tooltip" title="{=nl2br(basic.comment)}" data-html="true" >{=if_empty(nl2br(basic.comment),'<span class="f-null">미입력</span>')}</dd>
+				</dl>
+				<div class="dashed" style="margin:10px 0px"></div>
+				<div style="float:left;width:150px">
+					<dl class="inline">
+						<dt style="width:80px">개인정보이용</dt><dd>{? basic.agree_privacy == 'Y'}<i class="fa fa-check fa-1 f-theme"></i>{:}<i class="fa fa-times fa-1 f-error"></i>{/}</dd>
+						<dt style="width:80px">SMS수신</dt><dd>{? basic.agree_sms == 'Y'}<i class="fa fa-check fa-1 f-theme"></i>{:}<i class="fa fa-times fa-1 f-error"></i>{/}</dd>
+						<dt style="width:80px">이메일수신</dt><dd>{? basic.agree_email == 'Y'}<i class="fa fa-check fa-1 f-theme"></i>{:}<i class="fa fa-times fa-1 f-error"></i>{/}</dd>
+					</dl>
+				</div>
+				<dl class="inline" style="">
+					<dt style="width:80px">사진활용동의</dt><dd>{? basic.agree_photo == 'Y'}<i class="fa fa-check fa-1 f-theme"></i>{:}<i class="fa fa-times fa-1 f-error"></i>{/}</dd>
+					<dt style="width:80px">수술동의</dt><dd>{? basic.agree_surgery == 'Y'}<i class="fa fa-check fa-1 f-theme"></i>{:}<i class="fa fa-times fa-1 f-error"></i>{/}</dd>
+					
+				</dl>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+<script type="text/javascript">
+var PatientBasic = {
+	init: function() {
+		$('#attach').MultiFile({
+			accept: 'gif|jpg|png|bmp|jpeg',
+			onFileSelect: function(ele, value, master_ele) {
+				PatientBasic.uploadPhoto();
+			},
+			afterFileAppend:function() {
+				$('#attach_wrap_list').empty();
+			}
+		});
+	},
+	syncGrade: function(patient_no) {
+		
+		$.ajax({
+			url:'/patient_proc/sync_patient_grade',
+			data:{
+				patient_no:patient_no
+			},
+			dataType:'json',
+			type:'POST',
+			complete: function(r) {
+				PatientInfo.load('basic');
+			}
+		})
+	},
+	uploadPhoto: function() {
+		var options = { 
+			url:'/patient_proc/save_patient_profile',
+			type:'POST',
+			dataType:'json',
+			success : function(r) {
+				if(r.success){
+					PatientInfo.load('basic');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		}
+		$('#FrmPatientPhoto').ajaxSubmit(options)
+	}, 
+	changeManagerTeam: function() {
+		PatientInfo.openModal('상담실장변경', '/patient/patient_manager', 500);
+	},
+	goConsulting: function(cst_seqno) {
+		if(cst_seqno>0) {
+			document.location.href="/consulting/input/"+cst_seqno;
+		}
+		else {
+			HmisAlert.alert('상담내역이 존재하지 않는 환자입니다.');
+		}
+	}
+}
+
+$(function(){
+	PatientBasic.init();
+})
+</script>

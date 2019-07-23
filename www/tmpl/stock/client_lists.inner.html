@@ -1,0 +1,52 @@
+<table class="table table-bordered table-list table-striped table-hover">
+	<colgroup>
+		<col style="width:60px" /><!-- 번호 -->
+		<col style="width:200px" /><!-- 거래처명 -->
+		<col style="width:150px" /><!-- 담당자 -->
+		<col style="width:150px" /><!-- 연락처 -->
+		<col style="width:300px" /><!-- 주소 -->
+		<col ><!-- 특이사항 -->
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>거래처명</th>
+			<th>담당자</th>
+			<th>연락처</th>
+			<th>주소</th>
+			<th>관리메모</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.idx}</td>
+			<td><a href="javascript:;" onclick="ClientLists.input('{.no}')" class="link">{.client_name}</a></td>
+			<td>{.manager_name}</td>
+			<td>{.tel}</td>
+			<td>{.address}</td>
+			<td>{.memo}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="6">등록된 거래처가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+
+{this->xprint('_include/pagination.html')}
+
+<script type="text/javascript">
+var ClientListInner = {
+	init: function() {
+		$('#cnt_total').text('{count.total}');
+		$('#cnt_search').text('{count.search}');
+	}
+}
+
+$(function() {
+	ClientListInner.init();
+})
+</script>

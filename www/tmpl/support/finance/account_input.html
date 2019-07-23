@@ -1,0 +1,137 @@
+<form id="FrmAccountInput" onsubmit="return false">
+<input type="hidden" name="mode" value="{mode}">
+<input type="hidden" name="hst_code" value="{rs.hst_code}">
+<!-- <input type="hidden" name="biz_id" value="{rs.biz_id}"> -->
+<input type="hidden" name="account_seqno" value="{rs.account_seqno}">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>사업장</th>
+			<td colspan="3">
+				<!-- <div class="minheight">{rs.biz_name}</div> -->
+				<select name="biz_id"  data-role="search">
+					<option value="">::사업장선택::</option>
+					{@ cfg.biz}
+					<option value="{.key_}" {? rs.biz_id==.key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+
+			</td>
+		</tr>
+		<tr>
+			<th>계좌명</th>
+			<td><input type="text" name="account_name" value="{rs.account_name}" class="validate[required] required" /></td>
+			<th>사용여부</th>
+			<td>
+				<label class="hmis"><input type="radio" name="use_flag" value="Y" {? rs.use_flag == 'Y'}checked{/} class="hmis" /><span class="lbl"> Y</span></label>
+				<label class="hmis"><input type="radio" name="use_flag" value="N" {? rs.use_flag == 'N'}checked{/} class="hmis" /><span class="lbl"> N</span></label>
+			</td>
+		</tr>
+		{? mode == 'insert'}
+		<tr>
+			<th>구분</th>
+			<td colspan="3">
+				<label class="hmis"><input type="radio" name="account_type" value="A" {? rs.account_type == 'A'}checked{/} class="hmis" /><span class="lbl"> 계좌</span></label>
+				<label class="hmis"><input type="radio" name="account_type" value="C" {? rs.account_type == 'C'}checked{/} class="hmis" /><span class="lbl"> 현금</span></label>
+			</td>
+		</tr>
+		<tr id="account_type_A">
+			<th>금융기관</th>
+			<td>
+				<select name="bank_code" class="validate[required] required" >
+					<option value="">::금융기관선택::</option>
+					{@ cfg.bank}
+					<option value="{.key_}" {? rs.bank_code == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>계좌번호</th>
+			<td>
+				<input type="text" name="account_no" value="{rs.account_no}" class="validate[required] required"  />
+			</td>
+ 		</tr>
+		<tr>
+			<th>최초잔액</th>
+			<td colspan=3>
+				<input type="text" name="balance" value="{rs.balance}" class="validate[required] required number" />
+			</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg" >저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var AccountInput = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			promptPosition:'centerRight',
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		this.createNumber();
+
+		$("#FrmAccountInput").validationEngine('attach',option);
+
+		$('#FrmAccountInput input[name="account_type"]').on('change', function() {
+			AccountInput.setAccount();
+		});
+
+		this.setAccount();
+	},
+	setAccount: function() {
+		var type = $('#FrmAccountInput input[name="account_type"]:checked').val();
+		if(type == 'A') {
+			$('#account_type_A').find('select, input').attr('disabled', false);
+		}
+		else {
+			$('#account_type_A').find('select, input').attr('disabled', true);
+		}
+	}, 
+	save: function() {
+		var me = this;
+		var formdata = $('#FrmAccountInput').serialize();
+		$.ajax({
+			url:'/finance_proc/account_save',
+			data:formdata, 
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				HmisAlert.alert(r.msg, function(){
+					if(r.success) {
+						$('.modal-close').trigger('click');
+					}
+				});
+			}
+		})
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+		
+		})
+	},
+}
+
+$(function() {
+	AccountInput.init();
+})
+</script>

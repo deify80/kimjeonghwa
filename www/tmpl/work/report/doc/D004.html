@@ -1,0 +1,307 @@
+{? mode == 'insert'}
+<table class="table table-bordered table-center ">
+	<colgroup>
+		<col style="width:100px" />
+		<col style="width:250px" />
+		<col style="width:120px" />
+		<col style="width:120px" />
+		<col style="width:100px" />
+		<col style="width:100px" />
+		<col  />
+		<col style="width:30px" />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>출금일</th>
+			<th>분류</th>
+			<th>계좌명</th>
+			<th>거래처</th>
+			<th>처리방식</th>
+			<th>출금액</th>
+			<th>거래상세내역</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody id="tbody">
+		<tr>
+			<td><input type="text" name="doc[1][plan_date]" class="validate[required] datepicker required" autocomplete="off" /></td>
+			<td >
+				<select name="doc[1][classify_code]" onchange="DocTpl.loadItem(this.value, '1')" class="validate[required] required">
+					<option value="">::1차::</option>
+					{@ cfg.category}
+					<option value="{.code}">{.title}</option>
+					{/}
+				</select>
+				
+				<select name="doc[1][item_code]" id="item_1" style="" disabled class="validate[required] required">
+					<option value="">::2차::</option>
+				</select>
+			</td>
+			<td>
+				<select name="doc[1][account_seqno]" class="validate[required] required">
+					<option value="">::계좌명::</option>
+					{@ cfg.account}
+					<option value="{.account_seqno}">{.account_name}</option>
+					{/}
+				</select>
+			</td>
+			<td>
+				<input type="text" name="doc[1][trade_customer]" value="" class="full" />
+			</td>
+			<td>
+				<select name="doc[1][process_category]" class="validate[required] required">
+					<option value="" {? !rs.process_category}selected{/}>::처리방식::</option>
+					<option value="0" {? rs.process_category=='0'}selected{/}>자금출금</option>
+					<option value="1" {? rs.process_category=='1'}selected{/}>자금이체</option>
+					<option value="2" {? rs.process_category=='2'}selected{/}>자동이체</option>
+					<option value="3" {? rs.process_category=='3'}selected{/}>잔액이체</option>
+					<option value="4" {? rs.process_category=='4'}selected{/}>입금</option>
+				</select>
+			</td>
+			<td>
+				<input type="text" name="doc[1][amount]" value="" class="full validate[required] required number" />
+			</td>
+			<td>
+				<input type="text" name="doc[1][info]" value="" class="full" />
+			</td>
+			<td><a href="javascript:;" onclick="DocTpl.addRow()"><i class="fa fa-1 fa-plus-circle" style="color:#03A9F4"></i></a></td>
+		</tr>
+	</tbody>
+</table>
+<table class="table table-bordered table-form table-center ">
+	<colgroup>
+		<col style="width:690px" />
+		<col  />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>합계</th>
+			<td><span id="sum">0</span></td>
+		</tr>
+	</tbody>
+</table>
+{:}
+<table class="table table-bordered table-center ">
+	<colgroup>
+		<col style="width:100px" />
+		<col style="width:150px" />
+		<col style="width:120px" />
+		<col style="width:120px" />
+		<col style="width:100px" />
+		<col style="width:100px" />
+		<col  />
+		<col style="width:80px" />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>출금일</th>
+			<th>분류</th>
+			<th>계좌명</th>
+			<th>거래처</th>
+			<th>처리방식</th>
+			<th>출금액</th>
+			<th>거래상세내역</th>
+			<th>결재</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.plan_date}</td>
+			<td >
+				{.classify_txt} &gt; {.item_txt}
+			</td>
+			<td>
+				{.account_info.name}
+			</td>
+			<td>
+				{.trade_customer}
+			</td>
+			<td>
+				{.process_category_txt}
+			</td>
+			<td>
+				{=number_format(.amount)}
+			</td>
+			<td>
+				{.info}
+			</td>
+			<td>
+				{? report.waiter_id == layout.login.info.ss_user_id && report.is_waiter} 
+				<!-- 자동분배:S -->
+				
+				<div class="onoffswitch report" style="margin-left:5px">
+					<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="sign_switch_{.seqno}" {? .status=='approved'}checked{/} onchange="DocTpl.sign(this, '{.seqno}')" />
+						<label class="onoffswitch-label" for="sign_switch_{.seqno}">
+						<span class="onoffswitch-inner"></span>
+						<span class="onoffswitch-switch"></span>
+					</label>
+				</div>
+				<!-- 자동분배:E -->
+
+				<!-- <button type="button" class="btn btn-xs btn-onlyicon" onclick="DocTpl.signApprove('{.seqno}');"><i class="fa fa-thumbs-up f-blue" data-toggle="tooltip" title="승인"></i></button>
+				<button type="button" class="btn btn-xs btn-onlyicon" onclick="DocTpl.signReject('{.seqno}');"><i class="fa fa-thumbs-down f-error" data-toggle="tooltip" title="반려"></i></button> -->
+				{:}
+				{? .status == 'approved'}<span class="label label-xs label-theme">승인</span>{:}<span class="label label-xs">반려</span>{/}
+				{/}
+			</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="8">등록된 지출결의가 없습니다.</td>
+		</tr>
+		{/}
+	</tbody>
+</table>
+<table class="table table-bordered table-form table-center ">
+	<colgroup>
+		<col style="width:590px" />
+		<col  />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>합계</th>
+			<td>{=number_format(sum)}</td>
+		</tr>
+	</tbody>
+</table>
+{/}
+
+<textarea id="tmpl_row" style="display:none;">
+<tr>
+	<td><input type="text" name="doc[${\idx}][plan_date]" class="datepicker validate[required] required" autocomplete="off"  /></td>
+	<td class="left1">
+		<select name="doc[${\idx}][classify_code]" onchange="DocTpl.loadItem(this.value, '${\idx}')" class="validate[required] required">
+			<option value="">::1차::</option>
+			{@ cfg.category}
+			<option value="{.code}">{.title}</option>
+			{/}
+		</select>
+		
+		<select name="doc[${\idx}][item_code]" id="item_${\idx}" style="" disabled class="validate[required] required">
+			<option value="">::2차::</option>
+		</select>
+	</td>
+	<td>
+		<select name="doc[${\idx}][account_seqno]" class="validate[required] required">
+			<option value="">::계좌명::</option>
+			{@ cfg.account}
+			<option value="{.account_seqno}">{.account_name}</option>
+			{/}
+		</select>
+	</td>
+	<td>
+		<input type="text" name="doc[${\idx}][trade_customer]" value="" class="full" />
+	</td>
+	<td>
+		<select name="doc[${\idx}][process_category]" class="validate[required] required">
+			<option value="" {? !rs.process_category}selected{/}>::처리방식::</option>
+			<option value="0" {? rs.process_category=='0'}selected{/}>자금출금</option>
+			<option value="1" {? rs.process_category=='1'}selected{/}>자금이체</option>
+			<option value="2" {? rs.process_category=='2'}selected{/}>자동이체</option>
+			<option value="3" {? rs.process_category=='3'}selected{/}>잔액이체</option>
+			<option value="4" {? rs.process_category=='4'}selected{/}>입금</option>
+		</select>
+	</td>
+	<td>
+		<input type="text" name="doc[${\idx}][amount]" value="" class="full validate[required] required number" />
+	</td>
+	<td>
+		<input type="text" name="doc[${\idx}][info]" value="" class="full" />
+	</td>
+	<td><a href="javascript:;" onclick="DocTpl.removeRow(this)"><i class="fa fa-1 fa-minus-circle" style="color:#FF8080"></i></a></td>
+</tr>
+</textarea>
+
+<link rel="stylesheet" type="text/css" href="/css/onoffswitch.css?{=time()}">
+<script type="text/javascript">
+var DocTpl = {
+	idx:1,
+	init: function() {
+		HmisCommon.createDatepicker();
+		$('[data-toggle="tooltip"]').tooltip();
+		this.createNumber();
+	},
+	createNumber : function() {
+		var me = this;
+		$("input.number").attr('placeholder','0');
+		$("input.number").attr('autocomplete','off');
+		$("input.number").unbind('keyup.number').bind('keyup.number', function(){
+			var e = $(this);
+			e.val( HmisCommon.numberFormat(e.val()) );
+			var sum = 0;
+			$.each($('input.number'), function(i,e) {
+				var number = $(e).val();
+				if(number){
+					sum = parseInt(sum) + parseInt(number.replace(/[^0-9]/g,''));
+				}
+			})
+			$('#sum').html(HmisCommon.numberFormat(sum));
+		})
+	},
+	loadItem: function(parent_code, idx) {
+		var sb_item = $('#item_'+idx);
+		$.ajax({
+			url:'/finance/category_list',
+			data:{
+				kind:'item',
+				group_code:'{group_code}',
+				parent_code:parent_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+
+					sb_item.find('option[value!=""]').remove();
+					var selected;
+					$.each(r.data, function(i,e){
+						selected = (e.code == '{rs.item_code}')?'selected':'';
+						sb_item.append('<option value="'+e.code+'" '+selected+'>'+e.title+'</option>');
+					});
+					sb_item.removeAttr('disabled');
+										
+				}
+				else {
+					sb_item.val('');
+					sb_item.attr('disabled',true);
+				}
+			}
+		});
+	},
+	addRow: function() {
+		this.idx++;
+		var data = {
+			idx:this.idx
+		}
+		var result = TrimPath.processDOMTemplate("tmpl_row", data);
+		$('#tbody').append(result);
+		HmisCommon.createDatepicker();
+		this.createNumber();
+		
+	},
+	removeRow: function(e) {
+		var tr = $(e).parents('tr');
+		tr.remove();
+		this.idx--;
+	},
+	sign: function(e, seqno) {
+		$.ajax({
+			url:'/finance_proc/inout_sign',
+			data:{
+				seqno:seqno,
+				status:($(e).is(':checked'))?'approved':'reject'
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+
+			}
+		});
+	}
+}
+
+$(function(){
+	DocTpl.init();
+})
+</script>

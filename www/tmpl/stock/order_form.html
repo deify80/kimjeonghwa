@@ -1,0 +1,119 @@
+<style>
+.classify {
+	background-color:#3A3633;
+	color:#fff;
+	font-size:13px;
+	padding:8px;
+	margin-top:15px;
+	font-weight:700;
+}
+
+.classify-box {margin-left:-1%;}
+.classify-box > div {width:32.3%;float:left;margin-left:1%;box-sizing: border-box}
+.classify-box:after {content:"";display:block;clear:both;}
+</style>
+<!--{*
+<h3 class="area-title">물품 검색</h3>
+<form id="FrmClientSearch" onsubmit="return false">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>검색</th>
+			<td>
+				<select name="" id="">
+					<option value="goods_name">물품명</option>
+
+				</select>
+			</td>
+			<th>사용팀</th>
+			<td>
+				<input type="text" name="date_s" id="sdate_s"  class="datepicker lg" value="{search.date_s}" data-default="{=date('Y-m-d')}" /> ~ <input type="text" name="date_e" id="sdate_e"  class="datepicker lg" value="{search.date_e}"data-default="{=date('Y-m-d')}"  />
+
+				<ul class="btn-group btn-group-xs">
+					<li onclick="OrderLists.setDate('{cfg.date.today}','{cfg.date.today}');"><a href="javascript:;">오늘</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.weekday_db}','{cfg.date.today}');"><a href="javascript:;">이번주</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.cur_month}','{cfg.date.today}');"><a href="javascript:;">이번달</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+					<li onclick="OrderLists.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+				</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
+*}-->
+<div id="order_inner"></div>
+
+<script type="text/javascript">
+var OrderForm = {
+	order:{},
+	init: function() {
+		this.prev();
+
+	},
+
+	prev: function() {
+		var me = this;
+		$('#order_inner').load('/stock/order_form_choice', {'layout':'inc','goods':OrderForm.order}, function() {
+			//숫자만입력
+			$('[data-filter="numeric"]').on('keydown input', function (evt) {
+				var v = $(this).val();
+				$(this).val(v.replace(/[^0-9]/g, ''));
+			});
+
+
+			$('[data-filter="numeric"]').on('keyup', function() {
+				var val = this.value;
+				var no  =  $(this).data('no');
+				if(val > 0) {
+					me.order[no] = val;
+				}
+				else {
+					delete me.order[no];
+				}
+			})
+		});
+	},
+	next: function() {
+		var length = Object.keys(OrderForm.order).length;
+		if(length<1) {
+			HmisAlert.alert('최소 1개 이상의 물품을 신청해야 합니다.');
+			return false;
+		}
+		$('#order_inner').load('/stock/order_form_confirm', {'goods':OrderForm.order});
+	},
+	save: function() {
+		HmisAlert.confirm('발주하시겠습니까?', function(r) {
+			if(r) {
+				var formdata = $('#FrmOrderForm').serialize();
+				$.ajax({
+					url:'/stock_proc/order_apply',
+					data:formdata,
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						if(r.success){
+							HmisAlert.alert(r.msg, function() {
+								document.location.href="/stock/order_lists";
+							});
+						}
+						else {
+							HmisAlert.alert(r.msg);
+						}
+					}
+				})
+			}
+		})
+	}
+}
+
+$(function() {
+	OrderForm.init();
+})
+</script>

@@ -1,0 +1,200 @@
+<h2>재직정보</h2>
+<!-- <?pre($basic)?> -->
+<form id="FrmUserInfoTab" >
+<input type="hidden" id="user_no" name="no" value="<?=$basic['no']?>" />
+<input type="hidden" name="tab_no" value="6" />
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			
+			<th>사원번호</th>
+			<td colspan="5"><div class="minheight f-bold"><?=if_empty($basic['user_code'])?></div></td>
+		</tr>
+		<tr>
+			<th>재직상태</th>
+			<td>
+				<label class="hmis"><input type="radio" name="status" value="1" class="hmis" <?=($basic['status']=='1')?'checked':''?> /><span class="lbl"> 근무</span></label>
+				<label class="hmis"><input type="radio" name="status" value="2" class="hmis" <?=($basic['status']=='2')?'checked':''?> /><span class="lbl"> 휴직</span></label>
+				<label class="hmis"><input type="radio" name="status" value="0" class="hmis" <?=($basic['status']=='0')?'checked':''?> /><span class="lbl"> 퇴사</span></label>
+			</td>
+			<th>입사일</th>
+			<td><input type="text" name="join_date" value="<?=$basic['join_date']?>" class="datepicker lg validate[required] required" /></td>
+			<th>퇴사일</th>
+			<td><input type="text" name="retire_date" value="<?=$basic['retire_date']?>" class="datepicker lg" /></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2 style="margin-top:20px">기본정보</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+	<tr>
+		<th>이름(한글)</th>
+		<td><input type="text" name="name" value="<?=$basic['name']?>" class="validate[required] required" /></td>
+		<th>부서/팀</th>
+		<td>
+			<select name="dept_code" onchange="HmisCommon.loadTeam(this.value, '<?=$basic['team_code']?>')" class="validate[required] required">
+				<option value="">::부서선택::</option>
+				<? foreach($cfg['dept'] as $i=>$val) {?>
+				<option value="<?=$i?>"  <?=($basic['dept_code']==$i)?'selected':''?>><?=$val?></option>
+				<? } ?>
+			</select>
+			<select name="team_code" id="sb_team" autocomplete="off" class="validate[required] required">
+				<option value="">::팀선택::</option>
+			</select>
+		</td>
+		<th>연봉</th>
+		<td>
+			<input type="text" name="income" value="<?=number_format($basic['income'])?>"  placeholder="0" class="validate[custom[numberFormat]] number"/>
+		</td>
+	</tr>
+	<tr>
+		<th>직급</th>
+		<td>
+			<select name="position_code">
+				<option value="">::직급선택::</option>
+				<? foreach($cfg['position'] as $i=>$val) {?>
+				<option value="<?=$i?>"  <?=($basic['position_code']==$i)?'selected':''?>><?=$val?></option>
+				<? } ?>
+			</select>
+		</td>
+		<th>직책</th>
+		<td>
+			<select name="duty_code">
+				<option value="">::직책선택::</option>
+				<? foreach($cfg['duty'] as $i=>$val) {?>
+				<option value="<?=$i?>" <?=($basic['duty_code']==$i)?'selected':''?> ><?=$val?></option>
+				<? } ?>
+			</select>
+		</td>
+		<th>직군</th>
+		<td>
+			<select name="occupy_code">
+				<option value="">::직군선택::</option>
+				<? foreach($cfg['occupy'] as $i=>$val) {?>
+				<option value="<?=$i?>" <?=($basic['occupy_code']==$i)?'selected':''?> ><?=$val?></option>
+				<? } ?>
+			</select>
+		</td>
+	</tr>
+	<tr>	
+		<th>휴대폰 번호</th>
+		<td><input type="text" name="mobile" value="<?=$basic['mobile']?>" data-mask="mobile" /></td>
+		<th>이메일</th>
+		<td colspan="3"><input type="text" name="email" value="<?=$basic['email']?>" class="validate[custom[email]] full" /></td>
+	</tr>
+	
+	</tbody>
+</table>
+
+<h2 style="margin-top:20px">인트라넷 사용정보</h2>
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+		<col style="width:120px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>아이디</th>
+			<td>
+				<b><?=$basic['user_id']?></b>
+			</td>
+			<th>비밀번호</th>
+			<td colspan="3">
+				<button type="button" class="btn btn-flat-orange" onclick="UserInfoTab.openPassword()">비밀번호 초기화</button>
+			</td>
+		</tr>
+		<tr>
+			<th>사업장</th>
+			<td colspan="5">
+				<? foreach($cfg['biz'] as $biz_code=>$biz_name){ ?>
+				<label class="hmis"><input type="checkbox" name="biz_id[]" value="<?=$biz_code?>" class="hmis" <?=(in_array($biz_code, $basic['biz_id']))?'checked':''?> /><span class="lbl"> <?=$biz_name?></span></label>
+				<? } ?>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg" onclick="document.location.href='/manage/user_main'">목록</button>
+</div>
+</form>
+
+<script language="javascript" src="/js/jquery.maskedinput.min.js"></script>
+<script type="text/javascript">
+var UserInfoTab = {
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+		$("#FrmUserInfoTab").validationEngine('attach',option);
+
+		$('input[data-mask="mobile"]').mask('010-9999-9999');
+
+		HmisCommon.loadTeam($('select[name="dept_code"]').val(), "<?=$basic['team_code']?>");
+		HmisCommon.createDatepicker();
+		HmisCommon.createNumber();
+
+	},
+	openPassword: function() {
+		HmisAlert.confirm('비밀번호를 초기화하시겠습니까?', function(r) {
+			if(r) {
+				$.ajax({
+					url:'/manage_proc/reset_passwd',
+					data:{
+						user_no:$('#user_no').val()
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r){
+						HmisAlert.alert(r.msg);
+					}
+				})
+			}
+		})
+	},
+	save: function() {
+		var formdata = $('#FrmUserInfoTab').serialize();
+		$.ajax({
+			url:'/manage_proc/save_user_tab',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				HmisAlert.alert(r.msg);
+				if(r.success) {
+					UserInfo.loadBasic();
+				}
+			}
+		});
+	}
+};
+
+$(function(){
+	UserInfoTab.init();
+})
+</script>

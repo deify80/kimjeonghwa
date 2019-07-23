@@ -1,0 +1,374 @@
+<style>
+#user_list div.label-default {display:block;margin-top:5px;}
+
+</style>
+<table class="table table-closely">
+	<colgroup>
+		<col style="width:200px" />
+		<col style="width:10px" />
+		<col />
+	</colgroup>
+	<tr>
+		<td style="vertical-align: top">
+			<table class="basic-table" style="margin-top:15px">
+				{@ cfg.tree}
+				<tr>
+					<td style="background-color:#F9F9F9">{.name}</td>
+				</tr>
+
+				<!-- 2,3차 메뉴:S -->
+				{? .children}
+				<tr>
+					<td>
+						<!-- 메뉴데이터:S -->
+						<div class="treeview-container">
+							<ul class="treeview">
+								{@ children}
+								<li>
+									{..name}
+									{? ..children}
+
+									<ul>
+									{@ ..children}
+
+						        		<li onclick="ManageMenu.loadMenuInfo('{...no}')">{...name}</li>
+									{/}
+									</ul>
+									{/}
+								</li>
+								{/}
+							</ul>
+						</div>
+					</td>
+				</tr>
+				{/}
+				<!-- 2,3차 메뉴:E -->
+				{/}
+			</table>
+		</td>
+		<td></td>
+		<td style="vertical-align: top">
+			<h3 class="area-title">
+				설정메뉴
+				<div class="button-box">
+					<button type="button" class="btn btn-flat-blue" onclick="ManageMenu.saveGrant()" ><i class="fa fa-1 fa-save"></i> 저장</button>
+				</div>
+			</h3>
+			<form name="">
+			<input type="hidden" name="menu_no" id="menu_no" autocomplete="off"/>
+			<table class="basic-table">
+				<tr>
+					<td style="padding:10px 15px" id="menu_navigator">
+						<span class="f-warning">설정할 메뉴를 선택하세요.</span>
+						<!-- 상담관리 <span class="split">></span> 상담센터 <span class="split">></span> <span style="font-weight:bold;color:#DC4F23">공동DB</span> -->
+					</td>
+				</tr>
+			</table>
+			<!--{*
+			<h3 class="area-title">
+				직책선택
+			</h3>
+			<table class="basic-table">
+				<tr>
+					<td style="padding:10px 15px">
+						{@ cfg.duty}
+						<label style="display:inline;margin-right:20px;"><input type="checkbox" class="hmis" name="grant_duty[]" value="{.key_}" autocomplete="off"><span class="lbl"> {.value_}</span></label>
+						{/}
+					</td>
+				</tr>
+			</table>
+			*}-->
+
+			<h3 class="area-title">
+				직원선택
+			</h3>
+			<table class="basic-table">
+				<tr>
+					<td style="padding:10px">
+						<select name="user[]" id="sb_dept" onchange="ManageMenu.loadTeam(this.value)" style="vertical-align: bottom" autocomplete="off">
+							<option value="all">전체 부서</option>
+							{@ cfg.dept}
+							<option value="{.key_}">{.value_}</option>
+							{/}
+						</select>
+						<select name="user[]" id="sb_team" onchange="ManageMenu.loadUser(this.value)" style="display:none;vertical-align: bottom" autocomplete="off">
+							<option value="all">전체 팀</option>
+						</select>
+						<select name="user[]" id="sb_user" style="display:none;vertical-align: bottom" autocomplete="off">
+							<option value="all">전체 직원</option>
+						</select>
+						<button type="button" class="btn btn-theme" onclick="ManageMenu.addGrant()" >추가</button>
+						<div class="dashed" style="margin:10px 0px"></div>
+						<div>
+							{@ cfg.biz_id}
+							<label class="hmis"><input type="checkbox" name="biz_id[]" value="{.key_}" class="hmis" data-name="{.value_}" /><span class="lbl"> {.value_}</span></label>
+							{/}
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div id="user_notice" class="f-notice">권한이 부여된 직원이 없습니다.</div>
+						<div id="user_list"></div>
+					</td>
+				</tr>
+			</table>
+			</form>
+		</td>
+	</tr>
+</table>
+
+
+<link href="/lib/js/tree/jquery.treeView.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="/lib/js/tree/jquery.treeView.js"></script>
+<script type="text/javascript">
+var ManageMenu = {
+	init:function() {
+
+		$('.treeview').treeView();
+	},
+	loadMenuInfo : function(menu_no) {
+		var me = this;
+		$.ajax({
+			url:'/manage/get_menu',
+			data:{
+				menu_no:menu_no
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success) {
+					$('#menu_no').val(menu_no);
+					//네이게이터
+					var navigator_txt = '';
+					$.each(r.data.navigator, function(i,e){
+						if(i<2) {
+							navigator_txt += e.name+' <span class="split">></span>';
+						}
+						else {
+							navigator_txt += '<span style="font-weight:bold;color:#DC4F23">'+e.name+'</span>';
+						}
+					});
+					$('#menu_navigator').html(navigator_txt);
+
+
+					var cb_duty = 	$('input[name="grant_duty[]"]');
+					cb_duty.prop('checked',false);
+					if(r.data.grant_duty) {
+						var duty = r.data.grant_duty.split(',');
+						$.each(duty, function(i,e){
+							cb_duty.filter('[value="'+e+'"]').prop('checked',true);
+						})
+					}
+
+					$('#user_list >div').remove();
+					if(r.data.grant_dept_info) {
+						var html = '';
+						$.each(r.data.grant_dept_info, function(i,e){
+							var html = '<div class="label-default" id="'+i+'" data-depth="'+i.split('_').length+'" data-biz="'+e.biz_id+'">';
+							html += "<span style='padding-right:20px'>"+e.user+"</span>";
+
+							//사업장추가
+							if(e.biz) {
+								$.each(e.biz, function(no,biz) {
+									html += "<span class='label label-xs' style='margin:0 2px'>"+biz.name+"</span>";
+								})
+							}
+							html += '<i class="fa fa-times pointer" style="position:absolute;right:10px;top:8px" onclick="ManageMenu.removeGrant(\''+i+'\')"></i></div>';
+							$('#user_list').append(html);
+						});
+
+					}
+					me.layoutGrant();
+				}
+				else {
+					alert('ERROR#1');
+				}
+			}
+		})
+	},
+	loadTeam : function(dept_no) {
+		var sb_team = $('#sb_team');
+		var sb_user = $('#sb_user');
+		if(dept_no == 'all') {
+			sb_team.val('all').css('display','none');
+			sb_user.val('all').css('display','none');
+			return false;
+		}
+		else {
+			dept_code = dept_no;
+		}
+
+		$.ajax({
+			url:'/manage/get_team_json',
+			data:{
+				biz_id:'all',
+				dept_code:dept_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					sb_team.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb_team.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb_team.css('display','');
+				}
+				else {
+					sb_team.val('all').css('display','none');
+				}
+				sb_user.val('all').css('display','none');
+			}
+		});
+	},
+	loadUser : function(team_no) {
+		team_no = team_no || $('#sb_team').val();
+		var team_code = (team_no=='all')?'':team_no;
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				key:'no',
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				var sb = $('#sb_user');
+				if(r.success && team_code!=''){
+					sb.find('option[value!="all"]').remove();
+					$.each(r.data, function(i,e){
+						sb.append('<option value="'+i+'">'+e+'</option>');
+					});
+					sb.css('display','');
+				}
+				else {
+					sb.val('all');
+					sb.css('display','none');
+				}
+			}
+		});
+	},
+	addGrant : function() {
+		if(!this.checkMenu()) return false; //메뉴선택여부
+
+		//사업장선택여부
+		var checked_biz_id = HmisCommon.getChecked('biz_id[]');
+		if (checked_biz_id.length<1) {
+			HmisAlert.alert('사업장을 한개 이상 선택하세요.');
+			return false;
+		}
+
+		var text_arr = [];
+		var value_arr = [];
+		var valid = ($('#user_list > div[id^="all"]').length>0)?false:true; //전체부서가 설정되어 있는 경우 무조건 무효
+		var biz_id = checked_biz_id.map(function () {return this.value;}).get();
+
+		$.each($('select[name="user[]"]'), function(i,e) {
+			var value = $(e).val();
+			var text = $(e).find('option:selected').text();
+			if(i>0) {
+				if(value == 'all') return false;
+			}
+			else {
+				if(value == 'all') $('#user_list > div[id!="all"]').remove(); //전체부서를 선택한경우 다른 권한 삭제
+			}
+
+			value_arr.push(value);
+			text_arr.push(text);
+		});
+
+		var div_id = value_arr.join('_');
+		var html = '<div class="label-default" id="'+div_id+'" data-depth="'+value_arr.length+'" data-biz="'+biz_id.join(',')+'">';
+		html += "<span style='padding-right:20px'>"+text_arr.join(' > ')+"</span>";
+
+		//선택 사업장 추가
+		$.each(checked_biz_id, function(i,e) {
+			html += "<span class='label label-xs' data-i='"+e.value+"' style='margin:0 2px'>"+$(e).data('name')+"</span>";
+		})
+
+		html += '<i class="fa fa-times pointer" style="position:absolute;right:10px;top:8px;" onclick="ManageMenu.removeGrant(\''+div_id+'\')"></i></div>';
+
+		// valid = $('#user_list > div[id="'+div_id+'"]').length>0?false:valid; //동일 권한 체크
+		if($('#user_list > div[id="'+div_id+'"]')) {
+			$('#user_list > div[id="'+div_id+'"]').remove(); //동일권한 교체를 위한 삭제
+		}
+
+		//상위 권한 존재체크
+		var length = value_arr.length;
+		for( var i=0; i<length ; i++) {
+			var match = $('#user_list > div[id="'+value_arr.join('_')+'"]').length;
+			if(match>0) {
+				valid = false;
+				break;
+			}
+			else {
+				value_arr.pop();
+			}
+		}
+
+		if(valid) {
+			if($('#user_list > div[id="'+div_id+'"]')) {
+				$('#user_list > div[id="'+div_id+'"]').remove(); //하위권한 삭제
+			}
+			else {
+				$('#user_list > div[id^="'+div_id+'"]').remove(); //하위권한 삭제
+			}
+
+			$('#user_list').append(html);
+			this.layoutGrant();
+		}
+		else {
+			HmisAlert.alert('상위권한이나 동일한 권한이 이미 지정되어 있습니다.');
+			return false;
+		}
+	},
+	layoutGrant : function() {
+		var cnt = $('#user_list > div').length;
+		if(cnt > 0) { $('#user_notice').css('display','none'); }
+		else { $('#user_notice').css('display',''); }
+	},
+	saveGrant : function() {
+		if(!this.checkMenu()) return false;
+		HmisAlert.confirm('권한설정을 저장하시겠습니까?', function(r) {
+			if(r) {
+				var menu_no = $('#menu_no').val();
+				var grant_duty = $('input[name="grant_duty[]"]:checked').map(function(){ return this.value; }).get();
+				var grant_dept = $('div#user_list>div').map(function(){ return $(this).attr('id')+'|'+$(this).data('biz'); }).get();
+
+				$.ajax({
+					url:'/manage_proc/grant_save',
+					data:{
+						menu_no:menu_no,
+						grant_duty:grant_duty,
+						grant_dept:grant_dept
+					},
+					dataType:'json',
+					type:'POST',
+					success: function(r) {
+						HmisAlert.alert(r.msg);
+					}
+				});
+			}
+		})
+	},
+	removeGrant : function(id) {
+		$('#'+id).remove();
+		this.layoutGrant();
+	},
+	checkMenu : function() {
+		var menu_no = $('#menu_no').val();
+		if(!menu_no) {
+			HmisAlert.alert('권한을 설정할 메뉴를 먼저 선택하세요.');
+			return false;
+		}
+
+		return true;
+	}
+
+};
+
+$(function() {
+	ManageMenu.init();
+})
+</script>

@@ -1,0 +1,54 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, form, fieldset, p,
+	button {
+	margin: 0;
+	padding: 0
+}
+
+body, h1, h2, h3, h4, th, td, input {
+	color: #333;
+	font-family: "돋움", dotum;
+	font-size: 12px;
+	font-weight: normal
+}
+
+body {
+	background: #fff;
+	direction: ltr;
+	text-align: center
+}
+
+hr {
+	display: none
+}
+
+img, fieldset {
+	border: 0
+}
+
+ul, ol, li {
+	list-style: none
+}
+
+img, input, select, textarea {
+	vertical-align: middle
+}
+
+a {
+	color: #30323f;
+	text-decoration: none;
+	color: #6b6b6b;
+}
+
+a:hover {
+	color: #4559E9;
+	text-decoration: underline;
+	color: #4c4c4c;
+}
+
+
+textarea {
+	font-size: 12px;
+	border: 1px solid #acd8df;
+	background-color: #ffffff;
+	padding: 5 5 5 5
+}

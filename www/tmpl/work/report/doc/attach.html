@@ -1,0 +1,59 @@
+{? mode == 'insert'}
+<div style="width:100%;border:solid 1px #DDDDDD;height:250px;color:#C3C3C3;font-size:20px;text-align:center;padding-top:20px;margin-top:5px;" id="viewer_none">
+	<div style="position:relative;width:200px;margin:0 auto">
+		<img src="/images/common/upload_150.png" />
+		<input type="file" name="file_report" id="attach_report" class="file_hidden" style="height:200px;width:200px" />
+	</div>
+	<div>보고할 문서를 업로드하세요.</div>
+</div>
+
+<iframe src="about:blank" id="viewer" style="width:100%; height:250px;display:none;margin-top:5px;border:solid 1px #DDDDDD;" frameborder="0" ></iframe>
+{:}
+<div style="width:100%;border:solid 1px #DDDDDD;color:#1E1E1E;font-size:18px;height:350px;text-align:center;margin-top:5px;background-color:#D1D1D1;" id="viewer_none">
+	<div style="padding-top:130px" id="viewer_loading">
+			<img src="/images/common/loading_viewer.gif">
+			<div style="margin-top:20px">Loading...</div>
+	</div>
+	<iframe src="https://docs.google.com/gview?url={report.file.report}&embedded=true" style="width:100%; height:100%;display:none" frameborder="0" id="viewer" ></iframe>
+</div>
+{/}
+<script type="text/javascript">
+var DocAttach = {
+	init: function() {
+		this.createAttach();
+	},
+	createAttach: function() {
+		var me = this;
+
+		$('#attach_report').MultiFile({ 
+			accept:'xls|xlsx|docx|pptx|txt|png',
+			max:1,
+			list:'#uploaded_info',
+			STRING:{
+				remove:"<i class='fa fa-remove' style='color:#FF4040'></i>",
+				denied:'$ext 형식의 파일은 업로드 할 수 없습니다.',
+			},
+			afterFileSelect: function(ele, value, master) {
+				//$('#viewer').attr('src','https://docs.google.com/gview?url=http://hjleehmis.md21.kr/DATA/work/paper/2-64QWbGSx.xls&embedded=true');
+				var options = { 
+					url:'/report_proc/report_upload',
+					type:'POST',
+					dataType:'json',
+					success : function(r) {
+						$('#viewer').attr('src','https://docs.google.com/gview?url='+r.data.file_url+'&embedded=true').css('display','block');
+						$('#viewer_none').css('display','none');
+					}
+				}
+				$('#FrmReportInput').ajaxSubmit(options);
+			},
+			afterFileRemove: function(element, value, master_element){
+				me.removeAttach();
+			}
+		});
+	}
+}
+
+$(function(){
+	DocAttach.init();
+})
+</script>

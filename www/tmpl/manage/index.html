@@ -1,0 +1,128 @@
+<script>
+$(document).ready(function(){
+
+	open_calendar("#open_date");
+
+	$("#input-frm").validationEngine('attach', {
+		onValidationComplete: function(form, status){
+			if (status) save();
+		}
+	});
+
+	$("#bt-save").button("option", "icons", {
+		primary : "ui-icon-circle-check"
+	});
+
+
+});
+
+
+
+function save() {
+	var data = $("#input-frm").serialize();
+	var url = "/manage_proc/basic_update";
+	$.ajax({
+		type : "POST",
+		url : url,
+		data : data,
+		success : function(result_data) {
+			var obj = $.parseJSON(result_data);
+			$("#msg-area").html(obj.msg);
+			$("#msg-area").dialog("open");
+			document.location.reload();
+
+		}
+	});
+}
+
+</script>
+
+<form id="input-frm">
+<input type="hidden" name="is_reset_old" value="<?=$row['is_reset']?>">
+<input type="hidden" name="is_cash_old" value="<?=$row['is_cash']?>">
+<h3 class="area-title">설정
+	<div class="button-box">
+		<button type="submit" id="bt-save">
+			저장
+		</button>
+	</div>
+</h3>
+
+<table class="basic-table">
+	<colgroup>
+		<col width="10%" />
+		<col width="14%" />
+		<col width="10%" />
+		<col width="14%" />
+		<col width="10%" />
+		<col width="14%" />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>병원명</th>
+			<td><input type="text" name="hospital_name" id="hospital_name" value="<?=$row['hospital_name']?>" size="30" class="validate[required]" ></td>
+			<th>대표원장</th>
+			<td colspan="3"><input type="text" name="chief_name" id="chief_name" value="<?=$row['chief_name']?>" size="30" class="validate[required]" ></td>
+		</tr>
+		<tr>
+			<th>개원일</th>
+			<td><input type="text" name="open_date" id="open_date" value="<?=$row['open_date']?>" size="10" class="datepicker validate[custom[date]]"></td>
+			<th>사업자번호</th>
+			<td><input type="text" name="corp_no" id="corp_no" value="<?=$row['corp_no']?>" size="20"></td>
+			<th>연락처</th>
+			<td><input type="text" name="tel" id="tel" value="<?=$row['tel']?>"></td>
+		</tr>
+		<tr>
+			<th>주소</th>
+			<td colspan="5"><input type="text" name="addr" id="addr" size="100" value="<?=$row['addr']?>"></td>
+		</tr>
+		<tr>
+			<th>메모</th>
+			<td colspan="5">
+			<textarea cols="80" rows="8" name="etc"  name="etc"><?=$row['etc']?></textarea>
+			</td>
+		</tr>
+		<tr>
+			<th>사업장 정보</th>
+			<td colspan="5">
+				<? foreach($list as $i): ?>
+			<dl class="biz">
+			<dt><?=$i->biz_name?></dt><dd><?=$i->biz_url?></dd>
+			<? endforeach; ?>
+			</dl>
+			</td>
+		</tr>
+		<?if($auth_reset) {?>
+		<tr>
+			<th>1번 <!--환자정보처리--></th>
+			<td colspan="5">
+				<label class="hmis"><input type="checkbox" name="is_reset" value="Y" class="hmis" <?=($row['is_reset']=='Y')?'checked':''?> /><span class="lbl"> 적용</span></label>
+			</td>
+		</tr>
+		<tr>
+			<th>2번 <!-- 매출조정--></th>
+			<td colspan="5">
+				<label class="hmis"><input type="checkbox" name="is_cash" value="Y" class="hmis" <?=($row['is_cash']=='Y')?'checked':''?> /><span class="lbl"> 적용</span></label>
+			</td>
+		</tr>
+		<? } ?>
+	</tbody>
+</table>
+</form>
+
+<!--
+<table class="basic-table">
+	<colgroup>
+		<col style="width:120px"/>
+		<col  />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>병원명</th>
+			<td><input type="text" name="hospital_name" id="hospital_name" value="<?=$row['hospital_name']?>" size="30" class="validate[required]" ></td>
+
+		</tr>
+	</tbody>
+</table>
+-->
+

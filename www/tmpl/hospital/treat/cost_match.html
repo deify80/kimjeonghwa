@@ -1,0 +1,149 @@
+<div>
+	<div class="btn-group hmis orange" data-toggle="buttons">
+		<label class="btn"><input type="radio" name="parent" value="all" onchange="CostMatch.filter('all')">전체</label>
+		{@ list}
+		<label class="btn"><input type="radio" name="parent" value="{.key_}" onchange="CostMatch.filter('{.key_}')">{.name}</label>
+		{/}
+	</div>
+	<div style="float:right">
+		<button type="button" class="btn btn-flat-blue" onclick="CostMatch.add(0)"><i class="fa fa-1 fa-plus"></i> 진료부위/항목 추가</button>
+	</div>
+</div>
+
+<form id="FrmCostMatch">
+<table class="table table-bordered table-form  table-center">
+	<colgroup>
+		<col style="width:150px" />
+		<col style="width:250px" />
+		<col>
+	</colgroup>
+	<thead>
+		<tr>
+			<th>진료부위</th>
+			<th>진료항목</th>
+			<th>매칭수가</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr data-route="{.key_}">
+			<th rowspan="{.count}"><a href="javascript:;" onclick="CostMatch.modify('{.key_}')" class="link">{.name}</a> <i class="fa fa-1 fa-plus f-gray link" style="margin-left:5px" onclick="CostMatch.add('{.key_}')"></i></th>
+			{@ .children}
+				{? ..index_ >0}<tr  data-route="{.key_}_{..key_}">{/}
+				<td><div class="minheight"><a href="javascript:;" onclick="CostMatch.modify('{..key_}')" class="link">{..title}</a></div></td>
+				<td class="left" onclick="CostMatch.openTree('{..key_}')">
+						
+						{? ..etc && array_key_exists(..etc, cfg.categories)}
+							
+							<span  style="margin-right:10px;color:#FF5722"  onclick="CostMatch.openTree('{..key_}')" >
+								{ ..cost_info.route.name}
+							<!-- {@ ..cost_info.route}
+								{? ...index_ > 0 } &gt;{/}
+								{...name}
+							{/} -->
+							</span> 
+							
+							<a href="javascript:;" >
+								<div class="label label-xs label-default"  style="margin:0px;" >
+								<span data-toggle="tooltip" title="정상수가">{=number_format(..cost_info.cost.origin)}원</span><span class="split">|</span><span data-toggle="tooltip" title="재수술">{=number_format(..cost_info.cost.re)}원</span><span class="split">|</span><span data-toggle="tooltip" title="해외수가Ⅰ">{=number_format(..cost_info.cost.abroad_1)}원</span><span class="split">|</span><span data-toggle="tooltip" title="해외수가Ⅱ">{=number_format(..cost_info.cost.abroad_2)}원</span>
+								</div>
+							</a>
+						{:}
+						<span class="f-null">매칭된 수가가 없습니다.</span> 
+						{/}
+					
+				</td>
+			{? ..index_ >0}</tr>{/}
+			{:}
+			<td colspan="2" class="left f-null">등록된 진료항목이 없습니다.</td>
+			{/}
+		</tr>
+		{/}
+	</tbody>
+</table> 
+</form>
+
+<script type="text/javascript">
+var CostMatch = {
+	no:'',
+	init: function() {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.editSave();
+			}
+		});
+
+		$("#FrmCostMatch").validationEngine('attach',option);
+		
+		var radio = $('input[name="parent"][value="'+CostTab.filter.match+'"]');
+		radio.parent('label').addClass('active');
+		radio.trigger('change');
+		
+	},
+	filter: function(no){
+		if(no=='all') {
+			$('tr[data-route]').show();
+		}
+		else {
+			$('tr[data-route]').hide();
+			$('tr[data-route^="'+no+'"]').show();
+		}
+		CostTab.filter.match = no;
+	},
+
+	add: function(parent) {
+		var title = '진료부위/항목등록';
+		var modal = new HmisModal('costinput', {width:800, top:200});
+		modal.open(title,'/treat/cost_match_input',{mode:'insert',parent_code:parent});
+	},
+	openTree: function(code) {
+		var title = '수가표 매칭';
+		var modal = new HmisModal('costinput', {width:400, top:200});
+		modal.open(title,'/treat/cost_match_tree', {code:code});
+	},
+	modify: function(code) {
+		var title = '진료부위/항목 수정';
+		var modal = new HmisModal('costinput', {width:800, top:200});
+		modal.open(title,'/treat/cost_match_input',{mode:'update',code:code});
+	},
+	editable : function(no) {
+		this.editCancel();
+		this.no = no;
+		$('#edited_'+no).hide();
+		$('#editable_'+no).show();
+	},
+	editSave: function(){
+		var cost = $('#cost_'+this.no).val();
+		if(!cost) return false;
+
+		$.ajax({
+			url:'/treat_proc/save_cost',
+			data:{
+				mode:'update',
+				no:this.no,
+				cost:cost
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				if(r.success){
+					CostTab.loadTab('table');
+				}
+				else {
+					HmisAlert.alert(r.msg);
+				}
+			}
+		})
+	},
+	editCancel: function(){
+		$('#edited_'+this.no).show();
+		$('#editable_'+this.no).hide();
+		$('#FrmCostMatch')[0].reset();
+	}
+};
+
+$(function() {
+	CostMatch.init();
+})
+</script>

@@ -1,0 +1,35 @@
+
+<div id="tabs">
+	<ul>
+		<li><a href="#bbs_notice">공지사항</a></li>
+		<li><a href="#bbs_free">자유게시판</a></li>
+		<li><a href="#bbs_intranet">인트라넷개선사항</a></li>
+		<li><a href="#bbs_common">공통</a></li>
+		<li><a href="#bbs_team_1">상담</a></li>
+		<li><a href="#bbs_team_2">코디</a></li>
+		<li><a href="#bbs_team_3">간호</a></li>
+		<li><a href="#bbs_team_4">치료</a></li>
+		<li><a href="#bbs_team_5">피부</a></li>
+		<li><a href="#bbs_team_dr">의료진</a></li>
+	</ul>
+</div>
+
+<script type="text/javascript">
+var BBSHearder = {
+	init: function() {
+		$("#tabs").tabs({
+			active: <?=$bbs_config['order']?>
+		});
+
+		$( "#tabs ul li" ).click(function() {
+			var bbs_code = $(this).children("a").attr("href").replace("#", "");
+			document.location = "/bbs/"+bbs_code;
+		});
+	}
+}
+
+$(function() {
+	BBSHearder.init();
+})
+
+</script>

@@ -1,0 +1,113 @@
+<script>
+	$(document).ready(function() {
+
+		$('.date').Zebra_DatePicker();
+
+		$("#btn-search").on("click", function() {
+			document.location = "/sms/lists?" + $("#srch-frm").serialize();
+		});
+	});
+</script>
+<div style="width: 850px; float: left;">
+	<div class="panel panel-primary">
+		<div class="panel-heading">
+			<h3 class="panel-title" style="position: relative">SMS 발송 내역</h3>
+			<div class="col-xs-2" style="position: absolute; top: 15px; left: 740px;">
+				<button type="button" class="btn btn-info btn-sm" onClick="document.location='/sms/main'">SMS 발송</button>
+			</div>
+		</div>
+		<div class="panel-body">
+			<form class="form-inline" role="form" id="srch-frm">
+				<input type="hidden" name="MODE" id="MODE" value="LIST">
+				<div class="form-group">
+					<div class=" col-xs-2 ">
+						<select class="form-control" name="srch_type" id="srch_type">
+							<option value="">-방식-</option>
+							<option value="N"<?=$selected['srch_type']['N']?>>즉시발송</option>
+							<option value="Y"<?=$selected['srch_type']['Y']?>>예약발송</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class=" col-xs-2">
+						<select class="form-control" name="srch_status" id="srch_status">
+							<option value="">-상태-</option>
+							<option value="Y"<?=$selected['srch_status']['Y']?>>발송완료</option>
+							<option value="N"<?=$selected['srch_status']['N']?>>발송실패</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-5">
+						<input type="text" class="form-control date" id="srch_start_date" name="srch_start_date" value="<?=$start_date?>">
+					</div>
+					<div class="col-xs-5">
+						<input type="text" class="form-control date" id="srch_end_date" name="srch_end_date" value="<?=$end_date?>">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-10">
+						<button type="button" class="btn btn-primary btn-sm" id="btn-search">검색</button>
+					</div>
+				</div>
+			</form>
+
+			<table class="table table-striped" style="margin-top: 15px;">
+				<colgroup>
+					<col width="5%">
+					<col width="8%">
+					<col width="15%">
+					<col width="10%">
+					<col width="10%">
+					<col width="">
+					<col width="15%">
+				</colgroup>
+				<thead>
+					<tr class="active">
+						<th>구분</th>
+						<th>방식</th>
+						<th>발송날짜</th>
+						<th>발신번호</th>
+						<th>수신번호</th>
+						<th>내용</th>
+						<th>상태</th>
+					</tr>
+				</thead>
+				<tbody>
+					<? if(is_array($list)): ?>
+					<? foreach ($list as $i): ?>
+					<tr>
+						<td>
+							<?=$i->msg_type?>
+						</td>
+						<td>
+							<?=$i->reserve_type?>
+						</td>
+						<td>
+							<?=$i->reg_date?>
+						</td>
+						<td>
+							<?=$i->sender?>
+						</td>
+						<td>
+							<?=$i->receiver?>
+						</td>
+						<td>
+							<?=$i->msg?>
+						</td>
+						<td>
+							<?=$i->status?>
+						</td>
+					</tr>
+					<? endforeach; ?>
+					<? else: ?>
+					<tr>
+						<td colspan="7">해당 내역이 존재하지 않습니다.</td>
+					</tr>
+					<? endif; ?>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>

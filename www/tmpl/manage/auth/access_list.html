@@ -1,0 +1,65 @@
+<script>
+	$(document).ready(function() {
+
+		$("button, input[type=button]").button();
+		$("button[type!=submit]").button().click(function(event) {
+			event.preventDefault();
+		});
+	});
+	
+	
+	
+	function save() {
+
+		var data = $("#input-frm").serialize();
+		var url = "/manage_proc/access_insert";
+
+		$.ajax({
+			type : "POST",
+			url : url,
+			data : data,
+			success : function(result_data) {
+				alert("적용 완료했습니다.");
+				set_access("<?=$menu_seqno?>");
+				
+				/*
+				$("#msg-area").html(result_data);
+				$("#msg-area").dialog("open");
+				*/
+			}
+		});	
+
+	}
+	
+	
+</script>
+<form id="input-frm">
+<input type="hidden" name="menu_seqno" value="<?=$menu_seqno?>">
+<div style="clear:both;width:300px;text-align: right;">
+	<button type="button" id="bt-save" onClick="save();">설정</button>
+</div>
+<div style="float: left;margin-right: 10px;">
+	<span class="area-title">부서</span>
+	<ul>
+		<? foreach($dept_list as $i=>$val): ?>
+		<li><input type="checkbox" name="dept_code[]" value="<?=$i?>" <?=$access_dept[$i]?>> <?=$val?></li>
+		<? endforeach; ?>
+	</ul>
+</div>
+<div style="float: left;margin-right: 10px;">
+	<span class="area-title">팀</span>
+	<ul>
+		<? foreach($team_list as $i=>$val): ?>
+		<li><input type="checkbox" name="team_code[]" value="<?=$i?>" <?=$access_team[$i]?>> <?=$val?></li>
+		<? endforeach; ?>
+	</ul>
+</div>
+<div style="float: left;margin-right: 10px;">
+	<span class="area-title">직책</span>
+	<ul>
+		<? foreach($this->config->item('duty_code') as $i=>$val): ?>
+		<li><input type="checkbox" name="duty_code[]" value="<?=$i?>" <?=$access_duty[$i]?>> <?=$val?></li>
+		<? endforeach; ?>
+	</ul>
+</div>
+</form>

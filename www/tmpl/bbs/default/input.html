@@ -1,0 +1,138 @@
+<script src="//cdn.ckeditor.com/4.4.6/standard/ckeditor.js"></script>
+<script src="//oss.maxcdn.com/jquery.form/3.50/jquery.form.min.js"></script>
+<script src="/js/adapter.ckeditor.js"></script>
+
+<script>
+CKEDITOR.disableAutoInline = true;
+
+$(document).ready(function() {
+
+	$( '#bbs_contents' ).ckeditor()
+
+	$("#input-frm").validationEngine('attach');    		
+	
+	var bar = $('.bar');
+	var percent = $('.percent');
+	var status = $('#status');
+	
+    $('#input-frm').ajaxForm({
+    	beforeSend: function() {
+            status.empty();
+            var percentVal = '0%';
+            bar.width(percentVal)
+            percent.html(percentVal);
+        },
+        uploadProgress: function(event, position, total, percentComplete) {
+            var percentVal = percentComplete + '%';
+            bar.width(percentVal)
+            percent.html(percentVal);
+        },
+        success: function() {
+            var percentVal = '100%';
+            bar.width(percentVal)
+            percent.html(percentVal);
+        },
+        complete: function(xhr){
+        /*
+            var obj = $.parseJSON(result_data);		
+ 			if (obj.is_valid == "Y") document.location = "/bbs/<?=$bbs_code?>"; 			
+ 		*/	
+ 		document.location = "/bbs/<?=$bbs_code?>"; 		
+        }
+    });
+    
+    
+    $( "input[type='file']" ).change(function() {
+    	  $(".progress").show();
+  	});
+    
+    
+});
+
+
+
+function remove_file(seqno) {
+	
+	var url = "/bbs_proc/remove_file";
+	var data = "bbs_seqno=<?=$row['bbs_seqno']?>&seqno="+seqno;
+
+	$.ajax({
+		type : "POST",
+		url : url,
+		data : data,
+		success : function(result_data) {
+			history.go(0);
+		}
+	});
+	
+}
+</script>
+<style>
+
+.progress { position:relative; width:400px; border: 1px solid #ddd; padding: 1px; border-radius: 3px; display: none;}
+.bar { background-color: #fccea5; width:0%; height:20px; border-radius: 3px; }
+.percent { position:absolute; display:inline-block; top:3px; left:48%; }
+</style>
+
+
+<div style="width:100%;">
+<h3 class="area-title"><?=$bbs_config['bbs_title']?></h3>
+<form id="input-frm" enctype="multipart/form-data" method="post" action="/bbs_proc/insert/<?=$bbs_code?>">
+<input type="hidden" name="mode" value="<?=$mode?>">
+<input type="hidden" name="bbs_seqno" value="<?=$row['bbs_seqno']?>">
+<div class="tool-box" style="margin: 0px;padding-bottom: 5px;width:100%;">
+<button onClick="document.location='/bbs/<?=$bbs_code?>'">목록</button>
+<button type="submit">저장</button>
+</div>
+<table class="basic-table">
+<colgroup>
+	<col width="20%">
+	<col width="">
+</colgroup>
+	<tr>
+		<th>작성일자</th>
+		<td><?=date('Y-m-d H:i:s')?>
+		</td>
+	</tr>
+	<tr>
+		<th>작성자</th>
+		<td><?=$this->session->userdata( 'ss_name' )?>
+		</td>
+	</tr>
+	<? if($bbs_code != 'bbs_free'): ?>
+	<tr>
+		<th>상단노출</th>
+		<td><input type="radio" name="notice_flag" value="Y" <?=$row['notice_flag_chk']['Y']?>> 예 <input type="radio" name="notice_flag" <?=$row['notice_flag_chk']['N']?> value="N"> 아니오
+		</td>
+	</tr>
+	<? endif; ?>
+	<tr>
+		<th>제목</th>
+		<td><input type="text" name="title" id="title" class="validate[required]" size="80" placeholder="제목" value="<?=$row['title']?>"></td>
+	</tr>
+	<tr>
+		<th>첨부파일</th>
+		<td>
+		<? foreach($file_list as $i): ?>
+			<div style="clear: both;"><span style="float: left;"><a href="/bbs_down/<?=$bbs_code?>/<?=$i->seqno?>"><?=$i->file_name?></a></span><a href="javascript:remove_file('<?=$i->seqno?>');"><span class="ui-icon ui-icon-circle-close" style="float: left;text-align: left;"></span></a></div>
+		<? endforeach; ?>
+		<div style="clear: both;">
+		<? for($i=0; $i<2-count($file_list); $i++): ?>
+		<input type="file" name="userfile[]" size="60"><br>
+		<? endfor; ?>
+		</div>
+		<div class="progress">
+        <div class="bar"></div >
+        <div class="percent">0%</div >
+    	</div>    
+    	<div id="status"></div>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" style="padding: 0;"><textarea name="contents" id="bbs_contents" class="validate[required]" cols="80" rows="20"><?=$row['contents']?></textarea></td>
+	</tr>	
+	
+</table>
+</form>
+</div>
+<!-- <div id="tmp" style="width:500px;height: 600px;"></div>-->

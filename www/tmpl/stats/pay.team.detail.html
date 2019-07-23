@@ -1,0 +1,51 @@
+<h3 class="area-title">{cfg.field_name} - {cfg.manager_name}</h3>
+<table class="table table-bordered table-center table-form table-hover" >
+	<colgroup>
+		<col width="60px">
+		<col width="120px">
+		<col width="120px">
+		<col width="60px">
+		<col width="120px">
+		<col />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>고객명</th>
+			<th>수술날짜</th>
+			<th>유형</th>
+
+			<th>금액</th>
+			<th>진료부위</th>
+		</tr>
+	</thead>
+	<tbody>
+		{@ list}
+		<tr>
+			<td>{.index_+1}</td>
+			<td><a href="/patient/info/{.patient_no}" target="_blank" class="link">{.name}</a></td>
+			<td>{.date_project}</td>
+			<td>{.type}</td>
+			<td><b>{=number_format(.amount)}</b></td>
+			<td class="left">{? .type=='진료'}-{:}{=if_null(.treat_nav)}{/}</td>
+		</tr>
+		{:}
+		<tr>
+			<td colspan="6">검색결과 없음</td>
+		</tr>
+		{/}
+		<tr>
+			<th colspan="4">합계</th>
+			<th>{=number_format(total.amount)}</th>
+			<th></th>
+		</tr>
+	</tbody>
+</table>
+
+<script type="text/javascript">
+var PayTeamDetail = {
+	project: function() {
+
+	}
+}
+</script>

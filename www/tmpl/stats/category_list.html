@@ -1,0 +1,105 @@
+<!--
+<table class="summary-list-table" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+		<thead>
+			<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+				<th>팀</th>
+				<th>합계</th>
+				<? foreach($category_list as $j=>$category): ?>
+				<th><?=$category?></th>
+				<? endforeach; ?>
+			</tr>
+		</thead>
+		<tbody>
+			<? foreach($team_list as $i=>$team_name): ?>
+			<tr>
+				<th><?=$team_name?></th>
+				<td class="total"><?=$total_list['team'][$i]?></td>
+				<? foreach($category_list as $j=>$category): ?>
+				<td><?=$list[$i][$j]?></td>
+				<? endforeach; ?>
+			</tr>
+			<? endforeach; ?>
+			<tr>
+				<th class="total">총합</th>
+				<td class="total"><?=array_sum($total_list['team'])?></td>
+				<? foreach($category_list as $j=>$category): ?>
+				<td class="total"><?=$total_list['category'][$j]?></td>
+				<? endforeach; ?>
+			</tr>
+		</tbody>
+	</table>
+-->
+
+<table class="summary-list-table" <?if($output_mode=="EXCEL"):?>border="1" style="font-size: 11px; border-collapse: collapse;width:100%;" <?endif;?>>
+	<thead>
+		<tr <?if($output_mode=="EXCEL"):?>style="background-color: #cccccc; height: 30px;"<?endif;?>>
+			<th>팀</th>
+			<th>합계</th>
+			<? foreach($main_category as $j=>$val) { ?>
+			<th><?=$val?></th>
+			<? } ?>
+		</tr>
+	</thead>
+	<tbody>
+		<? foreach($team_list as $i=>$team_name) { ?>
+		<tr>
+			<th rowspan="2">
+				<?=$team_name?>
+			</th>
+			<td class="total">
+				<?=$total_list['team'][$i]?>
+			</td>
+			<? foreach($main_category as $j=>$val) { ?>
+			<td><?=($list[$i][$j]>0)?$list[$i][$j]:'<span class="f-null">0</span>'?></td>
+			<? } ?>
+		</tr>
+		<tr>
+			<td class="total">
+				<?=($total_list['team'][$i]>0 && array_sum($total_list['team'])>0)? round($total_list['team'][$i]/array_sum($total_list['team'])*100, 1).'%':'<span class="f-null">0%</span>'?>
+			</td>
+			<? foreach($main_category as $j=>$val) { ?>
+			<td><?=($list[$i][$j]>0 && $total_list['team'][$i]>0)? round($list[$i][$j]/$total_list['team'][$i]*100, 1).'%':'<span class="f-null">0%</span>'?></td>
+			<? } ?>
+		</tr>	
+		<? } ?>
+		<tr>
+			<th class="total" rowspan="2">총합</th>
+			<td class="total"><?=array_sum($total_list['team'])?></td>
+			<? foreach($main_category as $j=>$val) { ?>
+			<td class="total"><?=($total_list['main_category'][$j]>0)?$total_list['main_category'][$j]:'<span class="f-null">0</span>'?></td>
+			<? } ?>
+		</tr>
+		<tr>
+		<td class="total">100%</td>
+		<? foreach($main_category as $j=>$val) { ?>
+		<td class="total"><?=($total_list['main_category'][$j]>0 && array_sum($total_list['team'])>0)? round($total_list['main_category'][$j]/array_sum($total_list['team'])*100, 1).'%':'<span class="f-null">0%</span>'?></td>
+		<? } ?>
+		</tr>
+		<!-- 수술완료건 통계:S -->
+		<tr>
+			<th rowspan="2">수술완료</th>
+			<td class="total"><?=if_empty($total_list['status']['99'],'<span class="f-null">0</span>')?></td>
+			<? foreach($main_category as $j=>$val) { ?>
+			<td><?=if_empty($cst_status['99'][$j],'<span class="f-null">0</span>')?></td>
+			<? } ?>
+		</tr>
+		<tr>
+			<td class="total">
+				<?
+				$rate = ($total_list['status']['99']>0 && $total_list['team']>0)? round($total_list['status']['99']/array_sum($total_list['team'])*100, 1).'%':'';
+				echo if_empty($rate,'<span class="f-null">0%</span>');
+				?>
+			</td>
+			<? foreach($main_category as $j=>$val) { ?>
+			<td>
+				<?
+				$rate = ($cst_status['99'][$j]>0 && $total_list['main_category'][$j]>0)? round($cst_status['99'][$j]/$total_list['main_category'][$j]*100, 1).'%':'';
+				echo if_empty($rate,'<span class="f-null">0%</span>');
+				?>
+			</td>
+			<? } ?>
+		</tr>
+		<!-- 수술완료건 통계:E -->
+
+	</tbody>
+</table>

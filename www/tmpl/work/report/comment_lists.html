@@ -1,0 +1,9 @@
+{? count(comment)}
+<div class="dashed" style="margin:8px 0px 5px"></div>
+<dl class="inline">
+	{@ comment}
+	<dt>{.writer_info.name} {.writer_info.position_name}</dt>
+	<dd>{.comment} <span class="f-gray f-11">({=substr(.date_insert,2,14)})</span> {? .writer_id == layout.login.info.ss_user_id}<i class="fa fa-1 fa-trash f-error link" onclick="ReportView.removeComment('{.no}')"></i>{/} </dd>
+	{/}
+</dl>
+{/}

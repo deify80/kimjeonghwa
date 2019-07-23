@@ -1,0 +1,59 @@
+<form id="FrmTeamMove" onSubmit="return false">
+<div class="well" style="text-align:center;background-color:#F7F7F7;" >
+	<select name="team_from" class="validate[required]">
+		<option value="">::팀선택::</option>
+		<? foreach($cfg['team'] as $team_code=>$team) {?>
+		<option value="<?=$team_code?>"><?=$team?></option>
+		<? } ?>
+		<option></option>
+	</select> 팀의 모든 직원을 
+	<select name="team_to" class="validate[required]">
+		<option value="">::팀선택::</option>
+		<? foreach($cfg['team'] as $team_code=>$team) {?>
+		<option value="<?=$team_code?>"><?=$team?></option>
+		<? } ?>
+		<option></option>
+	</select> 팀으로 이동합니다.
+</div>
+
+<div class="area-button">
+	<button type="submit" class="btn btn-theme btn-lg">저장</button>
+	<button type="button" class="btn btn-gray btn-lg modal-close">닫기</button>
+</div>
+</form>
+
+<script type="text/javascript">
+var TeamMove = {
+	init: function () {
+		var me = this;
+		var option = $.extend({},validation_option, {
+			onValidationComplete: function(form, status){
+				if(status) me.save();
+			}
+		});
+
+		$("#FrmTeamMove").validationEngine('attach',option);
+	},
+	save: function() {
+		if(!confirm('팀원을 이동하시겠습니까?')) return false;
+		var formdata = $('#FrmTeamMove').serialize();
+		$.ajax({
+			url:'/manage_proc/team_move',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success: function(r) {
+				alert(r.msg);
+				if(r.success) {
+					TeamList.reload();
+					$('.modal-close').trigger('click');			
+				}
+			}
+		})
+	}
+};
+
+$(function(){
+	TeamMove.init();
+})
+</script>

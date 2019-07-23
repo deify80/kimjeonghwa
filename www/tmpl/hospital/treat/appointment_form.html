@@ -1,0 +1,189 @@
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col style="width:110px" />
+		<col style="width:250px"/>
+		<col style="width:110px" />
+		<col />
+		<col style="width:110px" />
+		<col />
+		<col style="width:110px" />
+		<col />
+	</colgroup>
+	<tbody>
+		<tr>
+			<th>초/재진</th>
+			<td>
+				<label class="hmis"><input type="radio" name="appointment[visit]" value="1" class="hmis" {? rs.visit_code=='1'}checked{/} /><span class="lbl"> 초진</span></label>
+				<label class="hmis"><input type="radio" name="appointment[visit]" value="2" class="hmis" {? rs.visit_code=='2'}checked{/} /><span class="lbl"> 재진</span></label>
+				<label class="hmis"><input type="radio" name="appointment[visit]" value="3" class="hmis" {? rs.visit_code=='3'}checked{/} /><span class="lbl"> Rev</span></label>	
+				<!-- 20170320 kruddo : 병원 내 재수술 추가 -->
+
+			</td>
+			<th>예약유형</th>
+			<td>
+				{? mode=='update' && !auth.manage}
+				{rs.type_code_txt}
+				{:}
+				<select name="appointment[type]" class="validate[required] required" data-errormessage-value-missing="예약유형을 선택 하세요.">
+					<option value="">::예약유형::</option>
+					{@ cfg.type}
+					<option value="{.key_}" {?rs.type_code == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+				{/}
+			</td>
+			<th>예약상태</th>
+			<td colspan="3">
+				<select name="appointment[status]" onchange="AppointmentForm.setStatus(this.value)" class="validate[required] required" data-errormessage-value-missing="예약상태를 선택 하세요.">
+					<option value="">::예약상태::</option>
+					{@ cfg.status}
+					<option value="{.key_}" {?rs.status_code == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+				<select name="appointment[room_no]" id="room_no" class="{? !in_array(rs.status_code,array('07-016','07-023'))}hide {/}validate[required] required">
+					{@ cfg.room}
+					<option value="{.key_}"  {?rs.room_no == .key_}selected{/}>{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>예약날짜</th>
+			<td>
+				{? mode=='insert'}
+				<input type="text" name="appointment[date]" value="{rs.appointment_date}" class="datepicker lg required"/>
+				{:}
+				<input type="hidden" name="appointment[date]" value="{rs.appointment_date}" />
+				{rs.appointment_date}
+				{/}
+
+			</td>
+			<th>예약시간</th>
+			<td colspan="5">
+				<select name="appointment[time_start]" id="time_start" class="validate[required, funcCall[AppointmentForm.checkTime]] required">
+					{@ range(cfg.time.start, cfg.time.end, 1800)}
+					<option value="{=date('H:i:s', .value_)}"  {? rs.appointment_time_start == date('H:i:s', .value_)} selected {/}>{=date('H:i', .value_)}</option>
+					{/}
+				</select>
+				~
+				<select name="appointment[time_end]" id="time_end" class="validate[required] required">
+					{@ range(cfg.time.start, cfg.time.end, 1800)}
+					<option value="{=date('H:i:s', .value_)}"  {? rs.appointment_time_end == date('H:i:s', .value_)} selected {/}>{=date('H:i', .value_)}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>접수자</th> <!-- 코디팀 -->
+			<td>
+				<select name="appointment[acceptor_id]">
+					<option value="">::접수자::</option>
+					{@ cfg.acceptor}
+					<option value="{.key_}"  {?rs.acceptor_id == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>담당실장</th> <!-- 상담팀 -->
+			<td>
+				<select name="appointment[manager_team_code]" id="appointment_team" onchange="HmisCommon.loadUser(this.value, '', 'appointment')">
+					<option value="">::팀::</option>
+					{@ cfg.team}
+					<option value="{.key_}"  {?rs.manager_team_code == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+				<select name="appointment[manager_id]" id="appointment_user" style="display:none">
+					<option value="">::팀원::</option>
+				</select>
+			</td>
+
+			<th>담당의사</th>
+			<td>
+				<select name="appointment[doctor_id]">
+					<option value="">::담당의사::</option>
+					{@ cfg.doctor}
+					<option value="{.key_}"  {?rs.doctor_id == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+			<th>피부관리사</th> <!-- 피부팀 -->
+			<td>
+				<select name="appointment[skincare_id]">
+					<option value="">::피부관리사::</option>
+					{@ cfg.skincare}
+					<option value="{.key_}"  {?rs.skincare_id == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th rowspan="2">진료부위</th>
+			<td colspan="7">
+				<!--{*
+				<select name="treat_region" id="sb_treat_region" onchange="HmisTreat.loadTreatItem(this.value)">
+					<option value="">::진료부위::</option>
+					{@ cfg.treat_region}
+					<option value="{.key_}"  {?rs.treat_region_code == .key_}selected{/} >{.value_}</option>
+					{/}
+				</select>
+				<select name="treat_item" id="sb_treat_item" style="display:none" onchange="HmisTreat.addTreat()">
+					<option value="">::진료항목::</option>
+				</select>
+				*}-->
+
+				<button type="button" onclick="HmisCommon.treat('HmisTreat.addTreat','{parient.treat_cost_no}')" class="btn btn-flat-lightgray btn-onlyicon"><i class="fa fa-search fa-1"></i></button>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="7" style="padding-bottom:0px">
+				<div id="treat_null" style="padding:7px 0px 13px;">진료항목을 선택하세요.</div>
+				<div id="treat_list">
+					{@ rs.treat_info}
+					<span class="label label-default" style="" id="{.key_}">{.value_} <i class="fa fa-times fa-1" style="margin-left:10px;cursor:pointer;vertical-align: -1px" onclick="HmisTreat.removeTreat('{.key_}')"></i></span>
+					{/}
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>진료특이사항</th>
+			<td colspan="7">
+				<textarea name="appointment[comment]" class="hmis" style="height:80px">{rs.comment}</textarea>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<script type="text/javascript">
+var AppointmentForm = {
+	checkTime: function() {
+		var time_start = $('#time_start').val();
+		var time_end = $('#time_end').val();
+		if(time_start >= time_end) {
+			return "예약시각을 바르게 입력하세요.";
+		}
+	},
+	setStatus: function(code) {
+		var target = $('#room_no');
+		if(code == '07-016' || code == '07-023') {
+			target.removeClass('hide');
+			target.find('option').remove();
+			$.ajax({
+				url:'/patient/get_room',
+				data:{
+					code:code
+				},
+				dataType:'json',
+				type:'POST',
+				success:function(r) {
+					$.each(r.data, function(i,e) {
+						console.log(i,e);
+						target.append('<option value="'+i+'">'+e+'</option>');
+					})
+				}
+			})
+		}
+		else {
+			target.addClass('hide');
+		}
+	}
+}
+</script>

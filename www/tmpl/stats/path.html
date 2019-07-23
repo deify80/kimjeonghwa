@@ -1,0 +1,188 @@
+<div class="area-body" style="width:">
+<h3 class="area-title">검색</h3>
+<form id="FrmSearch">
+<table class="table table-bordered table-form">
+	<colgroup>
+		<col width="120px">
+		<col>
+		<col width="120px">
+		<col>
+	</colgroup>
+	<tbody>
+		<!-- 20170131 kruddo : 팀별 현황 추가 -->
+		{? session.dept != 90}
+		<tr>
+			<th>팀</th>			
+			<td colspan="3">
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+					<label class="btn {? !search.team_code || search.team_code=='all' }active{/}"><input type="radio" name="team_code" value="all" {? !search.team_code || search.team_code=='all' }checked{/} data-role="search" />전체</label>
+					{@ cfg.team_list}
+					<label class="btn {? search.team_code==.key_}active{/}"><input type="radio" name="team_code" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label>
+					{/}
+				</div>
+				
+				<div class="btn-group hmis orange" data-toggle="buttons" id="reg_user_id" style="display:none">
+					<label class="btn {? search.reg_user_id =='all'}active{/}"><input type="radio" name="reg_user_id" value="all"  data-role="search" {? search.reg_user_id =='all'}checked{/}  /><span>전체</span></label>
+				</div>
+			</td>
+		</tr>
+		{:}
+		<tr>
+			<th>상담실장</th>
+			<td>
+				<div class="btn-group hmis blue" data-toggle="buttons" data-default="">
+					<label class="btn {? !search.team_code}active{/}"><input type="radio" name="reg_user_id" value="" {? !search.team_code}checked{/} data-role="search" />전체</label>
+					{@ cfg.team_member}
+					<label class="btn {? search.team_code==.key_}active{/}"><input type="radio" name="reg_user_id" value="{.key_}" {? search.team_code==.key_}checked{/} data-role="search" />{.value_}</label>
+					{/}
+				</div>
+			</td>
+		</tr>
+		{/}
+		<!-- 20170131 kruddo : 팀별 현황 추가 -->
+		<tr>
+			<th>분배일자</th>
+			<td colspan="3">
+				<!-- <input type="text" name="srch_start_date" id="sdate_s" class="datepicker lg" value="{cfg.today}"> ~ <input type="text" name="srch_end_date" id="sdate_e" class="datepicker lg" value="{cfg.today}"> -->
+				<input type="text" name="date_s" id="sdate_s"  class="datepicker lg" value="{cfg.today}" data-default='{cfg.date.cur_month}' /> ~ <input type="text" name="date_e" id="sdate_e"  class="datepicker lg" value="{cfg.today}"data-default='{cfg.date.cur_month_end}'  />
+				<ul class="btn-group btn-group-xs">
+						<li onclick="StatusMain.setDate('{cfg.today}','{cfg.today}');"><a href="javascript:;">오늘</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.weekday_db}','{cfg.today}');"><a href="javascript:;">이번주</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.cur_month}','{cfg.today}');"><a href="javascript:;">이번달</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.yesterday}','{cfg.date.yesterday}');"><a href="javascript:;">어제</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.pre_week_start_db}','{cfg.date.pre_week_end_db}');"><a href="javascript:;">지난주</a></li>
+						<li onclick="StatusMain.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');"><a href="javascript:;">지난달</a></li>
+					</ul>
+			</td>
+		</tr>
+
+	</tbody>
+</table>
+</form>
+
+<div class="area-button">
+	<button class="btn btn-lg btn-theme" onclick="StatusMain.load()"><i class="fa fa-search"></i> 검색</button>
+	<button class="btn btn-lg btn-gray" onclick="StatusMain.reset()">처음으로</button>
+</div>
+
+<div class="dashed"></div>
+<h3 class="area-title">유입경로별 실적
+	<div class="button-box">
+		<button type="button" class="btn btn-flat-blue" onClick="StatusMain.excel();"><i class="fa fa-file-excel-o"></i> EXCEL</button>
+	</div>
+</h3>
+
+<div id="inner" style="padding: 0;margin: 0;"></div>
+
+
+<iframe id="excel-frm" name="excel-frm" style="width:0;height:0;border:0;"></iframe>
+
+<script type="text/javascript" src="/js/bootstrap.button.js"></script>
+<script type="text/javascript">
+var StatusMain = {
+	/*
+	// 20170202 kruddo : 팀별 검색 조건 추가
+	init: function() {
+		HmisCommon.createDatepicker();
+		this.load();
+		var me = this;
+		$('[data-role="reload"]').on('change',function() {
+			me.load();
+		});
+
+		//setInterval(StatusMain.load, 1000*60*2);
+	},
+	*/
+	init: function() {
+		var me = this;
+		
+		//me.setDate('{cfg.date.pre_month_start}','{cfg.date.pre_month_end}');
+		me.setDate('{cfg.date.cur_month}','{cfg.date.cur_month_end}');
+
+		$('[data-role="search"]').on('change.search',function() {
+			
+			if(this.name == 'team_code') {
+				me.loadUser(this.value);
+			}
+			StatusMain.load();
+		});
+
+		me.loadUser('{search.team_code}');
+		HmisCommon.createDatepicker();
+		this.load();
+	},
+	// 20170202 kruddo : 팀별 검색 조건 추가
+	setDate: function(s, e) {
+		HmisCommon.setDate(s,e);
+		this.load();
+	},
+	load: function() {
+		var formdata = $('#FrmSearch').serializeArray();
+		$('#inner').load('/stats/path_inner', formdata);
+	},
+	reset: function() {
+		this.loadUser('{search.team_code}');
+		//alert('{search.team_code}');
+		HmisCommon.formReset('FrmSearch');
+		this.load();
+	},
+	excel: function() {
+		var formdata = $('#FrmSearch').serialize();
+		document.location.href="/stats/path_inner?mode=excel&"+formdata;
+	},
+
+	// 20170131 kruddo : 팀 선택 시 팀 내 상담원 목록
+	loadUser: function(team_code) {
+
+		var sb_team = $('#reg_user_id');
+		if(team_code == 'all' || !team_code) {
+			sb_team.hide();
+			return false;
+		}
+		sb_team.find('label:gt(0)').remove();
+		
+		$.ajax({
+			url:'/manage/get_user_json',
+			data:{
+				dept_code:'90',
+				team_code:team_code
+			},
+			dataType:'json',
+			type:'POST',
+			success: function(r){
+				if(r.success){
+					var reg_user_id = '{search.reg_user_id}';
+
+					$.each(r.data, function(i,e){
+						var checked = (reg_user_id==i)?'checked':'';
+						var active = (reg_user_id==i)?'active':'';
+						var label = '<label class="btn '+active+'" data-id="'+i+'"><input type="radio" name="reg_user_id" value="'+i+'"  onchange="StatusMain.load(1)"  '+checked+'/><span>'+e+'</span></label>'
+						sb_team.append(label);
+					});
+					if(team_code == 'all' ) {
+						sb_team.hide();
+					}
+					else {
+						sb_team.show();
+						if(sb_team.find('label.active').length<1) {
+							sb_team.find('label:eq(0)').trigger('click');
+						}
+						else {
+							sb_team.find('label[data-id="'+reg_user_id+'"]').trigger('click');
+						}
+						
+					}
+				}
+			}
+		});
+	},
+	// 20170131 kruddo :  팀 선택 시 팀 내 상담원 목록
+}
+
+$(function(){
+	StatusMain.init();
+});
+
+
+</script>
+</div>

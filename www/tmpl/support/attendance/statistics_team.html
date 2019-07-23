@@ -1,0 +1,88 @@
+<div class="well">
+<div id="statistics_team"> 데이터를 불러오고 있습니다... </div>
+</div>
+
+
+<script type="text/javascript">
+var StatisticsTeam = {
+	option : {
+		chart: {
+			type: 'column'
+		},
+		title: {
+			align:'left',
+			text: '근태상태'
+		},
+		subtitle: {
+			align:'left',
+			text: '각 팀별 근태상태(지각, 조퇴, 야간근무) 데이터'
+		},
+		xAxis: {
+			crosshair: true
+		},
+		yAxis: {
+			min: 0,
+			title: {
+				text: '',
+				rotation:0,
+			}
+		},
+		tooltip: {
+			headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+			pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+			'<td style="padding:0"><b>{point.y} 회</b></td></tr>',
+			footerFormat: '</table>',
+			shared: true,
+			useHTML: true
+		},
+		plotOptions: {
+			column: {
+				pointPadding: 0.2,
+				borderWidth: 0
+			}
+		},
+		series:[]
+	},
+	init : function() {
+		this.load()
+	},
+	load : function() {
+		var me = this;
+		var formdata = $('#FrmAttendanceSearch').serialize();
+		var field 
+		$.ajax({
+			url:'/attendance_proc/get_statistics',
+			data:formdata,
+			dataType:'json',
+			type:'POST',
+			success : function(r) {
+				if(r.success) {
+					me.option['xAxis']['categories'] = r.data.x;
+					var series = [];
+					$.each(r.data.series, function(i,e) {
+						var data = [];
+						$.each(e.data, function(data_i, data_v){
+							data.push(parseInt(data_v));
+						})
+
+						series.push({name:e.name, data:data})
+						
+					});
+					me.option['series'] = series;
+					me.create();
+				}
+				else {
+					$('#statistics_team').html('집계된 데이터가 없습니다.');
+				}
+			}
+		})
+
+	},
+	create: function() {
+		$('#statistics_team').highcharts(this.option);
+	}
+}
+
+$(function () {
+   StatisticsTeam.init();
+});
